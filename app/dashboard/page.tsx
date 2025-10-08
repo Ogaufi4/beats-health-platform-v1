@@ -1,17 +1,18 @@
+import { redirect } from "next/navigation"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { redirect } from "next/navigation"
 
-export default async function Dashboard() {
+export default async function DashboardPage() {
   const session = await getServerSession(authOptions)
 
-  if (!session?.user) {
+  if (!session) {
     redirect("/auth/signin")
   }
 
+  // Redirect based on role
   if (session.user.role === "provider") {
     redirect("/dashboard/provider")
-  } else {
-    redirect("/dashboard/user")
   }
+
+  redirect("/dashboard/user")
 }

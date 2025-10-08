@@ -1,30 +1,148 @@
-# Beats health platform
+# Beats Health Platform
 
-*Automatically synced with your [v0.app](https://v0.app) deployments*
+A comprehensive health management platform built with Next.js 15, Prisma, and Neon PostgreSQL.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/ogauras-projects/v0-beats-health-platform)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/projects/4QF6a43yLmb)
+## Features
 
-## Overview
+- 🔐 Complete authentication system (credentials + OAuth ready)
+- 📅 Appointment booking system
+- 👥 Role-based dashboards (Patients, Providers, Admin)
+- 🏥 Provider directory with search
+- 📊 Analytics and reporting
+- 🌍 Bilingual support (English/Setswana)
 
-This repository will stay in sync with your deployed chats on [v0.app](https://v0.app).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.app](https://v0.app).
+## Quick Start
+
+### 1. Install Dependencies
+
+\`\`\`bash
+npm install
+\`\`\`
+
+### 2. Set Up Environment Variables
+
+Create a \`.env.local\` file in the root directory:
+
+\`\`\`env
+# Database (from your Neon dashboard)
+DATABASE_URL="postgresql://neondb_owner:npg_vhJzXZ5wbqH3@ep-falling-term-add9r6zd-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require"
+
+# NextAuth (generate with: openssl rand -base64 32)
+NEXTAUTH_SECRET="your-generated-secret-here"
+NEXTAUTH_URL="http://localhost:3000"
+
+# Optional: Google OAuth
+GOOGLE_CLIENT_ID="your-google-client-id"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
+\`\`\`
+
+### 3. Initialize Database
+
+\`\`\`bash
+# Generate Prisma Client
+npx prisma generate
+
+# Push schema to database
+npx prisma db push
+\`\`\`
+
+### 4. Run Development Server
+
+\`\`\`bash
+npm run dev
+\`\`\`
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Database Management
+
+\`\`\`bash
+# Open Prisma Studio (database GUI)
+npx prisma studio
+
+# Reset database (WARNING: deletes all data)
+npx prisma db push --force-reset
+
+# Generate Prisma Client after schema changes
+npx prisma generate
+\`\`\`
+
+## Project Structure
+
+\`\`\`
+app/
+├── actions/          # Server actions
+├── api/              # API routes
+├── auth/             # Auth pages (signin/signup)
+├── dashboard/        # Dashboard pages
+├── providers/        # Provider listing
+└── ...
+components/
+├── dashboard/        # Dashboard components
+├── providers/        # Provider components
+└── ui/               # UI components
+lib/
+├── prisma.ts         # Prisma client
+└── auth.ts           # Auth utilities
+prisma/
+└── schema.prisma     # Database schema
+\`\`\`
+
+## User Roles
+
+- **Patient**: Book appointments, view bookings
+- **Provider**: Manage bookings, view schedule
+- **Admin**: Full system access
+- **Facility**: Facility management
+- **CMS**: Content management
+- **Doctor**: Medical provider access
 
 ## Deployment
 
-Your project is live at:
+### Deploy to Vercel
 
-**[https://vercel.com/ogauras-projects/v0-beats-health-platform](https://vercel.com/ogauras-projects/v0-beats-health-platform)**
+1. Push your code to GitHub
+2. Import project in Vercel
+3. Add environment variables
+4. Deploy!
 
-## Build your app
+Vercel will automatically run \`prisma generate\` via the postinstall script.
 
-Continue building your app on:
+## Troubleshooting
 
-**[https://v0.app/chat/projects/4QF6a43yLmb](https://v0.app/chat/projects/4QF6a43yLmb)**
+### Prisma Client Error
 
-## How It Works
+If you see "PrismaClient is not a constructor":
 
-1. Create and modify your project using [v0.app](https://v0.app)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+\`\`\`bash
+npx prisma generate
+\`\`\`
+
+### Database Connection Error
+
+Check that your DATABASE_URL is correct and Neon database is accessible.
+
+### Build Errors
+
+Make sure all dependencies are installed:
+
+\`\`\`bash
+rm -rf node_modules package-lock.json
+npm install
+\`\`\`
+\`\`\`
+
+Create the environment template:
+
+```plaintext file=".env.local"
+# Database URL from Neon
+DATABASE_URL="postgresql://neondb_owner:npg_vhJzXZ5wbqH3@ep-falling-term-add9r6zd-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require"
+
+# NextAuth Configuration
+# Generate a secret with: openssl rand -base64 32
+NEXTAUTH_SECRET="generate-your-secret-key-here"
+NEXTAUTH_URL="http://localhost:3000"
+
+# Optional: Google OAuth
+GOOGLE_CLIENT_ID=""
+GOOGLE_CLIENT_SECRET=""
