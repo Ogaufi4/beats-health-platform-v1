@@ -39,6 +39,44 @@ export async function createBooking(data: {
   return booking
 }
 
+export async function createStaffBookingForPatient(data: {
+  patientUserId: string
+  providerId: string
+  date: Date
+  time: string
+  notes?: string
+}) {
+  const session = await getServerSession(authOptions)
+
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized")
+  }
+
+  // Only staff can book on behalf of patients
+  const staff = await prisma.user.findUnique({ where: { id: session.user.id } })
+  if (!staff || !["doctor", "nurse", "pharmacist", "facility_admin"].includes(staff.role)) {
+    throw new Error("Forbidden")
+  }
+
+  const booking = await prisma.booking.create({
+    data: {
+      userId: data.patientUserId,
+      providerId: data.providerId,
+      date: data.date,
+      time: data.time,
+      notes: data.notes,
+      status: "pending",
+    },
+    include: {
+      user: { include: { profile: true } },
+      provider: { include: { profile: true } },
+    },
+  })
+
+  revalidatePath("/dashboard")
+  return booking
+}
+
 export async function updateBookingStatus(bookingId: string, status: "confirmed" | "declined" | "cancelled") {
   const session = await getServerSession(authOptions)
 
@@ -91,7 +129,7 @@ export async function getMyBookings() {
     where: { id: session.user.id },
   })
 
-  if (user?.role === "provider") {
+  if (user?.role === "doctor" || user?.role === "nurse" || user?.role === "pharmacist") {
     return await prisma.booking.findMany({
       where: { providerId: session.user.id },
       include: {

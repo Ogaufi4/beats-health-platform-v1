@@ -4,7 +4,8 @@ import { prisma } from "@/lib/prisma"
 export default async function ProvidersPage() {
   const providers = await prisma.user.findMany({
     where: {
-      role: "provider",
+      role: "doctor",
+      status: "active",
     },
     include: {
       profile: true,

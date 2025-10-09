@@ -39,6 +39,11 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Invalid credentials")
         }
 
+        // Enforce active status before allowing login
+        if (user.status !== "active") {
+          throw new Error("Account pending verification")
+        }
+
         return user
       },
     }),
@@ -53,8 +58,10 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = user.role
-        token.id = user.id
+        token.role = (user as any).role as string
+        token.id = (user as any).id as string
+        // @ts-ignore include status in token if present
+        token.status = (user as any).status
       }
       return token
     },
@@ -62,6 +69,8 @@ export const authOptions: NextAuthOptions = {
       if (token && session.user) {
         session.user.role = token.role as string
         session.user.id = token.id as string
+        // @ts-ignore surface status to session
+        session.user.status = (token as any).status as string | undefined
       }
       return session
     },

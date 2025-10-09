@@ -20,7 +20,16 @@ export default function SignUpPage() {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [role, setRole] = useState<"user" | "provider">("user")
+  const [role, setRole] = useState<
+    | "doctor"
+    | "nurse"
+    | "pharmacist"
+    | "facility_admin"
+    | "moh"
+    | "chw"
+    | "super_admin"
+    | "cms"
+  >("doctor")
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -37,20 +46,12 @@ export default function SignUpPage() {
         redirect: false,
       })
 
-      if (result?.error) {
-        toast({
-          title: "Error",
-          description: "Account created but failed to sign in",
-          variant: "destructive",
-        })
-      } else {
-        toast({
-          title: "Success",
-          description: "Account created successfully",
-        })
-        router.push("/dashboard")
-        router.refresh()
-      }
+      // For role verification flow, always show pending message and redirect to signin
+      toast({
+        title: "Success",
+        description: "Signup received. Awaiting admin verification.",
+      })
+      router.push("/auth/signin")
     } catch (error) {
       toast({
         title: "Error",
@@ -117,13 +118,31 @@ export default function SignUpPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="role">I am a</Label>
-                <Select value={role} onValueChange={(value: "user" | "provider") => setRole(value)}>
+                <Select
+                  value={role}
+                  onValueChange={(value:
+                    | "doctor"
+                    | "nurse"
+                    | "pharmacist"
+                    | "facility_admin"
+                    | "moh"
+                    | "chw"
+                    | "super_admin"
+                    | "cms"
+                  ) => setRole(value)}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="user">Patient / Client</SelectItem>
-                    <SelectItem value="provider">Healthcare Provider / Trainer</SelectItem>
+                    <SelectItem value="doctor">Doctor / Specialist</SelectItem>
+                    <SelectItem value="nurse">Nurse</SelectItem>
+                    <SelectItem value="pharmacist">Pharmacist</SelectItem>
+                    <SelectItem value="chw">Community Health Worker (CHW)</SelectItem>
+                    <SelectItem value="facility_admin">Facility Admin</SelectItem>
+                    <SelectItem value="moh">MoH Admin</SelectItem>
+                    <SelectItem value="cms">CMS</SelectItem>
+                    <SelectItem value="super_admin">Super Admin</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

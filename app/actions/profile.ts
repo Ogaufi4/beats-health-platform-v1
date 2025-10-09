@@ -63,7 +63,7 @@ export async function getProfile(userId?: string) {
 export async function getAllProviders() {
   const providers = await prisma.user.findMany({
     where: {
-      role: "provider",
+      role: "doctor",
     },
     include: {
       profile: true,

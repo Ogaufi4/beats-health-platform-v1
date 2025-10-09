@@ -11,7 +11,13 @@ model User {
   id                    String    @id @default(cuid())
   email                 String    @unique
   password              String?
-  role                  String    @default("user")
+  role                  Role
+  status                UserStatus @default(pending_verification)
+  phone                 String?   @unique
+  facilityId            String?
+  languagePref          Language  @default(en)
+  professionalId        String?
+  documentUrls          Json?
   emailVerified         DateTime?
   image                 String?
   createdAt             DateTime  @default(now())
@@ -20,8 +26,35 @@ model User {
   profile               Profile?
   bookingsAsClient      Booking[] @relation("ClientBookings")
   bookingsAsProvider    Booking[] @relation("ProviderBookings")
+  referralsCreated      Referral[] @relation("ReferralCreatedBy")
+  referralsAsPatient    Referral[] @relation("ReferralPatient")
+  recordsCreated        MedicalRecord[] @relation("RecordCreatedBy")
+  recordsAsPatient      MedicalRecord[] @relation("RecordPatient")
   accounts              Account[]
   sessions              Session[]
+}
+
+enum Role {
+  doctor
+  nurse
+  pharmacist
+  facility_admin
+  moh
+  chw
+  super_admin
+  cms
+}
+
+enum UserStatus {
+  pending_verification
+  active
+  suspended
+  rejected
+}
+
+enum Language {
+  en
+  tn
 }
 
 model Account {
@@ -86,9 +119,15 @@ model Booking {
   time        String
   status      String   @default("pending")
   notes       String?
+  equipmentId String?
+  referralId  String?
+  recordId    String?
   
   user        User     @relation("ClientBookings", fields: [userId], references: [id], onDelete: Cascade)
   provider    User     @relation("ProviderBookings", fields: [providerId], references: [id], onDelete: Cascade)
+  equipment   Equipment? @relation(fields: [equipmentId], references: [id])
+  referral    Referral?  @relation(fields: [referralId], references: [id])
+  record      MedicalRecord? @relation(fields: [recordId], references: [id])
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -96,4 +135,52 @@ model Booking {
   @@index([userId])
   @@index([providerId])
   @@index([date])
+}
+
+model Equipment {
+  id          String   @id @default(cuid())
+  facilityId  String
+  name        String
+  type        String
+  status      String   @default("available")
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  bookings    Booking[]
+}
+
+model Referral {
+  id            String   @id @default(cuid())
+  createdById   String
+  patientUserId String
+  targetFacilityId String?
+  reason        String
+  status        String   @default("open")
+  metadata      Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  createdBy     User     @relation("ReferralCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  patient       User     @relation("ReferralPatient", fields: [patientUserId], references: [id], onDelete: Cascade)
+  bookings      Booking[]
+
+  @@index([patientUserId])
+}
+
+model MedicalRecord {
+  id            String   @id @default(cuid())
+  patientUserId String
+  createdById   String
+  type          String
+  summary       String?
+  data          Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  patient       User     @relation("RecordPatient", fields: [patientUserId], references: [id], onDelete: Cascade)
+  createdBy     User     @relation("RecordCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  bookings      Booking[]
+
+  @@index([patientUserId])
 }
