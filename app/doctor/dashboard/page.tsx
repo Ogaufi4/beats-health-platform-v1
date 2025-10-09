@@ -31,6 +31,7 @@ import Link from "next/link"
 export default function DoctorDashboard() {
   const [language, setLanguage] = useState<"en" | "tn">("en")
   const [selectedDate, setSelectedDate] = useState("2024-01-11")
+  const [selectedTown, setSelectedTown] = useState("all");
 
   const content = {
     en: {
@@ -175,95 +176,68 @@ export default function DoctorDashboard() {
   ]
 
   const medicalEquipment = [
-    {
-      id: 1,
-      name: "ECG Machine",
-      type: "Diagnostic",
-      location: "Cardiology Wing",
-      status: "available",
-      nextAvailable: "Now",
-      bookedSlots: 3,
-      icon: <Activity className="h-6 w-6" />,
-      description: "12-lead electrocardiogram",
-    },
-    {
-      id: 2,
-      name: "Echocardiogram",
-      type: "Imaging",
-      location: "Cardiology Wing",
-      status: "busy",
-      nextAvailable: "11:30 AM",
-      bookedSlots: 8,
-      icon: <Heart className="h-6 w-6" />,
-      description: "Cardiac ultrasound imaging",
-    },
-    {
-      id: 3,
-      name: "Stress Test Machine",
-      type: "Diagnostic",
-      location: "Cardiology Wing",
-      status: "available",
-      nextAvailable: "Now",
-      bookedSlots: 2,
-      icon: <Monitor className="h-6 w-6" />,
-      description: "Exercise stress testing",
-    },
-    {
-      id: 4,
-      name: "Holter Monitor",
-      type: "Monitoring",
-      location: "Equipment Room",
-      status: "available",
-      nextAvailable: "Now",
-      bookedSlots: 1,
-      icon: <Clock className="h-6 w-6" />,
-      description: "24-hour cardiac monitoring",
-    },
-    {
-      id: 5,
-      name: "CT Scanner",
-      type: "Imaging",
-      location: "Radiology Department",
-      status: "maintenance",
-      nextAvailable: "2:00 PM",
-      bookedSlots: 12,
-      icon: <Camera className="h-6 w-6" />,
-      description: "Computed tomography",
-    },
-    {
-      id: 6,
-      name: "MRI Machine",
-      type: "Imaging",
-      location: "Radiology Department",
-      status: "available",
-      nextAvailable: "Now",
-      bookedSlots: 6,
-      icon: <Brain className="h-6 w-6" />,
-      description: "Magnetic resonance imaging",
-    },
-    {
-      id: 7,
-      name: "X-Ray Machine",
-      type: "Imaging",
-      location: "Radiology Department",
-      status: "available",
-      nextAvailable: "Now",
-      bookedSlots: 15,
-      icon: <Zap className="h-6 w-6" />,
-      description: "Digital radiography",
-    },
-    {
-      id: 8,
-      name: "Ultrasound",
-      type: "Imaging",
-      location: "General Imaging",
-      status: "available",
-      nextAvailable: "Now",
-      bookedSlots: 9,
-      icon: <Eye className="h-6 w-6" />,
-      description: "General ultrasound imaging",
-    },
-  ]
+  {
+    id: 1,
+    name: "ECG Machine",
+    type: "Diagnostic",
+    town: "Gaborone", // 👈 new
+    clinic: "Princess Marina Hospital", // 👈 new
+    status: "available",
+    nextAvailable: "Now",
+    bookedSlots: 3,
+    icon: <Activity className="h-6 w-6" />,
+    description: "12-lead electrocardiogram",
+  },
+  {
+    id: 2,
+    name: "Echocardiogram",
+    type: "Imaging",
+    town: "Gaborone",
+    clinic: "Princess Marina Hospital",
+    status: "busy",
+    nextAvailable: "11:30 AM",
+    bookedSlots: 8,
+    icon: <Heart className="h-6 w-6" />,
+    description: "Cardiac ultrasound imaging",
+  },
+  {
+    id: 3,
+    name: "Stress Test Machine",
+    type: "Diagnostic",
+    town: "Francistown",
+    clinic: "Nyanga Clinic",
+    status: "available",
+    nextAvailable: "Now",
+    bookedSlots: 2,
+    icon: <Monitor className="h-6 w-6" />,
+    description: "Exercise stress testing",
+  },
+  {
+    id: 4,
+    name: "Holter Monitor",
+    type: "Monitoring",
+    town: "Gaborone",
+    clinic: "Equipment Room",
+    status: "available",
+    nextAvailable: "Now",
+    bookedSlots: 1,
+    icon: <Clock className="h-6 w-6" />,
+    description: "24-hour cardiac monitoring",
+  },
+  {
+    id: 5,
+    name: "CT Scanner",
+    type: "Imaging",
+    town: "Maun",
+    clinic: "Maun General Hospital",
+    status: "maintenance",
+    nextAvailable: "2:00 PM",
+    bookedSlots: 12,
+    icon: <Camera className="h-6 w-6" />,
+    description: "Computed tomography",
+  },
+  // ... add more as needed
+];
 
   const pendingResults = [
     {
@@ -315,6 +289,22 @@ export default function DoctorDashboard() {
       facility: "Nyangabgwe Hospital",
     },
   ]
+  // Get unique towns
+const availableTowns = Array.from(new Set(medicalEquipment.map(eq => eq.town)));
+
+// Filter by selected town
+const filteredEquipment = selectedTown === "all"
+  ? medicalEquipment
+  : medicalEquipment.filter(eq => eq.town === selectedTown);
+
+// Group by town
+const filteredEquipmentByTown = Array.from(
+  filteredEquipment.reduce((acc, eq) => {
+    if (!acc.has(eq.town)) acc.set(eq.town, []);
+    acc.get(eq.town)!.push(eq);
+    return acc;
+  }, new Map<string, typeof medicalEquipment>())
+).sort((a, b) => a[0].localeCompare(b[0])); // Sort towns alphabetically
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -563,84 +553,108 @@ export default function DoctorDashboard() {
           </TabsContent>
 
           <TabsContent value="equipment" className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">{t.equipmentBooking}</h2>
-              <Button className="bg-green-600 hover:bg-green-700">
-                <Plus className="h-4 w-4 mr-2" />
-                {t.bookEquipment}
-              </Button>
-            </div>
+  <div className="flex items-center justify-between">
+    <h2 className="text-2xl font-bold">{t.equipmentBooking}</h2>
+    <div className="flex gap-2">
+      {/* Town/Region Filter */}
+      <select
+        value={selectedTown}
+        onChange={(e) => setSelectedTown(e.target.value)}
+        className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+        <option value="all">{language === "en" ? "All Towns" : "Metse ohle"}</option>
+        {availableTowns.map((town) => (
+          <option key={town} value={town}>
+            {town}
+          </option>
+        ))}
+      </select>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {medicalEquipment.map((equipment) => (
-                <Card key={equipment.id} className="hover:shadow-md transition-shadow">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-100 rounded-lg">{equipment.icon}</div>
-                        <div>
-                          <CardTitle className="text-lg">{equipment.name}</CardTitle>
-                          <CardDescription>{equipment.type}</CardDescription>
-                        </div>
-                      </div>
-                      <Badge className={getStatusColor(equipment.status)}>
-                        {equipment.status === "available"
-                          ? language === "en"
-                            ? "Available"
-                            : "E teng"
-                          : equipment.status === "busy"
-                            ? language === "en"
-                              ? "Busy"
-                              : "E dirisiwa"
-                            : language === "en"
-                              ? "Maintenance"
-                              : "Tokafatso"}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="text-sm">
-                        <p className="text-gray-600">{equipment.description}</p>
-                        <p className="text-gray-600 mt-1">
-                          <strong>{language === "en" ? "Location:" : "Lefelo:"}</strong> {equipment.location}
-                        </p>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">
-                          {language === "en" ? "Next available:" : "E tla nna teng:"}
-                        </span>
-                        <span className="font-medium">{equipment.nextAvailable}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">
-                          {language === "en" ? "Booked today:" : "E beelitswe gompieno:"}
-                        </span>
-                        <span className="font-medium">{equipment.bookedSlots}</span>
-                      </div>
-                      <Button
-                        className="w-full"
-                        variant={equipment.status === "available" ? "default" : "outline"}
-                        disabled={equipment.status === "maintenance"}
-                      >
-                        {equipment.status === "available"
-                          ? language === "en"
-                            ? "Book Now"
-                            : "Beela Jaanong"
-                          : equipment.status === "busy"
-                            ? language === "en"
-                              ? "Schedule Later"
-                              : "Rulaganya Morago"
-                            : language === "en"
-                              ? "Under Maintenance"
-                              : "Mo Tokafatsong"}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
+      <Button className="bg-green-600 hover:bg-green-700">
+        <Plus className="h-4 w-4 mr-2" />
+        {t.bookEquipment}
+      </Button>
+    </div>
+  </div>
+
+  {/* Group equipment by town */}
+  {filteredEquipmentByTown.map(([town, equipmentList]) => (
+    <div key={town} className="space-y-3">
+      <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
+        {language === "en" ? "Location:" : "Lefelo:"} {town}
+      </h3>
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {equipmentList.map((equipment) => (
+          <Card key={equipment.id} className="hover:shadow-md transition-shadow">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-100 rounded-lg">{equipment.icon}</div>
+                  <div>
+                    <CardTitle className="text-lg">{equipment.name}</CardTitle>
+                    <CardDescription>{equipment.type}</CardDescription>
+                  </div>
+                </div>
+                <Badge className={getStatusColor(equipment.status)}>
+                  {equipment.status === "available"
+                    ? language === "en"
+                      ? "Available"
+                      : "E teng"
+                    : equipment.status === "busy"
+                    ? language === "en"
+                      ? "Busy"
+                      : "E dirisiwa"
+                    : language === "en"
+                    ? "Maintenance"
+                    : "Tokafatso"}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="text-sm">
+                  <p className="text-gray-600">{equipment.description}</p>
+                  <p className="text-gray-600 mt-1">
+                    <strong>{language === "en" ? "Clinic:" : "Sepetlele:"}</strong> {equipment.clinic}
+                  </p>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">
+                    {language === "en" ? "Next available:" : "E tla nna teng:"}
+                  </span>
+                  <span className="font-medium">{equipment.nextAvailable}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">
+                    {language === "en" ? "Booked today:" : "E beelitswe gompieno:"}
+                  </span>
+                  <span className="font-medium">{equipment.bookedSlots}</span>
+                </div>
+                <Button
+                  className="w-full"
+                  variant={equipment.status === "available" ? "default" : "outline"}
+                  disabled={equipment.status === "maintenance"}
+                >
+                  {equipment.status === "available"
+                    ? language === "en"
+                      ? "Book Now"
+                      : "Beela Jaanong"
+                    : equipment.status === "busy"
+                    ? language === "en"
+                      ? "Schedule Later"
+                      : "Rulaganya Morago"
+                    : language === "en"
+                    ? "Under Maintenance"
+                    : "Mo Tokafatsong"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  ))}
+</TabsContent>
 
           <TabsContent value="referrals" className="space-y-6">
             <div className="flex items-center justify-between">

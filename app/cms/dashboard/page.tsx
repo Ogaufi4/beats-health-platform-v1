@@ -6,8 +6,38 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Truck, AlertTriangle, TrendingUp, MapPin, Heart, Globe, Bell, Settings, LogOut, BarChart3 } from "lucide-react"
+import {
+  Truck,
+  AlertTriangle,
+  TrendingUp,
+  MapPin,
+  Heart,
+  Globe,
+  Bell,
+  Settings,
+  LogOut,
+  BarChart3,
+} from "lucide-react"
 import Link from "next/link"
+
+// Recharts imports
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell,
+  AreaChart,
+  Area,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+} from "recharts"
 
 export default function CMSDashboard() {
   const [language, setLanguage] = useState<"en" | "tn">("en")
@@ -45,6 +75,12 @@ export default function CMSDashboard() {
         western: "Western",
         eastern: "Eastern",
       },
+      charts: {
+        regionalStock: "Regional Stock Levels",
+        deliverySuccess: "Delivery Success Rate (Last 6 Months)",
+        supplierReliability: "Supplier Reliability Distribution",
+        demandForecast: "Demand Forecast (Next 3 Months)",
+      },
     },
     tn: {
       title: "Dashboard ya Central Medical Stores",
@@ -76,6 +112,12 @@ export default function CMSDashboard() {
         northern: "Bokone",
         western: "Bophirima",
         eastern: "Botlhaba",
+      },
+      charts: {
+        regionalStock: "Kabo ya Kotsi ka Dikgaolo",
+        deliverySuccess: "Seelo sa Katlego ya Diromelo (Matsatsi a 6 a go fela)",
+        supplierReliability: "Kabo ya Seelo sa Bafani",
+        demandForecast: "Ponelopele ya Tlhokego (Matsatsi a 3 a go tlhogo)",
       },
     },
   }
@@ -694,21 +736,116 @@ export default function CMSDashboard() {
           </TabsContent>
 
           <TabsContent value="analytics">
-            <Card>
-              <CardHeader>
-                <CardTitle>Supply Chain Analytics</CardTitle>
-                <CardDescription>Data insights and performance metrics</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">Advanced analytics and reporting interface would be implemented here</p>
-                  <p className="text-sm text-gray-500 mt-2">
-                    Including demand forecasting, delivery optimization, and cost analysis
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="space-y-6">
+              {/* Chart 1: Regional Stock Levels (Bar Chart) */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t.charts.regionalStock}</CardTitle>
+                  <CardDescription>{language === "en" ? "Current stock percentage by region" : "Kotsi e teng ka dikgaolo"}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={regionalData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="region" />
+                        <YAxis domain={[0, 100]} />
+                        <Tooltip />
+                        <Legend />
+                        <Bar dataKey="stockLevel" fill="#3b82f6" name={language === "en" ? "Stock Level (%)" : "Kotsi (%)"}/>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Chart 2: Delivery Success Rate Over Time (Line Chart) */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t.charts.deliverySuccess}</CardTitle>
+                  <CardDescription>{language === "en" ? "Percentage of successful deliveries per month" : "Seelo sa katlego ya diromelo ka matsatsi"}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={[
+                        { month: "Jan", rate: 95.2 },
+                        { month: "Feb", rate: 96.8 },
+                        { month: "Mar", rate: 94.5 },
+                        { month: "Apr", rate: 97.1 },
+                        { month: "May", rate: 95.9 },
+                        { month: "Jun", rate: 96.2 },
+                      ]}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" />
+                        <YAxis domain={[90, 100]} />
+                        <Tooltip />
+                        <Legend />
+                        <Line type="monotone" dataKey="rate" stroke="#10b981" name={language === "en" ? "Success Rate (%)" : "Seelo (%)" } strokeWidth={2} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Chart 3: Supplier Reliability (Pie Chart) */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t.charts.supplierReliability}</CardTitle>
+                  <CardDescription>{language === "en" ? "Performance breakdown by supplier" : "Kabo ya seelo ya bafani"}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={suppliers.map(s => ({ name: s.name, value: s.reliability }))}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                          outerRadius={80}
+                          fill="#8b5cf6"
+                          dataKey="value"
+                        >
+                          {suppliers.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={["#3b82f6", "#10b981", "#f59e0b"][index % 3]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Chart 4: Demand Forecast (Area Chart) */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t.charts.demandForecast}</CardTitle>
+                  <CardDescription>{language === "en" ? "Predicted medicine demand based on historical usage" : "Ponelopele ya tlhokego ya meditshene ka go dirisiwa ga bosheng"}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={[
+                        { month: "Jul", demand: 1200 },
+                        { month: "Aug", demand: 1450 },
+                        { month: "Sep", demand: 1600 },
+                      ]}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Area type="monotone" dataKey="demand" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.3} name={language === "en" ? "Demand (units)" : "Tlhokego (units)"} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

@@ -87,18 +87,34 @@ export default function LoginPage() {
   const t = content[language]
 
   const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Simulate login and redirect based on user type
-    if (userType === "admin") {
+  e.preventDefault()
+
+  switch (userType) {
+    case "admin":
       router.push("/admin/dashboard")
-    } else if (userType === "cms") {
-      router.push("/cms/dashboard")
-    } else if (userType === "doctor") {
-      router.push("/doctor/dashboard")
-    } else {
+      break
+    case "facility_admin":
       router.push("/facility/dashboard")
-    }
+      break
+    case "doctor":
+      router.push("/doctor/dashboard")
+      break
+    case "nurse":
+      router.push("/nurse/dashboard")
+      break
+    case "pharmacist":
+      router.push("/pharmacist/dashboard")
+      break
+    case "chw":
+      router.push("/chw/dashboard")
+      break
+    case "cms":
+      router.push("/cms/dashboard")
+      break
+    default:
+      alert("Please select a valid user role.")
   }
+}
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center p-4">

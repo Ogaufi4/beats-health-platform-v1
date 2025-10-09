@@ -1,0 +1,711 @@
+"use client"
+
+import { useState, useMemo } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Input } from "@/components/ui/input"
+import {
+  Pill,
+  AlertTriangle,
+  Clock,
+  Truck,
+  Plus,
+  Download,
+  Printer,
+  Search,
+  Filter,
+  Calendar,
+  TrendingUp,
+  Database,
+  Users,
+  Settings,
+  LogOut,
+  Globe,
+  Bell,
+  CheckCircle,
+} from "lucide-react"
+import Link from "next/link"
+import { useToast } from "@/components/ui/use-toast"
+
+// Types
+type InventoryItem = {
+  id: string
+  medicationName: string
+  brandName?: string
+  dosage: string
+  form: string
+  stock: number
+  unit: string
+  reorderLevel: number
+  lastRestock: string // YYYY-MM-DD
+  nextDelivery?: string
+  expirationDate: string // YYYY-MM-DD
+  batchNumber: string
+  supplier: string
+  costPerUnit: number
+  location: string
+  status: "in-stock" | "low-stock" | "out-of-stock" | "discontinued"
+}
+
+type RestockRequest = {
+  id: string
+  medicationId: string
+  medicationName: string
+  quantity: number
+  supplier: string
+  urgency: "routine" | "urgent" | "emergency"
+  reason: string
+  dateRequested: string
+  dateFulfilled?: string
+  receivedQuantity?: number
+  status: "pending" | "approved" | "delivered" | "cancelled"
+}
+
+export default function PharmacistDashboard() {
+  const [language, setLanguage] = useState<"en" | "tn">("en")
+  const [searchTerm, setSearchTerm] = useState("")
+  const [filterStatus, setFilterStatus] = useState<"all" | InventoryItem["status"]>("all")
+  const [sortBy, setSortBy] = useState<keyof InventoryItem>("medicationName")
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false)
+
+  const { toast } = useToast()
+
+  // Mock data
+  const inventory: InventoryItem[] = [
+    {
+      id: "MED001",
+      medicationName: "Amoxicillin",
+      brandName: "Amoxil",
+      dosage: "500mg",
+      form: "Capsule",
+      stock: 12,
+      unit: "strips",
+      reorderLevel: 20,
+      lastRestock: "2025-09-28",
+      nextDelivery: "2025-10-15",
+      expirationDate: "2026-03-20",
+      batchNumber: "B202503A",
+      supplier: "MediSupplies Botswana",
+      costPerUnit: 12.5,
+      location: "Shelf A3, Bin 12",
+      status: "low-stock",
+    },
+    {
+      id: "MED002",
+      medicationName: "Paracetamol",
+      brandName: "Panado",
+      dosage: "500mg",
+      form: "Tablet",
+      stock: 0,
+      unit: "bottles",
+      reorderLevel: 15,
+      lastRestock: "2025-09-10",
+      expirationDate: "2026-01-15",
+      batchNumber: "B202501P",
+      supplier: "Pharma Distributors",
+      costPerUnit: 8.2,
+      location: "Shelf B1, Bin 5",
+      status: "out-of-stock",
+    },
+    {
+      id: "MED003",
+      medicationName: "Atorvastatin",
+      dosage: "20mg",
+      form: "Tablet",
+      stock: 45,
+      unit: "strips",
+      reorderLevel: 30,
+      lastRestock: "2025-10-01",
+      expirationDate: "2027-05-10",
+      batchNumber: "B202505T",
+      supplier: "MediSupplies Botswana",
+      costPerUnit: 22.0,
+      location: "Shelf C2, Bin 8",
+      status: "in-stock",
+    },
+    {
+      id: "MED004",
+      medicationName: "Insulin Glargine",
+      brandName: "Lantus",
+      dosage: "100 IU/mL",
+      form: "Injection",
+      stock: 3,
+      unit: "vials",
+      reorderLevel: 10,
+      lastRestock: "2025-09-20",
+      nextDelivery: "2025-10-12",
+      expirationDate: "2026-02-28",
+      batchNumber: "B202502I",
+      supplier: "Global Pharma",
+      costPerUnit: 320.0,
+      location: "Refrigerator R1, Bin 3",
+      status: "low-stock",
+    },
+    {
+      id: "MED005",
+      medicationName: "Doxycycline",
+      dosage: "100mg",
+      form: "Capsule",
+      stock: 8,
+      unit: "strips",
+      reorderLevel: 25,
+      lastRestock: "2025-08-15",
+      expirationDate: "2025-11-30", // expires in <30 days
+      batchNumber: "B202508D",
+      supplier: "Pharma Distributors",
+      costPerUnit: 18.75,
+      location: "Shelf A5, Bin 2",
+      status: "low-stock",
+    },
+  ]
+
+  const restockHistory: RestockRequest[] = [
+    {
+      id: "REQ001",
+      medicationId: "MED001",
+      medicationName: "Amoxicillin",
+      quantity: 50,
+      supplier: "MediSupplies Botswana",
+      urgency: "routine",
+      reason: "Regular reorder",
+      dateRequested: "2025-09-25",
+      dateFulfilled: "2025-10-02",
+      receivedQuantity: 50,
+      status: "delivered",
+    },
+    {
+      id: "REQ002",
+      medicationId: "MED002",
+      medicationName: "Paracetamol",
+      quantity: 30,
+      supplier: "Pharma Distributors",
+      urgency: "urgent",
+      reason: "Stockout",
+      dateRequested: "2025-10-08",
+      status: "pending",
+    },
+  ]
+
+  // Derived data
+  const totalInventory = inventory.length
+  const lowStockItems = inventory.filter(item => item.status === "low-stock")
+  const outOfStockItems = inventory.filter(item => item.status === "out-of-stock")
+  const expiringSoon = inventory.filter(item => {
+    const expDate = new Date(item.expirationDate)
+    const now = new Date()
+    const diffTime = expDate.getTime() - now.getTime()
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return diffDays > 0 && diffDays <= 30
+  })
+
+  const recentRestocks = restockHistory.filter(req =>
+    new Date(req.dateRequested) >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+  )
+
+  // Filter & sort inventory
+  const filteredInventory = useMemo(() => {
+    let result = [...inventory]
+
+    // Search
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase()
+      result = result.filter(item =>
+        item.medicationName.toLowerCase().includes(term) ||
+        item.brandName?.toLowerCase().includes(term) ||
+        item.batchNumber.toLowerCase().includes(term)
+      )
+    }
+
+    // Status filter
+    if (filterStatus !== "all") {
+      result = result.filter(item => item.status === filterStatus)
+    }
+
+    // Sort
+    result.sort((a, b) => {
+      if (a[sortBy] < b[sortBy]) return sortOrder === "asc" ? -1 : 1
+      if (a[sortBy] > b[sortBy]) return sortOrder === "asc" ? 1 : -1
+      return 0
+    })
+
+    return result
+  }, [searchTerm, filterStatus, sortBy, sortOrder, inventory])
+
+  const content = {
+    en: {
+      title: "Pharmacist Dashboard",
+      subtitle: "Princess Marina Hospital Pharmacy",
+      overview: "Overview",
+      inventory: "Inventory",
+      restocking: "Restocking",
+      alerts: "Alerts",
+      reporting: "Reporting",
+      searchPlaceholder: "Search medications, batch, brand...",
+      totalInventory: "Total Medications",
+      lowStock: "Low Stock",
+      outOfStock: "Out of Stock",
+      expiringSoon: "Expiring Soon",
+      recentRestocks: "Recent Restocks",
+      medicationName: "Medication",
+      brand: "Brand",
+      dosage: "Dosage",
+      form: "Form",
+      stock: "Stock",
+      reorderLevel: "Reorder Level",
+      expiry: "Expiry",
+      batch: "Batch",
+      supplier: "Supplier",
+      location: "Location",
+      status: "Status",
+      addMedication: "Add Medication",
+      adjustStock: "Adjust Stock",
+      generateRestock: "Generate Restock List",
+      exportData: "Export Data",
+      inStock: "In Stock",
+      lowStockLabel: "Low Stock",
+      outOfStockLabel: "Out of Stock",
+      discontinued: "Discontinued",
+      placeOrder: "Place Order",
+      orderSuccess: "Order Placed Successfully!",
+      orderSent: "Your restock request has been sent to the supplier.",
+    },
+    tn: {
+      title: "Lebokose la Ngaka ya Meditshene",
+      subtitle: "Sepetlele sa Princess Marina - Ngaka ya Meditshene",
+      overview: "Tlhatlhobo",
+      inventory: "Lekunutlo",
+      restocking: "Go Nya Gape",
+      alerts: "Ditlhatlhego",
+      reporting: "Diporofeta",
+      searchPlaceholder: "Batla meditshene, batch, brand...",
+      totalInventory: "Meditshene eohle",
+      lowStock: "Kotsi e Nyenyane",
+      outOfStock: "Ga e seng",
+      expiringSoon: "E Tla Fela Morago",
+      recentRestocks: "Go Nya Gape ga Morago",
+      medicationName: "Meditshene",
+      brand: "Brand",
+      dosage: "Kgato",
+      form: "Mongwana",
+      stock: "Kotsi",
+      reorderLevel: "Kgato ya Go Nya Gape",
+      expiry: "Nako ya go Fela",
+      batch: "Batch",
+      supplier: "Moongwi",
+      location: "Lefelo",
+      status: "Boemo",
+      addMedication: "Oketsa Meditshene",
+      adjustStock: "Fetola Kotsi",
+      generateRestock: "Dira Lenaneo la Go Nya Gape",
+      exportData: "Romela Data",
+      inStock: "E teng",
+      lowStockLabel: "Kotsi e Nyenyane",
+      outOfStockLabel: "Ga e seng",
+      discontinued: "E ile ya Tlhatlhwa",
+      placeOrder: "Ila Kopo",
+      orderSuccess: "Kopo e Neilwe!",
+      orderSent: "Kopo ya gago ya go naya gape e ile ya romelwa moongwing.",
+    },
+  }
+
+  const t = content[language]
+
+  const getStatusColor = (status: InventoryItem["status"]) => {
+    switch (status) {
+      case "in-stock": return "bg-green-100 text-green-800"
+      case "low-stock": return "bg-yellow-100 text-yellow-800"
+      case "out-of-stock": return "bg-red-100 text-red-800"
+      case "discontinued": return "bg-gray-100 text-gray-800"
+      default: return "bg-blue-100 text-blue-800"
+    }
+  }
+
+  const handlePlaceOrder = () => {
+    setIsPlacingOrder(true)
+
+    // Simulate API call
+    setTimeout(() => {
+      setIsPlacingOrder(false)
+
+      toast({
+        title: t.orderSuccess,
+        description: t.orderSent,
+        variant: "default",
+        duration: 5000,
+        icon: <CheckCircle className="h-5 w-5 text-green-500" />,
+      })
+    }, 1000)
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white border-b sticky top-0 z-50">
+        <div className="px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Pill className="h-8 w-8 text-purple-600" />
+                <div>
+                  <h1 className="text-xl font-bold text-gray-900">{t.title}</h1>
+                  <p className="text-sm text-gray-600">{t.subtitle}</p>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <Button variant="outline" size="sm" onClick={() => setLanguage(language === "en" ? "tn" : "en")}>
+                <Globe className="h-4 w-4 mr-2" />
+                {language === "en" ? "Setswana" : "English"}
+              </Button>
+              <Button variant="outline" size="sm" aria-label="Notifications">
+                <Bell className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" size="sm" aria-label="Settings">
+                <Settings className="h-4 w-4" />
+              </Button>
+              <Link href="/login">
+                <Button variant="outline" size="sm" aria-label="Log out">
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="p-6">
+        {/* Quick Actions Toolbar */}
+        <div className="flex flex-wrap gap-3 mb-6">
+          <Button className="bg-purple-600 hover:bg-purple-700">
+            <Plus className="h-4 w-4 mr-2" />
+            {t.addMedication}
+          </Button>
+          <Button variant="outline">
+            <Plus className="h-4 w-4 mr-2" />
+            {t.adjustStock}
+          </Button>
+          <Button variant="outline">
+            <Printer className="h-4 w-4 mr-2" />
+            {t.generateRestock}
+          </Button>
+          <Button variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            {t.exportData}
+          </Button>
+        </div>
+
+        {/* Overview Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <Database className="h-5 w-5 text-blue-600" />
+                <div>
+                  <p className="text-sm text-gray-600">{t.totalInventory}</p>
+                  <p className="text-2xl font-bold text-blue-600">{totalInventory}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                <div>
+                  <p className="text-sm text-gray-600">{t.lowStock}</p>
+                  <p className="text-2xl font-bold text-yellow-600">{lowStockItems.length}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+                <div>
+                  <p className="text-sm text-gray-600">{t.outOfStock}</p>
+                  <p className="text-2xl font-bold text-red-600">{outOfStockItems.length}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <Clock className="h-5 w-5 text-orange-600" />
+                <div>
+                  <p className="text-sm text-gray-600">{t.expiringSoon}</p>
+                  <p className="text-2xl font-bold text-orange-600">{expiringSoon.length}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <Truck className="h-5 w-5 text-green-600" />
+                <div>
+                  <p className="text-sm text-gray-600">{t.recentRestocks}</p>
+                  <p className="text-2xl font-bold text-green-600">{recentRestocks.length}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Tabs defaultValue="inventory" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="overview">{t.overview}</TabsTrigger>
+            <TabsTrigger value="inventory">{t.inventory}</TabsTrigger>
+            <TabsTrigger value="restocking">{t.restocking}</TabsTrigger>
+            <TabsTrigger value="alerts">{t.alerts}</TabsTrigger>
+            <TabsTrigger value="reporting">{t.reporting}</TabsTrigger>
+          </TabsList>
+
+          {/* Overview Tab */}
+          <TabsContent value="overview">
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>{language === "en" ? "Low Stock Items" : "Ditlhogo tse di Nnyane"}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {lowStockItems.length === 0 ? (
+                    <p className="text-gray-500">{language === "en" ? "No low stock items." : "Ga go na ditlhogo tse di nnyane."}</p>
+                  ) : (
+                    <ul className="space-y-2">
+                      {lowStockItems.map(item => (
+                        <li key={item.id} className="flex justify-between text-sm">
+                          <span>{item.medicationName} ({item.brandName})</span>
+                          <Badge variant="secondary">{item.stock} {item.unit}</Badge>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>{language === "en" ? "Expiring Soon (<30 days)" : "Di tla Fela Morago (<30 matsatsi)"}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {expiringSoon.length === 0 ? (
+                    <p className="text-gray-500">{language === "en" ? "No expiring items." : "Ga go na tse di tlang go fela."}</p>
+                  ) : (
+                    <ul className="space-y-2">
+                      {expiringSoon.map(item => (
+                        <li key={item.id} className="flex justify-between text-sm">
+                          <span>{item.medicationName} - {item.batchNumber}</span>
+                          <Badge variant="destructive">{item.expirationDate}</Badge>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Inventory Tab */}
+          <TabsContent value="inventory">
+            <div className="flex flex-col sm:flex-row gap-3 mb-4">
+              <div className="relative flex-grow">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder={t.searchPlaceholder}
+                  className="pl-10"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value as any)}
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm"
+              >
+                <option value="all">{language === "en" ? "All Status" : "Boemo Bohlale"}</option>
+                <option value="in-stock">{t.inStock}</option>
+                <option value="low-stock">{t.lowStockLabel}</option>
+                <option value="out-of-stock">{t.outOfStockLabel}</option>
+                <option value="discontinued">{t.discontinued}</option>
+              </select>
+            </div>
+
+            <div className="rounded-md border">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                      onClick={() => { setSortBy("medicationName"); setSortOrder(sortOrder === "asc" ? "desc" : "asc") }}>
+                      {t.medicationName} {sortBy === "medicationName" && (sortOrder === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t.brand}</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t.dosage}</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t.form}</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t.stock}</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t.expiry}</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t.status}</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredInventory.map((item) => (
+                    <tr key={item.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <div className="font-medium">{item.medicationName}</div>
+                        <div className="text-sm text-gray-500">Batch: {item.batchNumber}</div>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">{item.brandName || "—"}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">{item.dosage}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">{item.form}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span className="font-medium">{item.stock}</span> {item.unit}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">{item.expirationDate}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <Badge className={getStatusColor(item.status)}>
+                          {item.status === "in-stock" ? t.inStock :
+                           item.status === "low-stock" ? t.lowStockLabel :
+                           item.status === "out-of-stock" ? t.outOfStockLabel : t.discontinued}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </TabsContent>
+
+          {/* Restocking Tab */}
+          <TabsContent value="restocking">
+            <div className="flex justify-between items-center mb-4">
+              <CardTitle>{language === "en" ? "Restock Requests" : "Dikopo tsa go Nya Gape"}</CardTitle>
+              <Button
+                onClick={handlePlaceOrder}
+                disabled={isPlacingOrder}
+                className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
+              >
+                {isPlacingOrder ? (
+                  <>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    {language === "en" ? "Placing Order..." : "Go Ila Kopo..."}
+                  </>
+                ) : (
+                  <>
+                    <Truck className="h-4 w-4" />
+                    {language === "en" ? "Place Order" : "Ila Kopo"}
+                  </>
+                )}
+              </Button>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardDescription>{language === "en" ? "Manage pending and fulfilled orders" : "Laola dikopo tse di emetsweng le tse di filweng"}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {restockHistory.map(req => (
+                    <div key={req.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <h4 className="font-medium">{req.medicationName}</h4>
+                        <p className="text-sm text-gray-600">
+                          {req.quantity} units • {req.supplier} • {req.dateRequested}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={req.status === "delivered" ? "default" : req.status === "pending" ? "secondary" : "destructive"}>
+                          {req.status.charAt(0).toUpperCase() + req.status.slice(1)}
+                        </Badge>
+                        <Button variant="outline" size="sm">
+                          {language === "en" ? "View" : "Bona"}
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Alerts Tab */}
+          <TabsContent value="alerts">
+            <div className="space-y-6">
+              {lowStockItems.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-yellow-700 flex items-center gap-2">
+                      <AlertTriangle className="h-5 w-5" />
+                      {language === "en" ? "Low Stock Alerts" : "Ditlhatlhego tsa Kotsi e Nnyane"}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2">
+                      {lowStockItems.map(item => (
+                        <li key={item.id} className="text-sm">
+                          <span className="font-medium">{item.medicationName}</span> – only {item.stock} {item.unit} left (reorder at {item.reorderLevel})
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              )}
+
+              {expiringSoon.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-orange-700 flex items-center gap-2">
+                      <Clock className="h-5 w-5" />
+                      {language === "en" ? "Expiry Alerts" : "Ditlhatlhego tsa go Fela"}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2">
+                      {expiringSoon.map(item => (
+                        <li key={item.id} className="text-sm">
+                          <span className="font-medium">{item.medicationName}</span> (Batch: {item.batchNumber}) expires on {item.expirationDate}
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* Reporting Tab */}
+          <TabsContent value="reporting">
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>{language === "en" ? "Top 5 Most Used" : "Tse 5 tse di Dumilwang Kwa Ntle"}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2 text-sm">
+                    <li>1. Paracetamol – 240 units/month</li>
+                    <li>2. Amoxicillin – 180 units/month</li>
+                    <li>3. Atorvastatin – 120 units/month</li>
+                    <li>4. Insulin – 45 units/month</li>
+                    <li>5. Doxycycline – 90 units/month</li>
+                  </ul>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>{language === "en" ? "Monthly Spend" : "Tlhopho ya Kgwedi"}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">P 12,450.00</div>
+                  <p className="text-sm text-gray-600 mt-1">{language === "en" ? "October 2025" : "Phukwi 2025"}</p>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  )
+}
