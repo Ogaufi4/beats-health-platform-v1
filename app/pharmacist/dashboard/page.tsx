@@ -25,6 +25,9 @@ import {
   Globe,
   Bell,
   CheckCircle,
+  Info,
+  ArrowRight,
+  Star,
 } from "lucide-react"
 import Link from "next/link"
 import { useToast } from "@/components/ui/use-toast"
@@ -70,6 +73,7 @@ export default function PharmacistDashboard() {
   const [sortBy, setSortBy] = useState<keyof InventoryItem>("medicationName")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
   const [isPlacingOrder, setIsPlacingOrder] = useState(false)
+  const [showTips, setShowTips] = useState(true) // Toggle tooltips
 
   const { toast } = useToast()
 
@@ -271,6 +275,28 @@ export default function PharmacistDashboard() {
       placeOrder: "Place Order",
       orderSuccess: "Order Placed Successfully!",
       orderSent: "Your restock request has been sent to the supplier.",
+      userJourney: {
+        title: "Your Daily Workflow",
+        startDay: "Start Your Day",
+        checkExpiries: "Check Expiring Medicines",
+        restockNow: "Restock Critical Items",
+        completeTasks: "Complete Today's Tasks",
+        tips: "Show Tips",
+        hideTips: "Hide Tips",
+        action: "Action",
+        progress: "Progress",
+        completed: "Completed",
+        pending: "Pending",
+        expired: "Expired",
+        lowStock: "Low Stock",
+        outOfStock: "Out of Stock",
+        tooltip: {
+          startDay: "Begin by reviewing today’s critical alerts and expiring items.",
+          checkExpiries: "Review medicines expiring within 30 days to prevent waste.",
+          restockNow: "Order low-stock or out-of-stock items immediately.",
+          completeTasks: "Mark all restock requests and adjustments as done.",
+        },
+      },
     },
     tn: {
       title: "Lebokose la Ngaka ya Meditshene",
@@ -308,6 +334,28 @@ export default function PharmacistDashboard() {
       placeOrder: "Ila Kopo",
       orderSuccess: "Kopo e Neilwe!",
       orderSent: "Kopo ya gago ya go naya gape e ile ya romelwa moongwing.",
+      userJourney: {
+        title: "Taolo ya Letsoho la Gago",
+        startDay: "Qala Letsoho la Gago",
+        checkExpiries: "Bona Dihlare tse di Tla Fela",
+        restockNow: "Nya Gape Ditlhogo tse di Botlhokwa",
+        completeTasks: "Fetola Ditiro tsa Gompieno",
+        tips: "Bona Ditlhatlhego",
+        hideTips: "Fihla Ditlhatlhego",
+        action: "Tiro",
+        progress: "Karolelano",
+        completed: "E Feditse",
+        pending: "E Emetse",
+        expired: "E Fela",
+        lowStock: "Kotsi e Nyenyane",
+        outOfStock: "Ga e seng",
+        tooltip: {
+          startDay: "Qala ka go bonala dikitsiso tsa botlhokwa le ditlhogo tse di tlang go fela.",
+          checkExpiries: "Bona meditshene e tla fela morago ga matsatsi a 30 go tlhokomela go fela.",
+          restockNow: "Oketsa ditlhogo tse di nyenyane kapa tse di seng.",
+          completeTasks: "Rulaganya ditiro tsa go nya gape le ditiro tse di emetsweng.",
+        },
+      },
     },
   }
 
@@ -338,6 +386,42 @@ export default function PharmacistDashboard() {
         icon: <CheckCircle className="h-5 w-5 text-green-500" />,
       })
     }, 1000)
+  }
+
+  // User Journey Progress
+  const userJourneySteps = [
+    {
+      id: 1,
+      title: t.userJourney.startDay,
+      description: t.userJourney.tooltip.startDay,
+      status: "completed",
+      icon: <Star className="h-5 w-5 text-yellow-500" />,
+    },
+    {
+      id: 2,
+      title: t.userJourney.checkExpiries,
+      description: t.userJourney.tooltip.checkExpiries,
+      status: expiringSoon.length > 0 ? "pending" : "completed",
+      icon: <Clock className="h-5 w-5 text-orange-500" />,
+    },
+    {
+      id: 3,
+      title: t.userJourney.restockNow,
+      description: t.userJourney.tooltip.restockNow,
+      status: lowStockItems.length > 0 || outOfStockItems.length > 0 ? "pending" : "completed",
+      icon: <Truck className="h-5 w-5 text-blue-500" />,
+    },
+    {
+      id: 4,
+      title: t.userJourney.completeTasks,
+      description: t.userJourney.tooltip.completeTasks,
+      status: recentRestocks.some(r => r.status === "pending") ? "pending" : "completed",
+      icon: <CheckCircle className="h-5 w-5 text-green-500" />,
+    },
+  ]
+
+  const getStepColor = (status: string) => {
+    return status === "completed" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
   }
 
   return (
@@ -395,7 +479,43 @@ export default function PharmacistDashboard() {
             <Download className="h-4 w-4 mr-2" />
             {t.exportData}
           </Button>
+          <Button variant="outline" size="sm" onClick={() => setShowTips(!showTips)}>
+            <Info className="h-4 w-4 mr-2" />
+            {showTips ? t.userJourney.hideTips : t.userJourney.tips}
+          </Button>
         </div>
+
+        {/* User Journey Section */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ArrowRight className="h-5 w-5 text-blue-600" />
+              {t.userJourney.title}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {userJourneySteps.map(step => (
+                <div key={step.id} className="flex items-center justify-between p-4 rounded-lg border">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-full ${getStepColor(step.status)}`}>
+                      {step.icon}
+                    </div>
+                    <div>
+                      <h3 className="font-medium">{step.title}</h3>
+                      {showTips && (
+                        <p className="text-sm text-gray-600 mt-1">{step.description}</p>
+                      )}
+                    </div>
+                  </div>
+                  <Badge className={getStepColor(step.status)}>
+                    {step.status === "completed" ? t.userJourney.completed : t.userJourney.pending}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Overview Stats */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
@@ -549,6 +669,7 @@ export default function PharmacistDashboard() {
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t.stock}</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t.expiry}</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t.status}</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t.userJourney.action}</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -571,6 +692,29 @@ export default function PharmacistDashboard() {
                            item.status === "low-stock" ? t.lowStockLabel :
                            item.status === "out-of-stock" ? t.outOfStockLabel : t.discontinued}
                         </Badge>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        {item.status === "out-of-stock" ? (
+                          <Button
+                            size="sm"
+                            className="bg-red-600 hover:bg-red-700"
+                            onClick={handlePlaceOrder}
+                          >
+                            {t.placeOrder}
+                          </Button>
+                        ) : item.status === "low-stock" ? (
+                          <Button
+                            size="sm"
+                            className="bg-yellow-600 hover:bg-yellow-700"
+                            onClick={handlePlaceOrder}
+                          >
+                            {t.placeOrder}
+                          </Button>
+                        ) : (
+                          <Button size="sm" variant="outline">
+                            {t.userJourney.action}
+                          </Button>
+                        )}
                       </td>
                     </tr>
                   ))}
