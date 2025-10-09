@@ -1,4 +1,3 @@
-import "server-only"
 import { redirect } from "next/navigation"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
@@ -6,12 +5,17 @@ import { authOptions } from "@/lib/auth"
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions)
 
-  if (!session) {
+  if (!session?.user) {
     redirect("/auth/signin")
   }
 
-  // Redirect based on role
-  switch (session.user.role) {
+  const role = session.user.role
+
+  // Redirect based on user role
+  switch (role) {
+    case "super_admin":
+    case "moh":
+      redirect("/admin/dashboard")
     case "doctor":
       redirect("/doctor/dashboard")
     case "nurse":
@@ -20,12 +24,10 @@ export default async function DashboardPage() {
       redirect("/pharmacist/dashboard")
     case "facility_admin":
       redirect("/facility/dashboard")
-    case "moh":
-      redirect("/moh/dashboard")
     case "cms":
       redirect("/cms/dashboard")
     case "chw":
-      redirect("/facility/dashboard")
+      redirect("/dashboard/user")
     default:
       redirect("/dashboard/user")
   }

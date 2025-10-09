@@ -1,10 +1,9 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { signIn } from "next-auth/react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -15,6 +14,9 @@ import { toast } from "@/components/ui/use-toast"
 
 export default function SignInPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard"
+
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
@@ -36,23 +38,24 @@ export default function SignInPage() {
         setError("Invalid email or password")
         toast({
           title: "Error",
-          description: "Invalid email or password",
+          description: "Invalid email or password. Please try again.",
           variant: "destructive",
         })
       } else if (result?.ok) {
         toast({
           title: "Success",
-          description: "Signed in successfully!",
+          description: "Signed in successfully! Redirecting...",
         })
-        router.push("/dashboard")
-        router.refresh()
+
+        // Force a hard redirect to dashboard
+        window.location.href = callbackUrl
       }
     } catch (error) {
       console.error("Sign in error:", error)
       setError("Something went wrong. Please try again.")
       toast({
         title: "Error",
-        description: "Something went wrong",
+        description: "Something went wrong. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -61,7 +64,7 @@ export default function SignInPage() {
   }
 
   const handleGoogleSignIn = () => {
-    signIn("google", { callbackUrl: "/dashboard" })
+    signIn("google", { callbackUrl })
   }
 
   return (
@@ -83,7 +86,7 @@ export default function SignInPage() {
           <CardContent className="space-y-4">
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-md p-3 flex items-start gap-2">
-                <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
+                <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
                 <p className="text-sm text-red-800">{error}</p>
               </div>
             )}
@@ -99,6 +102,7 @@ export default function SignInPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   disabled={loading}
+                  autoComplete="email"
                 />
               </div>
 
@@ -112,6 +116,7 @@ export default function SignInPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   disabled={loading}
+                  autoComplete="current-password"
                 />
               </div>
 
@@ -141,7 +146,7 @@ export default function SignInPage() {
             </Button>
 
             <div className="text-center text-sm">
-              Don't have an account?{" "}
+              {"Don't have an account? "}
               <Link href="/auth/signup" className="text-blue-600 hover:underline font-medium">
                 Sign up
               </Link>
@@ -150,8 +155,11 @@ export default function SignInPage() {
         </Card>
 
         <div className="mt-6 text-center text-sm text-gray-600">
-          <p>Demo credentials:</p>
-          <p className="font-mono text-xs mt-2">admin@beats.health / admin123</p>
+          <p className="mb-2">Demo credentials:</p>
+          <div className="bg-white rounded-lg p-3 border">
+            <p className="font-mono text-xs">admin@beats.health</p>
+            <p className="font-mono text-xs">admin123</p>
+          </div>
         </div>
       </div>
     </div>

@@ -2,58 +2,52 @@
 
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
+import { revalidatePath } from "next/cache"
 
-export async function signUp(data: {
+interface SignUpData {
   email: string
   password: string
   name: string
-  role:
-    | "patient"
-    | "doctor"
-    | "nurse"
-    | "pharmacist"
-    | "facility_admin"
-    | "moh"
-    | "chw"
-    | "super_admin"
-    | "cms"
-  phone?: string
-  facilityId?: string
-  languagePref?: "en" | "tn"
-  professionalId?: string
-  documentUrls?: any
-}) {
-  const existingUser = await prisma.user.findUnique({
-    where: { email: data.email },
-  })
+  role: "doctor" | "nurse" | "pharmacist" | "facility_admin" | "moh" | "chw" | "super_admin" | "cms"
+}
 
-  if (existingUser) {
-    throw new Error("User already exists")
-  }
+export async function signUp(data: SignUpData) {
+  try {
+    const existingUser = await prisma.user.findUnique({
+      where: { email: data.email },
+    })
 
-  const hashedPassword = await bcrypt.hash(data.password, 10)
+    if (existingUser) {
+      throw new Error("User with this email already exists")
+    }
 
-  const user = await prisma.user.create({
-    data: {
-      email: data.email,
-      password: hashedPassword,
-      role: data.role,
-      status: "pending_verification",
-      phone: data.phone,
-      facilityId: data.facilityId,
-      languagePref: (data.languagePref as any) ?? "en",
-      professionalId: data.professionalId,
-      documentUrls: data.documentUrls as any,
-      profile: {
-        create: {
-          name: data.name,
+    const hashedPassword = await bcrypt.hash(data.password, 10)
+
+    const [firstName, ...lastNameParts] = data.name.split(" ")
+    const lastName = lastNameParts.join(" ") || firstName
+
+    const user = await prisma.user.create({
+      data: {
+        email: data.email,
+        password: hashedPassword,
+        role: data.role,
+        status: "active",
+        profile: {
+          create: {
+            firstName,
+            lastName,
+            phone: "",
+            district: "",
+          },
         },
       },
-    },
-    include: {
-      profile: true,
-    },
-  })
+    })
 
-  return user
+    revalidatePath("/auth/signin")
+
+    return { success: true, userId: user.id }
+  } catch (error) {
+    console.error("Signup error:", error)
+    throw error
+  }
 }
