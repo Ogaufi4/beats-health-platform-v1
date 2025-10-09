@@ -1,23 +1,28 @@
 "use client"
 
-import type React from "react"
+import { CardFooter } from "@/components/ui/card"
 
+import type React from "react"
 import { useState } from "react"
 import { signIn } from "next-auth/react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { AlertCircle } from "lucide-react"
 import Link from "next/link"
+import { toast } from "@/components/ui/use-toast"
 
 export default function SignInPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard"
+
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -33,15 +38,35 @@ export default function SignInPage() {
 
       if (result?.error) {
         setError("Invalid email or password")
-      } else {
-        router.push("/dashboard")
-        router.refresh()
+        toast({
+          title: "Error",
+          description: "Invalid email or password. Please try again.",
+          variant: "destructive",
+        })
+      } else if (result?.ok) {
+        toast({
+          title: "Success",
+          description: "Signed in successfully! Redirecting...",
+        })
+
+        // Force a hard redirect to dashboard
+        window.location.href = callbackUrl
       }
     } catch (error) {
-      setError("An error occurred. Please try again.")
+      console.error("Sign in error:", error)
+      setError("Something went wrong. Please try again.")
+      toast({
+        title: "Error",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      })
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleGoogleSignIn = () => {
+    signIn("google", { callbackUrl })
   }
 
   return (
@@ -54,9 +79,9 @@ export default function SignInPage() {
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg flex items-center gap-2">
-                <AlertCircle className="h-5 w-5" />
-                <span className="text-sm">{error}</span>
+              <div className="bg-red-50 border border-red-200 rounded-md p-3 flex items-start gap-2">
+                <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-red-800">{error}</p>
               </div>
             )}
             <div className="space-y-2">
@@ -69,6 +94,7 @@ export default function SignInPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={loading}
+                autoComplete="email"
               />
             </div>
             <div className="space-y-2">
@@ -81,6 +107,7 @@ export default function SignInPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={loading}
+                autoComplete="current-password"
               />
             </div>
           </CardContent>

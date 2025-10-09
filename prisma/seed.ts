@@ -30,7 +30,31 @@ async function main() {
 
   console.log("Created admin user:", admin.email)
 
-  // Create doctor
+  // Create MOH user
+  const mohPassword = await bcrypt.hash("moh123", 10)
+  const moh = await prisma.user.upsert({
+    where: { email: "moh@beats.health" },
+    update: {},
+    create: {
+      email: "moh@beats.health",
+      password: mohPassword,
+      role: "moh",
+      status: "active",
+      phone: "+2671234568",
+      profile: {
+        create: {
+          firstName: "MOH",
+          lastName: "User",
+          location: "Gaborone",
+          district: "South East",
+        },
+      },
+    },
+  })
+
+  console.log("Created MOH user:", moh.email)
+
+  // Create doctor user
   const doctorPassword = await bcrypt.hash("doctor123", 10)
   const doctor = await prisma.user.upsert({
     where: { email: "doctor@beats.health" },
@@ -40,15 +64,14 @@ async function main() {
       password: doctorPassword,
       role: "doctor",
       status: "active",
-      phone: "+2671234568",
+      phone: "+2671234569",
       profile: {
         create: {
           firstName: "Dr. John",
           lastName: "Doe",
-          specialization: "General Practice",
+          specialization: "Cardiologist",
           location: "Gaborone",
           district: "South East",
-          bio: "Experienced general practitioner with 10 years in healthcare.",
         },
       },
     },
@@ -56,31 +79,125 @@ async function main() {
 
   console.log("Created doctor user:", doctor.email)
 
-  // Create patient
-  const patientPassword = await bcrypt.hash("patient123", 10)
-  const patient = await prisma.user.upsert({
-    where: { email: "patient@beats.health" },
+  // Create nurse user
+  const nursePassword = await bcrypt.hash("nurse123", 10)
+  const nurse = await prisma.user.upsert({
+    where: { email: "nurse@beats.health" },
     update: {},
     create: {
-      email: "patient@beats.health",
-      password: patientPassword,
-      role: "chw",
+      email: "nurse@beats.health",
+      password: nursePassword,
+      role: "nurse",
       status: "active",
-      phone: "+2671234569",
+      phone: "+2671234570",
       profile: {
         create: {
-          firstName: "Jane",
-          lastName: "Smith",
+          firstName: "Nurse",
+          lastName: "Jane",
           location: "Gaborone",
           district: "South East",
-          gender: "female",
         },
       },
     },
   })
 
-  console.log("Created patient user:", patient.email)
+  console.log("Created nurse user:", nurse.email)
 
+  // Create pharmacist user
+  const pharmacistPassword = await bcrypt.hash("pharmacist123", 10)
+  const pharmacist = await prisma.user.upsert({
+    where: { email: "pharmacist@beats.health" },
+    update: {},
+    create: {
+      email: "pharmacist@beats.health",
+      password: pharmacistPassword,
+      role: "pharmacist",
+      status: "active",
+      phone: "+2671234571",
+      profile: {
+        create: {
+          firstName: "Pharma",
+          lastName: "John",
+          location: "Gaborone",
+          district: "South East",
+        },
+      },
+    },
+  })
+
+  console.log("Created pharmacist user:", pharmacist.email)
+
+  // Create facility admin user
+  const facAdminPassword = await bcrypt.hash("facadmin123", 10)
+  const facAdmin = await prisma.user.upsert({
+    where: { email: "facadmin@beats.health" },
+    update: {},
+    create: {
+      email: "facadmin@beats.health",
+      password: facAdminPassword,
+      role: "facility_admin",
+      status: "active",
+      phone: "+2671234572",
+      profile: {
+        create: {
+          firstName: "Facility",
+          lastName: "Admin",
+          location: "Gaborone",
+          district: "South East",
+        },
+      },
+    },
+  })
+
+  console.log("Created facility admin user:", facAdmin.email)
+
+  // Create community health worker user
+  const chwPassword = await bcrypt.hash("chw123", 10)
+  const chw = await prisma.user.upsert({
+    where: { email: "chw@beats.health" },
+    update: {},
+    create: {
+      email: "chw@beats.health",
+      password: chwPassword,
+      role: "chw",
+      status: "active",
+      phone: "+2671234573",
+      profile: {
+        create: {
+          firstName: "Community",
+          lastName: "Worker",
+          location: "Rural Village",
+          district: "Central",
+        },
+      },
+    },
+  })
+
+  console.log("Created CHW user:", chw.email)
+
+  // Create central medical stores user
+  const cmsPassword = await bcrypt.hash("cms123", 10)
+  const cms = await prisma.user.upsert({
+    where: { email: "cms@beats.health" },
+    update: {},
+    create: {
+      email: "cms@beats.health",
+      password: cmsPassword,
+      role: "cms",
+      status: "active",
+      phone: "+2671234574",
+      profile: {
+        create: {
+          firstName: "CMS",
+          lastName: "User",
+          location: "Gaborone",
+          district: "South East",
+        },
+      },
+    },
+  })
+
+  console.log("Created CMS user:", cms.email)
   console.log("Database seeded successfully!")
 }
 

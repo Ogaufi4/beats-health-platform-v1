@@ -7,16 +7,7 @@ export async function signUp(data: {
   email: string
   password: string
   name: string
-  role:
-    | "patient"
-    | "doctor"
-    | "nurse"
-    | "pharmacist"
-    | "facility_admin"
-    | "moh"
-    | "chw"
-    | "super_admin"
-    | "cms"
+  role: "patient" | "doctor" | "nurse" | "pharmacist" | "facility_admin" | "moh" | "chw" | "super_admin" | "cms"
   phone?: string
   facilityId?: string
   languagePref?: "en" | "tn"
@@ -46,7 +37,7 @@ export async function signUp(data: {
       documentUrls: data.documentUrls as any,
       profile: {
         create: {
-          name: data.name,
+          firstName: data.name,
         },
       },
     },

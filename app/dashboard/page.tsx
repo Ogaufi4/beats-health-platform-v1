@@ -15,6 +15,8 @@ export default async function DashboardPage() {
   switch (role) {
     case "super_admin":
       redirect("/admin/dashboard")
+    case "moh":
+      redirect("/moh/dashboard")
     case "doctor":
       redirect("/doctor/dashboard")
     case "nurse":
@@ -23,12 +25,10 @@ export default async function DashboardPage() {
       redirect("/pharmacist/dashboard")
     case "facility_admin":
       redirect("/facility/dashboard")
-    case "moh":
-      redirect("/moh/dashboard")
     case "cms":
       redirect("/cms/dashboard")
     case "chw":
-      redirect("/dashboard/user")
+      redirect("/facility/dashboard")
     default:
       redirect("/dashboard/user")
   }
