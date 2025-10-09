@@ -7,20 +7,22 @@ async function main() {
   console.log("Starting database seed...")
 
   // Create admin user
-  const hashedPassword = await bcrypt.hash("admin123", 10)
-
+  const adminPassword = await bcrypt.hash("admin123", 10)
   const admin = await prisma.user.upsert({
     where: { email: "admin@beats.health" },
     update: {},
     create: {
       email: "admin@beats.health",
-      password: hashedPassword,
+      password: adminPassword,
       role: "super_admin",
       status: "active",
-      languagePref: "en",
+      phone: "+2671234567",
       profile: {
         create: {
-          name: "System Administrator",
+          firstName: "Admin",
+          lastName: "User",
+          location: "Gaborone",
+          district: "South East",
         },
       },
     },
@@ -28,9 +30,8 @@ async function main() {
 
   console.log("Created admin user:", admin.email)
 
-  // Create a test doctor
+  // Create doctor
   const doctorPassword = await bcrypt.hash("doctor123", 10)
-
   const doctor = await prisma.user.upsert({
     where: { email: "doctor@beats.health" },
     update: {},
@@ -39,13 +40,15 @@ async function main() {
       password: doctorPassword,
       role: "doctor",
       status: "active",
-      languagePref: "en",
-      professionalId: "DOC001",
+      phone: "+2671234568",
       profile: {
         create: {
-          name: "Dr. John Smith",
+          firstName: "Dr. John",
+          lastName: "Doe",
           specialization: "General Practice",
-          bio: "Experienced general practitioner",
+          location: "Gaborone",
+          district: "South East",
+          bio: "Experienced general practitioner with 10 years in healthcare.",
         },
       },
     },
@@ -53,21 +56,24 @@ async function main() {
 
   console.log("Created doctor user:", doctor.email)
 
-  // Create a test patient
+  // Create patient
   const patientPassword = await bcrypt.hash("patient123", 10)
-
   const patient = await prisma.user.upsert({
     where: { email: "patient@beats.health" },
     update: {},
     create: {
       email: "patient@beats.health",
       password: patientPassword,
-      role: "patient",
+      role: "chw",
       status: "active",
-      languagePref: "en",
+      phone: "+2671234569",
       profile: {
         create: {
-          name: "Jane Doe",
+          firstName: "Jane",
+          lastName: "Smith",
+          location: "Gaborone",
+          district: "South East",
+          gender: "female",
         },
       },
     },
