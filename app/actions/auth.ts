@@ -2,52 +2,58 @@
 
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
-import { revalidatePath } from "next/cache"
 
-interface SignUpData {
+export async function signUp(data: {
   email: string
   password: string
   name: string
-  role: "doctor" | "nurse" | "pharmacist" | "facility_admin" | "moh" | "chw" | "super_admin" | "cms"
-}
+  role:
+    | "patient"
+    | "doctor"
+    | "nurse"
+    | "pharmacist"
+    | "facility_admin"
+    | "moh"
+    | "chw"
+    | "super_admin"
+    | "cms"
+  phone?: string
+  facilityId?: string
+  languagePref?: "en" | "tn"
+  professionalId?: string
+  documentUrls?: any
+}) {
+  const existingUser = await prisma.user.findUnique({
+    where: { email: data.email },
+  })
 
-export async function signUp(data: SignUpData) {
-  try {
-    const existingUser = await prisma.user.findUnique({
-      where: { email: data.email },
-    })
+  if (existingUser) {
+    throw new Error("User already exists")
+  }
 
-    if (existingUser) {
-      throw new Error("User with this email already exists")
-    }
+  const hashedPassword = await bcrypt.hash(data.password, 10)
 
-    const hashedPassword = await bcrypt.hash(data.password, 10)
-
-    const [firstName, ...lastNameParts] = data.name.split(" ")
-    const lastName = lastNameParts.join(" ") || firstName
-
-    const user = await prisma.user.create({
-      data: {
-        email: data.email,
-        password: hashedPassword,
-        role: data.role,
-        status: "active",
-        profile: {
-          create: {
-            firstName,
-            lastName,
-            phone: "",
-            district: "",
-          },
+  const user = await prisma.user.create({
+    data: {
+      email: data.email,
+      password: hashedPassword,
+      role: data.role,
+      status: "pending_verification",
+      phone: data.phone,
+      facilityId: data.facilityId,
+      languagePref: (data.languagePref as any) ?? "en",
+      professionalId: data.professionalId,
+      documentUrls: data.documentUrls as any,
+      profile: {
+        create: {
+          name: data.name,
         },
       },
-    })
+    },
+    include: {
+      profile: true,
+    },
+  })
 
-    revalidatePath("/auth/signin")
-
-    return { success: true, userId: user.id }
-  } catch (error) {
-    console.error("Signup error:", error)
-    throw error
-  }
+  return user
 }

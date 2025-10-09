@@ -1,31 +1,28 @@
 "use client"
 
 import type React from "react"
+
 import { useState } from "react"
 import { signIn } from "next-auth/react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Heart, Mail, AlertCircle } from "lucide-react"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { AlertCircle } from "lucide-react"
 import Link from "next/link"
-import { toast } from "@/components/ui/use-toast"
 
 export default function SignInPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard"
-
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
     setError("")
+    setLoading(true)
 
     try {
       const result = await signIn("credentials", {
@@ -36,132 +33,70 @@ export default function SignInPage() {
 
       if (result?.error) {
         setError("Invalid email or password")
-        toast({
-          title: "Error",
-          description: "Invalid email or password. Please try again.",
-          variant: "destructive",
-        })
-      } else if (result?.ok) {
-        toast({
-          title: "Success",
-          description: "Signed in successfully! Redirecting...",
-        })
-
-        // Force a hard redirect to dashboard
-        window.location.href = callbackUrl
+      } else {
+        router.push("/dashboard")
+        router.refresh()
       }
     } catch (error) {
-      console.error("Sign in error:", error)
-      setError("Something went wrong. Please try again.")
-      toast({
-        title: "Error",
-        description: "Something went wrong. Please try again.",
-        variant: "destructive",
-      })
+      setError("An error occurred. Please try again.")
     } finally {
       setLoading(false)
     }
   }
 
-  const handleGoogleSignIn = () => {
-    signIn("google", { callbackUrl })
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Heart className="h-8 w-8 text-red-500" />
-            <span className="text-2xl font-bold text-gray-900">Beats Health</span>
-          </div>
-          <p className="text-gray-600">Healthcare Management Platform</p>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Sign In</CardTitle>
-            <CardDescription>Sign in to your account to continue</CardDescription>
-          </CardHeader>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold text-center">Welcome Back</CardTitle>
+          <CardDescription className="text-center">Sign in to your BEATS Health account</CardDescription>
+        </CardHeader>
+        <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-md p-3 flex items-start gap-2">
-                <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
-                <p className="text-sm text-red-800">{error}</p>
+              <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg flex items-center gap-2">
+                <AlertCircle className="h-5 w-5" />
+                <span className="text-sm">{error}</span>
               </div>
             )}
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  disabled={loading}
-                  autoComplete="email"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  disabled={loading}
-                  autoComplete="current-password"
-                />
-              </div>
-
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Signing in..." : "Sign In"}
-              </Button>
-            </form>
-
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-muted-foreground">Or continue with</span>
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={loading}
+              />
             </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full bg-transparent"
-              onClick={handleGoogleSignIn}
-              disabled={loading}
-            >
-              <Mail className="mr-2 h-4 w-4" />
-              Google
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={loading}
+              />
+            </div>
+          </CardContent>
+          <CardFooter className="flex flex-col space-y-4">
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Signing in..." : "Sign In"}
             </Button>
-
-            <div className="text-center text-sm">
-              {"Don't have an account? "}
+            <div className="text-sm text-center text-gray-600">
+              Don't have an account?{" "}
               <Link href="/auth/signup" className="text-blue-600 hover:underline font-medium">
                 Sign up
               </Link>
             </div>
-          </CardContent>
-        </Card>
-
-        <div className="mt-6 text-center text-sm text-gray-600">
-          <p className="mb-2">Demo credentials:</p>
-          <div className="bg-white rounded-lg p-3 border">
-            <p className="font-mono text-xs">admin@beats.health</p>
-            <p className="font-mono text-xs">admin123</p>
-          </div>
-        </div>
-      </div>
+          </CardFooter>
+        </form>
+      </Card>
     </div>
   )
 }
