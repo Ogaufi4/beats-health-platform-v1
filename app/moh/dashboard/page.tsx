@@ -10,4 +10,3 @@ export default async function MoHDashboard() {
   // Reuse CMS dashboard route for MoH for now
   redirect("/cms/dashboard")
 }
-

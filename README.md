@@ -134,7 +134,7 @@ npm install
 
 Create the environment template:
 
-```plaintext file=".env.local"
+\`\`\`plaintext file=".env.local"
 # Database URL from Neon
 DATABASE_URL="postgresql://neondb_owner:npg_vhJzXZ5wbqH3@ep-falling-term-add9r6zd-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require"
 

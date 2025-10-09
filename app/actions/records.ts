@@ -38,4 +38,3 @@ export async function listMedicalRecords(patientUserId: string) {
     orderBy: { createdAt: "desc" },
   })
 }
-

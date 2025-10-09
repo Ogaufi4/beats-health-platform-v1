@@ -38,4 +38,3 @@ export const config = {
     "/((?!api/auth|auth|$|public|favicon|assets|_next/static|_next/image|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)).*)",
   ],
 }
-

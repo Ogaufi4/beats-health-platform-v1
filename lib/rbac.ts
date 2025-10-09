@@ -18,4 +18,3 @@ export function requireRole(userRole: string | undefined, allowed: AppRole[]) {
     throw new Error("Forbidden")
   }
 }
-
