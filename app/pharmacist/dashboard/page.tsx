@@ -31,6 +31,14 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { useToast } from "@/components/ui/use-toast"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 // Types
 type InventoryItem = {
@@ -73,7 +81,8 @@ export default function PharmacistDashboard() {
   const [sortBy, setSortBy] = useState<keyof InventoryItem>("medicationName")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
   const [isPlacingOrder, setIsPlacingOrder] = useState(false)
-  const [showTips, setShowTips] = useState(true) // Toggle tooltips
+  const [isModalOpen, setIsModalOpen] = useState(false) // 👈 Modal state
+  const [showTips, setShowTips] = useState(true)
 
   const { toast } = useToast()
 
@@ -275,6 +284,8 @@ export default function PharmacistDashboard() {
       placeOrder: "Place Order",
       orderSuccess: "Order Placed Successfully!",
       orderSent: "Your restock request has been sent to the supplier.",
+      viewOrder: "View Order Details",
+      closeModal: "Close",
       userJourney: {
         title: "Your Daily Workflow",
         startDay: "Start Your Day",
@@ -334,6 +345,8 @@ export default function PharmacistDashboard() {
       placeOrder: "Ila Kopo",
       orderSuccess: "Kopo e Neilwe!",
       orderSent: "Kopo ya gago ya go naya gape e ile ya romelwa moongwing.",
+      viewOrder: "Bona Dintlha tsa Kopo",
+      closeModal: "Fihla",
       userJourney: {
         title: "Taolo ya Letsoho la Gago",
         startDay: "Qala Letsoho la Gago",
@@ -371,20 +384,14 @@ export default function PharmacistDashboard() {
     }
   }
 
+  // Handle Place Order → Show Modal
   const handlePlaceOrder = () => {
     setIsPlacingOrder(true)
 
     // Simulate API call
     setTimeout(() => {
       setIsPlacingOrder(false)
-
-      toast({
-        title: t.orderSuccess,
-        description: t.orderSent,
-        variant: "default",
-        duration: 5000,
-        icon: <CheckCircle className="h-5 w-5 text-green-500" />,
-      })
+      setIsModalOpen(true) // 👈 Open modal on success
     }, 1000)
   }
 
@@ -850,6 +857,42 @@ export default function PharmacistDashboard() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* ✅ Success Modal */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle className="h-6 w-6 text-green-500" />
+              {t.orderSuccess}
+            </DialogTitle>
+            <DialogDescription>
+              {t.orderSent}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-gray-600">
+              {language === "en"
+                ? "Your order has been successfully submitted and will be processed by the supplier."
+                : "Kopo ya gago e neilwe ka botlhokwa e tla dirisiwa ke moongwi."}
+            </p>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setIsModalOpen(false)}>
+              {t.closeModal}
+            </Button>
+            <Button
+              onClick={() => {
+                setIsModalOpen(false)
+                // Optional: navigate to order history or details
+              }}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {t.viewOrder}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
