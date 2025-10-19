@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
+import { NewPatientRegistrationDialog } from "@/components/new-patient-registration-dialog"
 import {
   Users,
   Activity,
@@ -15,10 +16,6 @@ import {
   Settings,
   LogOut,
   Search,
-  Plus,
-  Clock,
-  FileText,
-  Stethoscope,
   Monitor,
   ClipboardList,
   Thermometer,
@@ -46,6 +43,7 @@ export default function NurseDashboard() {
       complete: "Complete",
       pending: "Pending",
       confirmed: "Confirmed",
+      registerPatient: "Register Patient",
       stats: {
         assignedPatients: "Assigned Patients",
         pendingTasks: "Pending Tasks",
@@ -69,6 +67,7 @@ export default function NurseDashboard() {
       complete: "Feditse",
       pending: "E Emetse",
       confirmed: "E Netefatsitswe",
+      registerPatient: "Kwadisa Molwetse",
       stats: {
         assignedPatients: "Balwetse ba Beilweng",
         pendingTasks: "Ditiro tse di Emetsweng",
@@ -130,14 +129,18 @@ export default function NurseDashboard() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "confirmed": return "bg-blue-100 text-blue-800"
-      case "urgent": return "bg-red-100 text-red-800"
-      case "routine": return "bg-gray-100 text-gray-800"
-      default: return "bg-yellow-100 text-yellow-800"
+      case "confirmed":
+        return "bg-blue-100 text-blue-800"
+      case "urgent":
+        return "bg-red-100 text-red-800"
+      case "routine":
+        return "bg-gray-100 text-gray-800"
+      default:
+        return "bg-yellow-100 text-yellow-800"
     }
   }
 
-  const getAlertColor = (hasAlert: boolean) => hasAlert ? "text-red-600" : "text-green-600"
+  const getAlertColor = (hasAlert: boolean) => (hasAlert ? "text-red-600" : "text-green-600")
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -165,7 +168,7 @@ export default function NurseDashboard() {
               <Button variant="outline" size="sm" aria-label={language === "en" ? "Settings" : "Ditlhophiso"}>
                 <Settings className="h-4 w-4" />
               </Button>
-              <Link href="/login">
+              <Link href="/auth/signin">
                 <Button variant="outline" size="sm" aria-label={language === "en" ? "Log out" : "Tswalela ka ntle"}>
                   <LogOut className="h-4 w-4" />
                 </Button>
@@ -209,7 +212,7 @@ export default function NurseDashboard() {
                 <div>
                   <p className="text-sm text-gray-600">{t.stats.urgentAlerts}</p>
                   <p className="text-2xl font-bold text-red-600">
-                    {assignedPatients.filter(p => p.alerts.length > 0).length}
+                    {assignedPatients.filter((p) => p.alerts.length > 0).length}
                   </p>
                 </div>
               </div>
@@ -241,9 +244,12 @@ export default function NurseDashboard() {
           <TabsContent value="patients" className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold">{t.patientRecords}</h2>
-              <div className="relative w-64">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input placeholder={t.searchPatients} className="pl-10" />
+              <div className="flex gap-2">
+                <div className="relative w-64">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input placeholder={t.searchPatients} className="pl-10" />
+                </div>
+                <NewPatientRegistrationDialog />
               </div>
             </div>
 
@@ -279,7 +285,7 @@ export default function NurseDashboard() {
                           )}
                         </div>
                         <p className="text-sm text-gray-600 font-medium">{patient.nextMed}</p>
-                        <Button variant="outline" size="sm" className="mt-2">
+                        <Button variant="outline" size="sm" className="mt-2 bg-transparent">
                           {t.viewRecord}
                         </Button>
                       </div>
@@ -293,11 +299,9 @@ export default function NurseDashboard() {
           {/* Tasks Tab */}
           <TabsContent value="tasks" className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">{language === "en" ? "Nursing Tasks" : "Ditiro tsa Ngaka ya Bodulo"}</h2>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                {language === "en" ? "New Task" : "Tiro e Ntsha"}
-              </Button>
+              <h2 className="text-2xl font-bold">
+                {language === "en" ? "Nursing Tasks" : "Ditiro tsa Ngaka ya Bodulo"}
+              </h2>
             </div>
 
             <div className="grid gap-4">
@@ -315,8 +319,12 @@ export default function NurseDashboard() {
                       <div className="flex items-center gap-2">
                         <Badge className={getStatusColor(task.priority)}>
                           {task.priority === "urgent"
-                            ? language === "en" ? "Urgent" : "Potlako"
-                            : language === "en" ? "Routine" : "Tlwaelo"}
+                            ? language === "en"
+                              ? "Urgent"
+                              : "Potlako"
+                            : language === "en"
+                              ? "Routine"
+                              : "Tlwaelo"}
                         </Badge>
                         <Button variant="outline" size="sm">
                           {t.complete}
@@ -346,9 +354,7 @@ export default function NurseDashboard() {
                           <p className="text-sm text-gray-500">{appt.room}</p>
                         </div>
                       </div>
-                      <Badge className={getStatusColor(appt.status)}>
-                        {t.confirmed}
-                      </Badge>
+                      <Badge className={getStatusColor(appt.status)}>{t.confirmed}</Badge>
                     </div>
                   </CardContent>
                 </Card>
@@ -371,33 +377,39 @@ export default function NurseDashboard() {
                       <div>
                         <Thermometer className="h-6 w-6 mx-auto text-gray-500" />
                         <p className="text-sm text-gray-600 mt-1">Temp</p>
-                        <p className={`text-lg font-bold ${getAlertColor(patient.vitals.temp.includes("37.5") || patient.vitals.temp.includes("38"))}`}>
+                        <p
+                          className={`text-lg font-bold ${getAlertColor(patient.vitals.temp.includes("37.5") || patient.vitals.temp.includes("38"))}`}
+                        >
                           {patient.vitals.temp}
                         </p>
                       </div>
                       <div>
                         <Activity className="h-6 w-6 mx-auto text-gray-500" />
                         <p className="text-sm text-gray-600 mt-1">BP</p>
-                        <p className={`text-lg font-bold ${getAlertColor(parseFloat(patient.vitals.bp.split("/")[0]) > 140)}`}>
+                        <p
+                          className={`text-lg font-bold ${getAlertColor(Number.parseFloat(patient.vitals.bp.split("/")[0]) > 140)}`}
+                        >
                           {patient.vitals.bp}
                         </p>
                       </div>
                       <div>
                         <Heart className="h-6 w-6 mx-auto text-gray-500" />
                         <p className="text-sm text-gray-600 mt-1">HR</p>
-                        <p className={`text-lg font-bold ${getAlertColor(parseInt(patient.vitals.hr.toString()) > 100 || parseInt(patient.vitals.hr.toString()) < 60)}`}>
+                        <p
+                          className={`text-lg font-bold ${getAlertColor(Number.parseInt(patient.vitals.hr.toString()) > 100 || Number.parseInt(patient.vitals.hr.toString()) < 60)}`}
+                        >
                           {patient.vitals.hr} bpm
                         </p>
                       </div>
                       <div>
                         <Monitor className="h-6 w-6 mx-auto text-gray-500" />
                         <p className="text-sm text-gray-600 mt-1">SpO₂</p>
-                        <p className={`text-lg font-bold ${getAlertColor(parseInt(patient.vitals.spo2) < 95)}`}>
+                        <p className={`text-lg font-bold ${getAlertColor(Number.parseInt(patient.vitals.spo2) < 95)}`}>
                           {patient.vitals.spo2}
                         </p>
                       </div>
                     </div>
-                    <Button variant="outline" size="sm" className="mt-4 w-full">
+                    <Button variant="outline" size="sm" className="mt-4 w-full bg-transparent">
                       {language === "en" ? "Record New Vitals" : "Rekota Dipelo tse Ntsha"}
                     </Button>
                   </CardContent>

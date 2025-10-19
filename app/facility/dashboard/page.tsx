@@ -6,6 +6,10 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
+import { WalkInQueue } from "@/components/walk-in-queue"
+import { PredictiveAnalytics } from "@/components/predictive-analytics"
+import { NewAppointmentDialog } from "@/components/new-appointment-dialog"
+import { NewPatientRegistrationDialog } from "@/components/new-patient-registration-dialog"
 import {
   Calendar,
   Package,
@@ -16,7 +20,6 @@ import {
   Settings,
   LogOut,
   Search,
-  Plus,
   Scan,
   Phone,
   MessageSquare,
@@ -48,6 +51,8 @@ export default function FacilityDashboard() {
       ruralPatients: "Rural Patients",
       smsNotifications: "SMS Notifications",
       ussdAccess: "USSD Access",
+      walkIns: "Walk-Ins",
+      analytics: "Analytics",
     },
     tn: {
       title: "Sepetlele sa Princess Marina",
@@ -68,6 +73,8 @@ export default function FacilityDashboard() {
       ruralPatients: "Balwetse ba Magae",
       smsNotifications: "Dikitsiso tsa SMS",
       ussdAccess: "Phitlhelelo ya USSD",
+      walkIns: "Ditiro tsa Bokhala",
+      analytics: "Analytics",
     },
   }
 
@@ -286,9 +293,9 @@ export default function FacilityDashboard() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5 text-purple-600" />
+                <Activity className="h-5 w-5 text-purple-600" />
                 <div>
-                  <p className="text-sm text-gray-600">SMS Sent Today</p>
+                  <p className="text-sm text-gray-600">Walk-Ins Today</p>
                   <p className="text-2xl font-bold text-purple-600">47</p>
                 </div>
               </div>
@@ -297,21 +304,23 @@ export default function FacilityDashboard() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="appointments">{t.appointments}</TabsTrigger>
             <TabsTrigger value="stock">{t.stock}</TabsTrigger>
             <TabsTrigger value="patients">{t.patients}</TabsTrigger>
             <TabsTrigger value="equipment">Equipment</TabsTrigger>
             <TabsTrigger value="sms">{t.sms}</TabsTrigger>
+            <TabsTrigger value="walkins">{t.walkIns}</TabsTrigger>
+            <TabsTrigger value="analytics">{t.analytics}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="appointments" className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold">{t.todayAppointments}</h2>
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="h-4 w-4 mr-2" />
-                {t.newAppointment}
-              </Button>
+              <div className="flex gap-2">
+                <NewAppointmentDialog />
+                <NewPatientRegistrationDialog />
+              </div>
             </div>
 
             <div className="grid gap-4">
@@ -434,10 +443,7 @@ export default function FacilityDashboard() {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input placeholder={t.searchPatients} className="pl-10 w-64" />
                 </div>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  {language === "en" ? "New Patient" : "Molwetse o Moša"}
-                </Button>
+                <NewPatientRegistrationDialog />
               </div>
             </div>
 
@@ -646,6 +652,14 @@ export default function FacilityDashboard() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="walkins" className="space-y-6">
+            <WalkInQueue />
+          </TabsContent>
+
+          <TabsContent value="analytics" className="space-y-6">
+            <PredictiveAnalytics />
           </TabsContent>
         </Tabs>
       </div>
