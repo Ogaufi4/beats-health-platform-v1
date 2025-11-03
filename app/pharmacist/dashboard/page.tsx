@@ -15,11 +15,8 @@ import {
   Download,
   Printer,
   Search,
-  Filter,
-  Calendar,
   TrendingUp,
   Database,
-  Users,
   Settings,
   LogOut,
   Globe,
@@ -28,17 +25,12 @@ import {
   Info,
   ArrowRight,
   Star,
+  BarChart3,
+  Activity,
 } from "lucide-react"
 import Link from "next/link"
 import { useToast } from "@/components/ui/use-toast"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 // Types
 type InventoryItem = {
@@ -85,6 +77,45 @@ export default function PharmacistDashboard() {
   const [showTips, setShowTips] = useState(true)
 
   const { toast } = useToast()
+
+  const demandForecast = [
+    {
+      medication: "Paracetamol",
+      currentStock: 0,
+      predictedDemand: 45,
+      timeframe: "Next 24 hours",
+      confidence: "High",
+      basedOn: "Walk-in patterns + historical data",
+      urgency: "critical",
+    },
+    {
+      medication: "Amoxicillin",
+      currentStock: 12,
+      predictedDemand: 28,
+      timeframe: "Next 48 hours",
+      confidence: "High",
+      basedOn: "Seasonal trends + walk-ins",
+      urgency: "high",
+    },
+    {
+      medication: "Insulin Glargine",
+      currentStock: 3,
+      predictedDemand: 15,
+      timeframe: "Next 72 hours",
+      confidence: "Medium",
+      basedOn: "Chronic patient appointments",
+      urgency: "high",
+    },
+    {
+      medication: "Atorvastatin",
+      currentStock: 45,
+      predictedDemand: 22,
+      timeframe: "Next week",
+      confidence: "Medium",
+      basedOn: "Regular prescription refills",
+      urgency: "low",
+    },
+  ]
 
   // Mock data
   const inventory: InventoryItem[] = [
@@ -204,9 +235,9 @@ export default function PharmacistDashboard() {
 
   // Derived data
   const totalInventory = inventory.length
-  const lowStockItems = inventory.filter(item => item.status === "low-stock")
-  const outOfStockItems = inventory.filter(item => item.status === "out-of-stock")
-  const expiringSoon = inventory.filter(item => {
+  const lowStockItems = inventory.filter((item) => item.status === "low-stock")
+  const outOfStockItems = inventory.filter((item) => item.status === "out-of-stock")
+  const expiringSoon = inventory.filter((item) => {
     const expDate = new Date(item.expirationDate)
     const now = new Date()
     const diffTime = expDate.getTime() - now.getTime()
@@ -214,8 +245,8 @@ export default function PharmacistDashboard() {
     return diffDays > 0 && diffDays <= 30
   })
 
-  const recentRestocks = restockHistory.filter(req =>
-    new Date(req.dateRequested) >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+  const recentRestocks = restockHistory.filter(
+    (req) => new Date(req.dateRequested) >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
   )
 
   // Filter & sort inventory
@@ -225,16 +256,17 @@ export default function PharmacistDashboard() {
     // Search
     if (searchTerm) {
       const term = searchTerm.toLowerCase()
-      result = result.filter(item =>
-        item.medicationName.toLowerCase().includes(term) ||
-        item.brandName?.toLowerCase().includes(term) ||
-        item.batchNumber.toLowerCase().includes(term)
+      result = result.filter(
+        (item) =>
+          item.medicationName.toLowerCase().includes(term) ||
+          item.brandName?.toLowerCase().includes(term) ||
+          item.batchNumber.toLowerCase().includes(term),
       )
     }
 
     // Status filter
     if (filterStatus !== "all") {
-      result = result.filter(item => item.status === filterStatus)
+      result = result.filter((item) => item.status === filterStatus)
     }
 
     // Sort
@@ -256,6 +288,7 @@ export default function PharmacistDashboard() {
       restocking: "Restocking",
       alerts: "Alerts",
       reporting: "Reporting",
+      demandForecast: "Demand Forecast",
       searchPlaceholder: "Search medications, batch, brand...",
       totalInventory: "Total Medications",
       lowStock: "Low Stock",
@@ -286,6 +319,15 @@ export default function PharmacistDashboard() {
       orderSent: "Your restock request has been sent to the supplier.",
       viewOrder: "View Order Details",
       closeModal: "Close",
+      predictedDemand: "Predicted Demand",
+      currentStock: "Current Stock",
+      timeframe: "Timeframe",
+      confidence: "Confidence",
+      basedOn: "Based On",
+      critical: "Critical",
+      high: "High",
+      medium: "Medium",
+      low: "Low",
       userJourney: {
         title: "Your Daily Workflow",
         startDay: "Start Your Day",
@@ -317,6 +359,7 @@ export default function PharmacistDashboard() {
       restocking: "Go Nya Gape",
       alerts: "Ditlhatlhego",
       reporting: "Diporofeta",
+      demandForecast: "Tshekatsheko ya Tlhokego",
       searchPlaceholder: "Batla meditshene, batch, brand...",
       totalInventory: "Meditshene eohle",
       lowStock: "Kotsi e Nyenyane",
@@ -347,6 +390,15 @@ export default function PharmacistDashboard() {
       orderSent: "Kopo ya gago ya go naya gape e ile ya romelwa moongwing.",
       viewOrder: "Bona Dintlha tsa Kopo",
       closeModal: "Fihla",
+      predictedDemand: "Tlhokego e e Solofetsweng",
+      currentStock: "Kotsi ya Jaanong",
+      timeframe: "Nako",
+      confidence: "Tshepo",
+      basedOn: "E Theilwe mo",
+      critical: "Botlhokwa Thata",
+      high: "Kwa Godimo",
+      medium: "Magareng",
+      low: "Kwa Tlase",
       userJourney: {
         title: "Taolo ya Letsoho la Gago",
         startDay: "Qala Letsoho la Gago",
@@ -376,11 +428,16 @@ export default function PharmacistDashboard() {
 
   const getStatusColor = (status: InventoryItem["status"]) => {
     switch (status) {
-      case "in-stock": return "bg-green-100 text-green-800"
-      case "low-stock": return "bg-yellow-100 text-yellow-800"
-      case "out-of-stock": return "bg-red-100 text-red-800"
-      case "discontinued": return "bg-gray-100 text-gray-800"
-      default: return "bg-blue-100 text-blue-800"
+      case "in-stock":
+        return "bg-green-100 text-green-800"
+      case "low-stock":
+        return "bg-yellow-100 text-yellow-800"
+      case "out-of-stock":
+        return "bg-red-100 text-red-800"
+      case "discontinued":
+        return "bg-gray-100 text-gray-800"
+      default:
+        return "bg-blue-100 text-blue-800"
     }
   }
 
@@ -422,13 +479,29 @@ export default function PharmacistDashboard() {
       id: 4,
       title: t.userJourney.completeTasks,
       description: t.userJourney.tooltip.completeTasks,
-      status: recentRestocks.some(r => r.status === "pending") ? "pending" : "completed",
+      status: recentRestocks.some((r) => r.status === "pending") ? "pending" : "completed",
       icon: <CheckCircle className="h-5 w-5 text-green-500" />,
     },
   ]
 
   const getStepColor = (status: string) => {
     return status === "completed" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+  }
+
+  // Added urgency color logic for demand forecast
+  const getUrgencyColor = (urgency: string) => {
+    switch (urgency) {
+      case "critical":
+        return "bg-red-100 text-red-800 border-red-200"
+      case "high":
+        return "bg-orange-100 text-orange-800 border-orange-200"
+      case "medium":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200"
+      case "low":
+        return "bg-green-100 text-green-800 border-green-200"
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200"
+    }
   }
 
   return (
@@ -502,17 +575,13 @@ export default function PharmacistDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {userJourneySteps.map(step => (
+              {userJourneySteps.map((step) => (
                 <div key={step.id} className="flex items-center justify-between p-4 rounded-lg border">
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-full ${getStepColor(step.status)}`}>
-                      {step.icon}
-                    </div>
+                    <div className={`p-2 rounded-full ${getStepColor(step.status)}`}>{step.icon}</div>
                     <div>
                       <h3 className="font-medium">{step.title}</h3>
-                      {showTips && (
-                        <p className="text-sm text-gray-600 mt-1">{step.description}</p>
-                      )}
+                      {showTips && <p className="text-sm text-gray-600 mt-1">{step.description}</p>}
                     </div>
                   </div>
                   <Badge className={getStepColor(step.status)}>
@@ -532,7 +601,7 @@ export default function PharmacistDashboard() {
                 <Database className="h-5 w-5 text-blue-600" />
                 <div>
                   <p className="text-sm text-gray-600">{t.totalInventory}</p>
-                  <p className="text-2xl font-bold text-blue-600">{totalInventory}</p>
+                  <p className="text-2xl font-bold text-blue-600">{inventory.length}</p>
                 </div>
               </div>
             </CardContent>
@@ -543,7 +612,9 @@ export default function PharmacistDashboard() {
                 <AlertTriangle className="h-5 w-5 text-yellow-600" />
                 <div>
                   <p className="text-sm text-gray-600">{t.lowStock}</p>
-                  <p className="text-2xl font-bold text-yellow-600">{lowStockItems.length}</p>
+                  <p className="text-2xl font-bold text-yellow-600">
+                    {inventory.filter((i) => i.status === "low-stock").length}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -554,7 +625,9 @@ export default function PharmacistDashboard() {
                 <AlertTriangle className="h-5 w-5 text-red-600" />
                 <div>
                   <p className="text-sm text-gray-600">{t.outOfStock}</p>
-                  <p className="text-2xl font-bold text-red-600">{outOfStockItems.length}</p>
+                  <p className="text-2xl font-bold text-red-600">
+                    {inventory.filter((i) => i.status === "out-of-stock").length}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -565,7 +638,16 @@ export default function PharmacistDashboard() {
                 <Clock className="h-5 w-5 text-orange-600" />
                 <div>
                   <p className="text-sm text-gray-600">{t.expiringSoon}</p>
-                  <p className="text-2xl font-bold text-orange-600">{expiringSoon.length}</p>
+                  <p className="text-2xl font-bold text-orange-600">
+                    {
+                      inventory.filter((i) => {
+                        const expDate = new Date(i.expirationDate)
+                        const now = new Date()
+                        const diffDays = Math.ceil((expDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+                        return diffDays > 0 && diffDays <= 30
+                      }).length
+                    }
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -584,9 +666,13 @@ export default function PharmacistDashboard() {
         </div>
 
         <Tabs defaultValue="inventory" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">{t.overview}</TabsTrigger>
             <TabsTrigger value="inventory">{t.inventory}</TabsTrigger>
+            <TabsTrigger value="demand-forecast">
+              <BarChart3 className="h-4 w-4 mr-2" />
+              {t.demandForecast}
+            </TabsTrigger>
             <TabsTrigger value="restocking">{t.restocking}</TabsTrigger>
             <TabsTrigger value="alerts">{t.alerts}</TabsTrigger>
             <TabsTrigger value="reporting">{t.reporting}</TabsTrigger>
@@ -601,13 +687,19 @@ export default function PharmacistDashboard() {
                 </CardHeader>
                 <CardContent>
                   {lowStockItems.length === 0 ? (
-                    <p className="text-gray-500">{language === "en" ? "No low stock items." : "Ga go na ditlhogo tse di nnyane."}</p>
+                    <p className="text-gray-500">
+                      {language === "en" ? "No low stock items." : "Ga go na ditlhogo tse di nnyane."}
+                    </p>
                   ) : (
                     <ul className="space-y-2">
-                      {lowStockItems.map(item => (
+                      {lowStockItems.map((item) => (
                         <li key={item.id} className="flex justify-between text-sm">
-                          <span>{item.medicationName} ({item.brandName})</span>
-                          <Badge variant="secondary">{item.stock} {item.unit}</Badge>
+                          <span>
+                            {item.medicationName} ({item.brandName})
+                          </span>
+                          <Badge variant="secondary">
+                            {item.stock} {item.unit}
+                          </Badge>
                         </li>
                       ))}
                     </ul>
@@ -617,16 +709,22 @@ export default function PharmacistDashboard() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>{language === "en" ? "Expiring Soon (<30 days)" : "Di tla Fela Morago (<30 matsatsi)"}</CardTitle>
+                  <CardTitle>
+                    {language === "en" ? "Expiring Soon (<30 days)" : "Di tla Fela Morago (<30 matsatsi)"}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {expiringSoon.length === 0 ? (
-                    <p className="text-gray-500">{language === "en" ? "No expiring items." : "Ga go na tse di tlang go fela."}</p>
+                    <p className="text-gray-500">
+                      {language === "en" ? "No expiring items." : "Ga go na tse di tlang go fela."}
+                    </p>
                   ) : (
                     <ul className="space-y-2">
-                      {expiringSoon.map(item => (
+                      {expiringSoon.map((item) => (
                         <li key={item.id} className="flex justify-between text-sm">
-                          <span>{item.medicationName} - {item.batchNumber}</span>
+                          <span>
+                            {item.medicationName} - {item.batchNumber}
+                          </span>
                           <Badge variant="destructive">{item.expirationDate}</Badge>
                         </li>
                       ))}
@@ -666,17 +764,36 @@ export default function PharmacistDashboard() {
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                      onClick={() => { setSortBy("medicationName"); setSortOrder(sortOrder === "asc" ? "desc" : "asc") }}>
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                      onClick={() => {
+                        setSortBy("medicationName")
+                        setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+                      }}
+                    >
                       {t.medicationName} {sortBy === "medicationName" && (sortOrder === "asc" ? "↑" : "↓")}
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t.brand}</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t.dosage}</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t.form}</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t.stock}</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t.expiry}</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t.status}</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t.userJourney.action}</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {t.brand}
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {t.dosage}
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {t.form}
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {t.stock}
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {t.expiry}
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {t.status}
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {t.userJourney.action}
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -695,26 +812,22 @@ export default function PharmacistDashboard() {
                       <td className="px-4 py-3 whitespace-nowrap">{item.expirationDate}</td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         <Badge className={getStatusColor(item.status)}>
-                          {item.status === "in-stock" ? t.inStock :
-                           item.status === "low-stock" ? t.lowStockLabel :
-                           item.status === "out-of-stock" ? t.outOfStockLabel : t.discontinued}
+                          {item.status === "in-stock"
+                            ? t.inStock
+                            : item.status === "low-stock"
+                              ? t.lowStockLabel
+                              : item.status === "out-of-stock"
+                                ? t.outOfStockLabel
+                                : t.discontinued}
                         </Badge>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         {item.status === "out-of-stock" ? (
-                          <Button
-                            size="sm"
-                            className="bg-red-600 hover:bg-red-700"
-                            onClick={handlePlaceOrder}
-                          >
+                          <Button size="sm" className="bg-red-600 hover:bg-red-700" onClick={handlePlaceOrder}>
                             {t.placeOrder}
                           </Button>
                         ) : item.status === "low-stock" ? (
-                          <Button
-                            size="sm"
-                            className="bg-yellow-600 hover:bg-yellow-700"
-                            onClick={handlePlaceOrder}
-                          >
+                          <Button size="sm" className="bg-yellow-600 hover:bg-yellow-700" onClick={handlePlaceOrder}>
                             {t.placeOrder}
                           </Button>
                         ) : (
@@ -727,6 +840,90 @@ export default function PharmacistDashboard() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="demand-forecast" className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold">{t.demandForecast}</h2>
+              <Badge variant="outline" className="text-sm">
+                <Activity className="h-4 w-4 mr-2" />
+                {language === "en" ? "Based on Walk-In Patterns" : "E Theilwe mo Mekgweng ya Baeti"}
+              </Badge>
+            </div>
+
+            <Card className="bg-blue-50 border-blue-200">
+              <CardHeader>
+                <CardTitle className="text-blue-900 flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  {language === "en" ? "AI-Powered Demand Forecasting" : "Tshekatsheko ya Tlhokego ka AI"}
+                </CardTitle>
+                <CardDescription className="text-blue-800">
+                  {language === "en"
+                    ? "Predictive analytics based on walk-in patterns, historical data, and seasonal trends to optimize stock levels."
+                    : "Tshekatsheko ya bokamoso e theilwe mo mekgweng ya baeti, data ya histori, le mekgwa ya dingwaga go tokafatsa maemo a stock."}
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
+            <div className="grid gap-4">
+              {demandForecast.map((forecast, index) => (
+                <Card key={index} className={forecast.urgency === "critical" ? "border-red-500 border-2" : ""}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className="font-semibold text-lg">{forecast.medication}</h3>
+                          <Badge className={getUrgencyColor(forecast.urgency)}>
+                            {forecast.urgency === "critical"
+                              ? t.critical
+                              : forecast.urgency === "high"
+                                ? t.high
+                                : forecast.urgency === "medium"
+                                  ? t.medium
+                                  : t.low}
+                          </Badge>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                          <div>
+                            <p className="text-gray-600">{t.currentStock}</p>
+                            <p className="font-bold text-lg">{forecast.currentStock} units</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600">{t.predictedDemand}</p>
+                            <p className="font-bold text-lg text-orange-600">{forecast.predictedDemand} units</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600">{t.timeframe}</p>
+                            <p className="font-medium">{forecast.timeframe}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600">{t.confidence}</p>
+                            <p className="font-medium">{forecast.confidence}</p>
+                          </div>
+                        </div>
+                        <p className="text-sm text-gray-600 mt-2">
+                          <strong>{t.basedOn}:</strong> {forecast.basedOn}
+                        </p>
+                      </div>
+                      <div className="ml-4">
+                        <Button
+                          className={
+                            forecast.urgency === "critical"
+                              ? "bg-red-600 hover:bg-red-700"
+                              : forecast.urgency === "high"
+                                ? "bg-orange-600 hover:bg-orange-700"
+                                : "bg-blue-600 hover:bg-blue-700"
+                          }
+                          onClick={() => setIsModalOpen(true)}
+                        >
+                          {t.placeOrder}
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </TabsContent>
 
@@ -755,11 +952,15 @@ export default function PharmacistDashboard() {
 
             <Card>
               <CardHeader>
-                <CardDescription>{language === "en" ? "Manage pending and fulfilled orders" : "Laola dikopo tse di emetsweng le tse di filweng"}</CardDescription>
+                <CardDescription>
+                  {language === "en"
+                    ? "Manage pending and fulfilled orders"
+                    : "Laola dikopo tse di emetsweng le tse di filweng"}
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {restockHistory.map(req => (
+                  {restockHistory.map((req) => (
                     <div key={req.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div>
                         <h4 className="font-medium">{req.medicationName}</h4>
@@ -768,7 +969,15 @@ export default function PharmacistDashboard() {
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge variant={req.status === "delivered" ? "default" : req.status === "pending" ? "secondary" : "destructive"}>
+                        <Badge
+                          variant={
+                            req.status === "delivered"
+                              ? "default"
+                              : req.status === "pending"
+                                ? "secondary"
+                                : "destructive"
+                          }
+                        >
                           {req.status.charAt(0).toUpperCase() + req.status.slice(1)}
                         </Badge>
                         <Button variant="outline" size="sm">
@@ -795,9 +1004,10 @@ export default function PharmacistDashboard() {
                   </CardHeader>
                   <CardContent>
                     <ul className="space-y-2">
-                      {lowStockItems.map(item => (
+                      {lowStockItems.map((item) => (
                         <li key={item.id} className="text-sm">
-                          <span className="font-medium">{item.medicationName}</span> – only {item.stock} {item.unit} left (reorder at {item.reorderLevel})
+                          <span className="font-medium">{item.medicationName}</span> – only {item.stock} {item.unit}{" "}
+                          left (reorder at {item.reorderLevel})
                         </li>
                       ))}
                     </ul>
@@ -815,9 +1025,10 @@ export default function PharmacistDashboard() {
                   </CardHeader>
                   <CardContent>
                     <ul className="space-y-2">
-                      {expiringSoon.map(item => (
+                      {expiringSoon.map((item) => (
                         <li key={item.id} className="text-sm">
-                          <span className="font-medium">{item.medicationName}</span> (Batch: {item.batchNumber}) expires on {item.expirationDate}
+                          <span className="font-medium">{item.medicationName}</span> (Batch: {item.batchNumber}) expires
+                          on {item.expirationDate}
                         </li>
                       ))}
                     </ul>
@@ -866,9 +1077,7 @@ export default function PharmacistDashboard() {
               <CheckCircle className="h-6 w-6 text-green-500" />
               {t.orderSuccess}
             </DialogTitle>
-            <DialogDescription>
-              {t.orderSent}
-            </DialogDescription>
+            <DialogDescription>{t.orderSent}</DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <p className="text-sm text-gray-600">

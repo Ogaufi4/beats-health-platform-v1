@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { NewPatientRegistrationDialog } from "@/components/new-patient-registration-dialog"
+import { WalkInQueue } from "@/components/walk-in-queue"
+import { PredictiveAnalytics } from "@/components/predictive-analytics"
 import {
   Users,
   Activity,
@@ -21,6 +23,8 @@ import {
   Thermometer,
   Droplet,
   AlertTriangle,
+  Clock,
+  TrendingUp,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -36,6 +40,8 @@ export default function NurseDashboard() {
       tasks: "Tasks",
       appointments: "Appointments",
       vitals: "Vitals & Monitoring",
+      walkIns: "Walk-In Queue",
+      analytics: "Predictive Analytics",
       todaySchedule: "Today's Assignments",
       patientRecords: "Patient Records",
       searchPatients: "Search patients...",
@@ -49,6 +55,8 @@ export default function NurseDashboard() {
         pendingTasks: "Pending Tasks",
         urgentAlerts: "Urgent Alerts",
         medsAdministered: "Meds Administered",
+        walkInsToday: "Walk-Ins Today",
+        avgWaitTime: "Avg Wait Time",
       },
       tasksTab: "Tasks",
       vitalsTab: "Vitals",
@@ -60,6 +68,8 @@ export default function NurseDashboard() {
       tasks: "Ditiro",
       appointments: "Dikopano",
       vitals: "Dipelo le Tlhokomelo",
+      walkIns: "Mola wa Baeti",
+      analytics: "Tshekatsheko ya Bokamoso",
       todaySchedule: "Tiro tsa Gompieno",
       patientRecords: "Direkoto tsa Balwetse",
       searchPatients: "Batla balwetse...",
@@ -73,6 +83,8 @@ export default function NurseDashboard() {
         pendingTasks: "Ditiro tse di Emetsweng",
         urgentAlerts: "Ditlhatlhego tsa Potlako",
         medsAdministered: "Meditshene e Neilweng",
+        walkInsToday: "Baeti ba Gompieno",
+        avgWaitTime: "Nako ya Emetse",
       },
       tasksTab: "Ditiro",
       vitalsTab: "Dipelo",
@@ -180,7 +192,7 @@ export default function NurseDashboard() {
 
       <div className="p-6">
         {/* Quick Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
@@ -230,14 +242,43 @@ export default function NurseDashboard() {
               </div>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <Activity className="h-5 w-5 text-green-600" />
+                <div>
+                  <p className="text-sm text-gray-600">{t.stats.walkInsToday}</p>
+                  <p className="text-2xl font-bold text-green-600">47</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <Clock className="h-5 w-5 text-indigo-600" />
+                <div>
+                  <p className="text-sm text-gray-600">{t.stats.avgWaitTime}</p>
+                  <p className="text-2xl font-bold text-indigo-600">18 min</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <Tabs defaultValue="patients" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="patients">{t.patients}</TabsTrigger>
+            <TabsTrigger value="walk-ins">{t.walkIns}</TabsTrigger>
             <TabsTrigger value="tasks">{t.tasksTab}</TabsTrigger>
             <TabsTrigger value="appointments">{t.appointments}</TabsTrigger>
             <TabsTrigger value="vitals">{t.vitalsTab}</TabsTrigger>
+            <TabsTrigger value="analytics">
+              <TrendingUp className="h-4 w-4 mr-2" />
+              {t.analytics}
+            </TabsTrigger>
           </TabsList>
 
           {/* Patients Tab */}
@@ -294,6 +335,11 @@ export default function NurseDashboard() {
                 </Card>
               ))}
             </div>
+          </TabsContent>
+
+          {/* Walk-Ins Tab */}
+          <TabsContent value="walk-ins" className="space-y-6">
+            <WalkInQueue />
           </TabsContent>
 
           {/* Tasks Tab */}
@@ -416,6 +462,11 @@ export default function NurseDashboard() {
                 </Card>
               ))}
             </div>
+          </TabsContent>
+
+          {/* Predictive Analytics Tab */}
+          <TabsContent value="analytics" className="space-y-6">
+            <PredictiveAnalytics />
           </TabsContent>
         </Tabs>
       </div>
