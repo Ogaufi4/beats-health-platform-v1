@@ -10,6 +10,10 @@ import { WalkInQueue } from "@/components/walk-in-queue"
 import { PredictiveAnalytics } from "@/components/predictive-analytics"
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog"
 import { NewPatientRegistrationDialog } from "@/components/new-patient-registration-dialog"
+import { MedicalEquipmentBookingDialog } from "@/components/medical-equipment-booking-dialog"
+import { AddMedicationDialog } from "@/components/add-medication-dialog"
+import { NewReferralDialog } from "@/components/new-referral-dialog"
+import { PatientRecordsViewer } from "@/components/patient-records-viewer"
 import {
   Calendar,
   Package,
@@ -304,8 +308,9 @@ export default function FacilityDashboard() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="appointments">{t.appointments}</TabsTrigger>
+            <TabsTrigger value="forms">Forms</TabsTrigger>
             <TabsTrigger value="stock">{t.stock}</TabsTrigger>
             <TabsTrigger value="patients">{t.patients}</TabsTrigger>
             <TabsTrigger value="equipment">Equipment</TabsTrigger>
@@ -357,6 +362,54 @@ export default function FacilityDashboard() {
                   </CardContent>
                 </Card>
               ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="forms" className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Booking Forms</CardTitle>
+                  <CardDescription>Schedule appointments and equipment</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <NewAppointmentDialog />
+                  <MedicalEquipmentBookingDialog />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Registration Forms</CardTitle>
+                  <CardDescription>Register patients and walk-ins</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <NewPatientRegistrationDialog />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Medical Forms</CardTitle>
+                  <CardDescription>Add medications and referrals</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <AddMedicationDialog />
+                  <NewReferralDialog />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Records Management</CardTitle>
+                  <CardDescription>View and manage patient records</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button variant="outline" className="w-full bg-transparent">
+                    View All Records
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
 
@@ -523,6 +576,7 @@ export default function FacilityDashboard() {
                 </CardContent>
               </Card>
             </div>
+            <PatientRecordsViewer />
           </TabsContent>
 
           <TabsContent value="equipment" className="space-y-6">

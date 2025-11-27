@@ -1,0 +1,50 @@
+{
+  "records": [
+    {
+      "id": "REC-001",
+      "patientId": "1",
+      "patientName": "Thabo Mogale",
+      "omang": "123456789",
+      "recordType": "visit",
+      "date": "2024-01-15",
+      "department": "General Medicine",
+      "doctor": "Dr. Sarah Molefe",
+      "diagnosis": "Hypertension",
+      "treatment": "Prescribed Lisinopril 10mg",
+      "notes": "Patient stable, follow-up in 2 weeks",
+      "vitals": {
+        "temperature": "36.8°C",
+        "bloodPressure": "140/90 mmHg",
+        "pulse": "72 bpm",
+        "respiratory": "16 breaths/min"
+      }
+    },
+    {
+      "id": "REC-002",
+      "patientId": "2",
+      "patientName": "Keabetswe Tsheko",
+      "omang": "234567890",
+      "recordType": "lab",
+      "date": "2024-01-14",
+      "department": "Laboratory",
+      "doctor": "Lab Technician",
+      "testType": "Blood Test",
+      "results": "Hemoglobin: 13.5 g/dL, WBC: 7.2 x10^9/L",
+      "notes": "All results normal"
+    },
+    {
+      "id": "REC-003",
+      "patientId": "3",
+      "patientName": "Naledi Kgomo",
+      "omang": "345678901",
+      "recordType": "prescription",
+      "date": "2024-01-13",
+      "medication": "Paracetamol",
+      "dosage": "500mg",
+      "frequency": "Every 6 hours",
+      "duration": "5 days",
+      "indication": "Fever",
+      "doctor": "Dr. John Smith"
+    }
+  ]
+}

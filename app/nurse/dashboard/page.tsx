@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input"
 import { NewPatientRegistrationDialog } from "@/components/new-patient-registration-dialog"
 import { WalkInQueue } from "@/components/walk-in-queue"
 import { PredictiveAnalytics } from "@/components/predictive-analytics"
+import { AddMedicationDialog } from "@/components/add-medication-dialog"
+import { PatientRecordsViewer } from "@/components/patient-records-viewer"
 import {
   Users,
   Activity,
@@ -269,8 +271,9 @@ export default function NurseDashboard() {
         </div>
 
         <Tabs defaultValue="patients" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="patients">{t.patients}</TabsTrigger>
+            <TabsTrigger value="records">Records</TabsTrigger>
             <TabsTrigger value="walk-ins">{t.walkIns}</TabsTrigger>
             <TabsTrigger value="tasks">{t.tasksTab}</TabsTrigger>
             <TabsTrigger value="appointments">{t.appointments}</TabsTrigger>
@@ -326,15 +329,23 @@ export default function NurseDashboard() {
                           )}
                         </div>
                         <p className="text-sm text-gray-600 font-medium">{patient.nextMed}</p>
-                        <Button variant="outline" size="sm" className="mt-2 bg-transparent">
-                          {t.viewRecord}
-                        </Button>
+                        <div className="flex gap-2 mt-2">
+                          <Button variant="outline" size="sm" className="bg-transparent">
+                            {t.viewRecord}
+                          </Button>
+                          <AddMedicationDialog />
+                        </div>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
+          </TabsContent>
+
+          {/* Records Tab */}
+          <TabsContent value="records" className="space-y-6">
+            <PatientRecordsViewer />
           </TabsContent>
 
           {/* Walk-Ins Tab */}

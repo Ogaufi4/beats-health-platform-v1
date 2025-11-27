@@ -1,114 +1,30 @@
-#
+# Beats health platform
 
+*Automatically synced with your [v0.app](https://v0.app) deployments*
 
-# **Beats Health Platform**
+[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/ogauras-projects/v0-beats-health-platform)
+[![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/projects/4QF6a43yLmb)
 
-*A modern health monitoring and wellness companion.*
+## Overview
 
-## 📌 **Overview**
+This repository will stay in sync with your deployed chats on [v0.app](https://v0.app).
+Any changes you make to your deployed app will be automatically pushed to this repository from [v0.app](https://v0.app).
 
-Beats Health Platform is a digital health ecosystem designed to help users track, manage, and improve their personal wellness. It combines real-time monitoring, analytics, and smart recommendations to promote healthier daily habits.
+## Deployment
 
-Whether you are a fitness enthusiast, a patient managing long-term conditions, or simply someone who wants to understand their body better — Beats gives you clear insights and actionable steps.
+Your project is live at:
 
----
+**[https://vercel.com/ogauras-projects/v0-beats-health-platform](https://vercel.com/ogauras-projects/v0-beats-health-platform)**
 
-## 🚀 **Features**
+## Build your app
 
-### **1. Real-Time Health Tracking**
+Continue building your app on:
 
-* Heart rate monitoring
-* Sleep pattern detection
-* Step and activity tracking
-* Stress and recovery analysis
+**[https://v0.app/chat/projects/4QF6a43yLmb](https://v0.app/chat/projects/4QF6a43yLmb)**
 
-### **2. Smart Recommendations**
+## How It Works
 
-* Personalized health tips
-* Activity goals based on your daily habits
-* Nutrition and hydration reminders
-
-### **3. Secure Health Records**
-
-* Store and manage personal medical data
-* Export reports for doctors
-* Encrypted and privacy-first design
-
-### **4. Analytics Dashboard**
-
-* Weekly and monthly progress
-* Visual charts for heart rate, sleep, activity
-* Insights that help you understand trends
-
-### **5. Multi-Platform Support**
-
-* Mobile App (Android & iOS)
-* Web Dashboard
-* Wearable integration (smartwatch/band)
-
----
-
-## 🛠️ **Tech Stack**
-
-* **Frontend:** React / Next.js / Flutter
-* **Backend:** Node.js / Laravel / Firebase
-* **Database:** PostgreSQL / Firestore
-* **Cloud:** AWS / Google Cloud
-* **AI:** Predictive analytics + wellness recommendations engine
-
-*(Modify these as needed based on your actual stack.)*
-
----
-
-## 📦 **Installation**
-
-```bash
-git clone https://github.com/ogaufi4/beats-health-platform.git
-cd beats-health-platform
-npm install   # or yarn install
-npm run dev   # start development server
-```
-
----
-
-## 📲 **Usage**
-
-* Create a user profile
-* Connect your wearable device
-* Start tracking daily health metrics
-* View insights on dashboard
-* Receive personalized recommendations
-
----
-
-## 🔒 **Security & Privacy**
-
-Beats Health Platform follows strict data-handling guidelines:
-
-* Encrypted data at rest and in transit
-* User-controlled data exports
-* GDPR-aligned privacy rules (where applicable)
-
----
-
-## 🤝 **Contributing**
-
-Contributions are welcome!
-Please open an issue or submit a pull request with improvements.
-
----
-
-## 📬 **Contact**
-
-For support or business inquiries:
-**Email:** [support@beatshealth.com](mailto:support@beatshealth.com)
-**Website:** [www.beatshealth.com](http://www.beatshealth.com)
-
----
-
-If you want, I can also make:
-✅ A logo
-✅ A full GitHub project structure
-✅ A business pitch / landing page copy
-✅ A dark-theme UI mockup
-Just tell me!
+1. Create and modify your project using [v0.app](https://v0.app)
+2. Deploy your chats from the v0 interface
+3. Changes are automatically pushed to this repository
+4. Vercel deploys the latest version from this repository

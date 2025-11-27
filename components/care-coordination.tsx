@@ -8,7 +8,10 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
-import { Calendar, Stethoscope, Activity } from "lucide-react"
+import { Calendar, Stethoscope, Activity, CheckCircle } from "lucide-react"
+import { ActionModal } from "./action-modal"
+import { ActionToastContainer, type ActionToast } from "./ui/action-toast"
+import { mockActions } from "@/lib/mock-actions"
 
 interface CareCoordinationProps {
   language: "en" | "tn"
@@ -18,6 +21,15 @@ export function CareCoordination({ language }: CareCoordinationProps) {
   const [selectedSpecialist, setSelectedSpecialist] = useState("")
   const [selectedFacility, setSelectedFacility] = useState("")
   const [appointmentDate, setAppointmentDate] = useState("")
+  const [patientName, setPatientName] = useState("")
+
+  const [toasts, setToasts] = useState<ActionToast[]>([])
+  const [actionModal, setActionModal] = useState({
+    open: false,
+    type: null as "specialist" | "appointment" | "referral" | null,
+    isLoading: false,
+    result: null as any,
+  })
 
   const content = {
     en: {
@@ -37,6 +49,9 @@ export function CareCoordination({ language }: CareCoordinationProps) {
       scheduleAppointment: "Schedule Appointment",
       availableSpecialists: "Available Specialists",
       equipmentAvailability: "Equipment Availability",
+      checkAvailability: "Check Specialist Availability",
+      bookAppointment: "Book Appointment",
+      generateReferral: "Generate Referral",
     },
     tn: {
       title: "Motlhala wa Thulaganyo ya Tlhokomelo",
@@ -55,6 +70,9 @@ export function CareCoordination({ language }: CareCoordinationProps) {
       scheduleAppointment: "Rulaganya Kopano",
       availableSpecialists: "Dingaka tse di Teng",
       equipmentAvailability: "Didirisiwa tse di Teng",
+      checkAvailability: "Lekola Dingaka tse di Teng",
+      bookAppointment: "Beela Kopano",
+      generateReferral: "Hlakisa Letho la go Romela",
     },
   }
 
@@ -134,6 +152,66 @@ export function CareCoordination({ language }: CareCoordinationProps) {
     },
   ]
 
+  const handleAction = async (actionType: string) => {
+    try {
+      setActionModal({ ...actionModal, open: true, type: actionType as any, isLoading: true })
+
+      let result
+      switch (actionType) {
+        case "specialist":
+          result = await mockActions.checkSpecialistAvailability(specialists[0]?.name || "Cardiology")
+          break
+        case "appointment":
+          result = await mockActions.bookAppointment(patientName || "John Doe", selectedSpecialist, appointmentDate)
+          break
+        case "referral":
+          result = await mockActions.generateReferral(
+            patientName || "John Doe",
+            facilities[0]?.name || "Princess Marina",
+          )
+          break
+      }
+
+      setActionModal({
+        ...actionModal,
+        isLoading: false,
+        result: {
+          success: result.success,
+          title: result.success ? "Success!" : "Error",
+          details: Object.fromEntries(Object.entries(result).filter(([k]) => k !== "success")),
+        },
+      })
+
+      // Add success toast
+      const id = Math.random().toString()
+      setToasts((prev) => [
+        ...prev,
+        {
+          id,
+          title: language === "en" ? "Action Completed" : "Kgato e Feleletse",
+          message:
+            language === "en"
+              ? `${actionType} action processed successfully`
+              : `Kgato ya ${actionType} e dirwa ka go siame`,
+          type: "success",
+          duration: 3000,
+        },
+      ])
+    } catch (error) {
+      const id = Math.random().toString()
+      setToasts((prev) => [
+        ...prev,
+        {
+          id,
+          title: language === "en" ? "Error" : "Phoso",
+          message: language === "en" ? "Failed to process action" : "Kgato e su phele",
+          type: "error",
+          duration: 3000,
+        },
+      ])
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -143,7 +221,7 @@ export function CareCoordination({ language }: CareCoordinationProps) {
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Appointment Scheduling Form */}
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 hover:shadow-lg transition-shadow duration-300 animate-in fade-in slide-in-from-bottom-4">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5" />
@@ -154,7 +232,12 @@ export function CareCoordination({ language }: CareCoordinationProps) {
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="patientName">{t.patientName}</Label>
-                <Input id="patientName" placeholder="Thabo Mogale" />
+                <Input
+                  id="patientName"
+                  placeholder="Thabo Mogale"
+                  value={patientName}
+                  onChange={(e) => setPatientName(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="patientId">{t.patientId}</Label>
@@ -239,16 +322,35 @@ export function CareCoordination({ language }: CareCoordinationProps) {
               />
             </div>
 
-            <Button className="w-full bg-blue-600 hover:bg-blue-700">
-              <Calendar className="h-4 w-4 mr-2" />
-              {t.scheduleAppointment}
-            </Button>
+            <div className="grid grid-cols-3 gap-2">
+              <Button
+                className="w-full bg-blue-600 hover:bg-blue-700 hover:scale-105 transition-all duration-200"
+                onClick={() => handleAction("specialist")}
+              >
+                <Stethoscope className="h-4 w-4 mr-2" />
+                {t.checkAvailability}
+              </Button>
+              <Button
+                className="w-full bg-green-600 hover:bg-green-700 hover:scale-105 transition-all duration-200"
+                onClick={() => handleAction("appointment")}
+              >
+                <Calendar className="h-4 w-4 mr-2" />
+                {t.bookAppointment}
+              </Button>
+              <Button
+                className="w-full bg-purple-600 hover:bg-purple-700 hover:scale-105 transition-all duration-200"
+                onClick={() => handleAction("referral")}
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                {t.generateReferral}
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
         {/* Available Resources */}
         <div className="space-y-4">
-          <Card>
+          <Card className="hover:shadow-lg transition-shadow duration-300 animate-in fade-in slide-in-from-bottom-4">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Stethoscope className="h-5 w-5" />
@@ -258,7 +360,10 @@ export function CareCoordination({ language }: CareCoordinationProps) {
             <CardContent>
               <div className="space-y-3">
                 {specialists.map((specialist) => (
-                  <div key={specialist.id} className="flex items-center justify-between p-2 rounded-lg bg-gray-50">
+                  <div
+                    key={specialist.id}
+                    className="flex items-center justify-between p-2 rounded-lg bg-gray-50 hover:bg-blue-50 transition-colors duration-200 cursor-pointer hover:scale-102"
+                  >
                     <span className="text-sm font-medium">{specialist.name}</span>
                     <Badge variant={specialist.available > 0 ? "default" : "secondary"}>{specialist.available}</Badge>
                   </div>
@@ -267,7 +372,7 @@ export function CareCoordination({ language }: CareCoordinationProps) {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="hover:shadow-lg transition-shadow duration-300 animate-in fade-in slide-in-from-bottom-4">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Activity className="h-5 w-5" />
@@ -277,7 +382,10 @@ export function CareCoordination({ language }: CareCoordinationProps) {
             <CardContent>
               <div className="space-y-3">
                 {equipment.map((item, index) => (
-                  <div key={index} className="p-3 rounded-lg border">
+                  <div
+                    key={index}
+                    className="p-3 rounded-lg border hover:border-blue-400 hover:shadow-md transition-all duration-200 hover:scale-102 cursor-pointer"
+                  >
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-medium text-sm">{item.name}</span>
                       <Badge variant={item.status === "available" ? "default" : "secondary"}>
@@ -301,6 +409,20 @@ export function CareCoordination({ language }: CareCoordinationProps) {
           </Card>
         </div>
       </div>
+
+      <ActionModal
+        open={actionModal.open}
+        onOpenChange={(open) => setActionModal({ ...actionModal, open })}
+        title={`${actionModal.type} Action`}
+        description={language === "en" ? "Processing your request..." : "Go tsamaya le go itumeletsa..."}
+        actionLabel="Execute"
+        isLoading={actionModal.isLoading}
+        result={actionModal.result}
+        onAction={() => {}}
+        language={language}
+      />
+
+      <ActionToastContainer toasts={toasts} onClose={(id) => setToasts((prev) => prev.filter((t) => t.id !== id))} />
     </div>
   )
 }
