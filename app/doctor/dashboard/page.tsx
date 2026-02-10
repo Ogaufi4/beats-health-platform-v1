@@ -21,21 +21,12 @@ import {
   Stethoscope,
   Monitor,
   Camera,
-  Zap,
-  Brain,
-  Eye,
   Microscope,
   CheckCircle,
+  UserPlus,
 } from "lucide-react"
 import Link from "next/link"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 export default function DoctorDashboard() {
   const [language, setLanguage] = useState<"en" | "tn">("en")
@@ -47,6 +38,45 @@ export default function DoctorDashboard() {
   const [isEquipmentModalOpen, setIsEquipmentModalOpen] = useState(false)
   const [isReferralModalOpen, setIsReferralModalOpen] = useState(false)
 
+  const walkInQueue = [
+    {
+      id: "WI001",
+      queueNumber: 12,
+      patientName: "Thato Moeti",
+      age: 34,
+      priority: "urgent",
+      department: "Cardiology",
+      chiefComplaint: "Chest pain, shortness of breath",
+      triageTime: "08:45 AM",
+      estimatedWait: "15 min",
+      status: "waiting",
+    },
+    {
+      id: "WI002",
+      queueNumber: 13,
+      patientName: "Lesego Kgosi",
+      age: 56,
+      priority: "routine",
+      department: "Cardiology",
+      chiefComplaint: "Follow-up for hypertension",
+      triageTime: "09:10 AM",
+      estimatedWait: "30 min",
+      status: "waiting",
+    },
+    {
+      id: "WI003",
+      queueNumber: 14,
+      patientName: "Mpho Setlhare",
+      age: 42,
+      priority: "emergency",
+      department: "Cardiology",
+      chiefComplaint: "Severe chest pain, suspected MI",
+      triageTime: "09:25 AM",
+      estimatedWait: "Immediate",
+      status: "in-progress",
+    },
+  ]
+
   const content = {
     en: {
       title: "Dr. Sarah Molefe - Cardiologist",
@@ -56,6 +86,7 @@ export default function DoctorDashboard() {
       equipment: "Medical Equipment",
       referrals: "Referrals",
       results: "Lab Results",
+      walkInQueue: "Walk-In Queue",
       todaySchedule: "Today's Schedule",
       upcomingAppointments: "Upcoming Appointments",
       patientRecords: "Patient Records",
@@ -71,11 +102,20 @@ export default function DoctorDashboard() {
       complete: "Complete",
       pending: "Pending",
       confirmed: "Confirmed",
+      callPatient: "Call Patient",
+      markComplete: "Mark Complete",
+      emergency: "Emergency",
+      urgent: "Urgent",
+      routine: "Routine",
+      waiting: "Waiting",
+      inProgress: "In Progress",
       stats: {
         todayPatients: "Today's Patients",
         pendingResults: "Pending Results",
         equipmentBooked: "Equipment Booked",
         referralsSent: "Referrals Sent",
+        walkInsToday: "Walk-Ins Today",
+        avgWaitTime: "Avg Wait Time",
       },
       success: {
         appointment: "Appointment Booked Successfully!",
@@ -94,6 +134,7 @@ export default function DoctorDashboard() {
       equipment: "Didirisiwa tsa Bongaka",
       referrals: "Go Romela",
       results: "Diphetho tsa Tlhatlhobo",
+      walkInQueue: "Mola wa Baeti",
       todaySchedule: "Lenaneo la Gompieno",
       upcomingAppointments: "Dikopano tse di Tlang",
       patientRecords: "Direkoto tsa Balwetse",
@@ -109,11 +150,20 @@ export default function DoctorDashboard() {
       complete: "Feditse",
       pending: "E Emetse",
       confirmed: "E Netefatsitswe",
+      callPatient: "Bitsa Molwetse",
+      markComplete: "Tshwaya e Fedile",
+      emergency: "Potlako Thata",
+      urgent: "Potlako",
+      routine: "Tlwaelo",
+      waiting: "E Emetse",
+      inProgress: "E Tsweletse",
       stats: {
         todayPatients: "Balwetse ba Gompieno",
         pendingResults: "Diphetho tse di Emetsweng",
         equipmentBooked: "Didirisiwa tse di Beelweng",
         referralsSent: "Go Romela go Dirweng",
+        walkInsToday: "Baeti ba Gompieno",
+        avgWaitTime: "Nako ya Emetse",
       },
       success: {
         appointment: "Kopano e Beelitswe ka Botlhokwa!",
@@ -251,7 +301,7 @@ export default function DoctorDashboard() {
       status: "available",
       nextAvailable: "Now",
       bookedSlots: 1,
-      icon: <Clock className="h-6 w-6" />,
+      icon: <Clock className="h-4 w-4" />,
       description: "24-hour cardiac monitoring",
     },
     {
@@ -320,12 +370,11 @@ export default function DoctorDashboard() {
   ]
 
   // Get unique towns
-  const availableTowns = Array.from(new Set(medicalEquipment.map(eq => eq.town)))
+  const availableTowns = Array.from(new Set(medicalEquipment.map((eq) => eq.town)))
 
   // Filter by selected town
-  const filteredEquipment = selectedTown === "all"
-    ? medicalEquipment
-    : medicalEquipment.filter(eq => eq.town === selectedTown)
+  const filteredEquipment =
+    selectedTown === "all" ? medicalEquipment : medicalEquipment.filter((eq) => eq.town === selectedTown)
 
   // Group by town
   const filteredEquipmentByTown = Array.from(
@@ -333,7 +382,7 @@ export default function DoctorDashboard() {
       if (!acc.has(eq.town)) acc.set(eq.town, [])
       acc.get(eq.town)!.push(eq)
       return acc
-    }, new Map<string, typeof medicalEquipment>())
+    }, new Map<string, typeof medicalEquipment>()),
   ).sort((a, b) => a[0].localeCompare(b[0]))
 
   const getStatusColor = (status: string) => {
@@ -354,6 +403,16 @@ export default function DoctorDashboard() {
         return "bg-orange-100 text-orange-800 border-orange-200"
       case "scheduled":
         return "bg-blue-100 text-blue-800 border-blue-200"
+      case "emergency":
+        return "bg-red-100 text-red-800 border-red-200"
+      case "urgent":
+        return "bg-orange-100 text-orange-800 border-orange-200"
+      case "routine":
+        return "bg-blue-100 text-blue-800 border-blue-200"
+      case "waiting":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200"
+      case "in-progress":
+        return "bg-green-100 text-green-800 border-green-200"
       default:
         return "bg-gray-100 text-gray-800 border-gray-200"
     }
@@ -370,6 +429,16 @@ export default function DoctorDashboard() {
 
   const handleCreateReferral = () => {
     setIsReferralModalOpen(true)
+  }
+
+  const handleCallPatient = (patientId: string) => {
+    console.log("[v0] Calling patient:", patientId)
+    // In real implementation, this would update the patient status and send SMS
+  }
+
+  const handleMarkComplete = (patientId: string) => {
+    console.log("[v0] Marking patient complete:", patientId)
+    // In real implementation, this would update the patient status
   }
 
   return (
@@ -410,7 +479,7 @@ export default function DoctorDashboard() {
 
       <div className="p-6">
         {/* Quick Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
@@ -458,11 +527,36 @@ export default function DoctorDashboard() {
               </div>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <UserPlus className="h-5 w-5 text-indigo-600" />
+                <div>
+                  <p className="text-sm text-gray-600">{t.stats.walkInsToday}</p>
+                  <p className="text-2xl font-bold text-indigo-600">{walkInQueue.length}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <Clock className="h-5 w-5 text-teal-600" />
+                <div>
+                  <p className="text-sm text-gray-600">{t.stats.avgWaitTime}</p>
+                  <p className="text-2xl font-bold text-teal-600">22 min</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <Tabs defaultValue="appointments" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="appointments">{t.appointments}</TabsTrigger>
+            <TabsTrigger value="walk-ins">{t.walkInQueue}</TabsTrigger>
             <TabsTrigger value="patients">{t.patients}</TabsTrigger>
             <TabsTrigger value="equipment">{t.equipment}</TabsTrigger>
             <TabsTrigger value="referrals">{t.referrals}</TabsTrigger>
@@ -518,6 +612,116 @@ export default function DoctorDashboard() {
                         <Button variant="outline" size="sm">
                           {t.reschedule}
                         </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="walk-ins" className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold">{t.walkInQueue}</h2>
+              <div className="flex gap-2">
+                <Badge variant="outline" className="text-sm">
+                  {language === "en" ? "Real-time Queue" : "Mola wa Nako ya Nnete"}
+                </Badge>
+              </div>
+            </div>
+
+            {/* Queue Statistics */}
+            <div className="grid grid-cols-4 gap-4">
+              <Card>
+                <CardContent className="p-4">
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600">
+                      {language === "en" ? "Total in Queue" : "Kakaretso mo Moleng"}
+                    </p>
+                    <p className="text-3xl font-bold text-blue-600">{walkInQueue.length}</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600">{language === "en" ? "Emergency" : "Potlako Thata"}</p>
+                    <p className="text-3xl font-bold text-red-600">
+                      {walkInQueue.filter((p) => p.priority === "emergency").length}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600">{language === "en" ? "Urgent" : "Potlako"}</p>
+                    <p className="text-3xl font-bold text-orange-600">
+                      {walkInQueue.filter((p) => p.priority === "urgent").length}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600">{language === "en" ? "Avg Wait" : "Nako ya Emetse"}</p>
+                    <p className="text-3xl font-bold text-green-600">22 min</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Walk-in Queue List */}
+            <div className="grid gap-4">
+              {walkInQueue.map((patient) => (
+                <Card key={patient.id} className={patient.priority === "emergency" ? "border-red-500 border-2" : ""}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-blue-600">#{patient.queueNumber}</div>
+                          <div className="text-xs text-gray-500">{patient.triageTime}</div>
+                        </div>
+                        <div>
+                          <h3 className="font-semibold">{patient.patientName}</h3>
+                          <p className="text-sm text-gray-600">
+                            {language === "en" ? "Age" : "Dingwaga"}: {patient.age} • {patient.department}
+                          </p>
+                          <p className="text-sm text-gray-700 mt-1">
+                            <strong>{language === "en" ? "Chief Complaint:" : "Bothata:"}</strong>{" "}
+                            {patient.chiefComplaint}
+                          </p>
+                          <p className="text-sm text-gray-500 mt-1">
+                            {language === "en" ? "Est. Wait:" : "Nako ya Emetse:"} {patient.estimatedWait}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-2">
+                        <div className="flex gap-2">
+                          <Badge className={getStatusColor(patient.priority)}>
+                            {patient.priority === "emergency"
+                              ? t.emergency
+                              : patient.priority === "urgent"
+                                ? t.urgent
+                                : t.routine}
+                          </Badge>
+                          <Badge className={getStatusColor(patient.status)}>
+                            {patient.status === "waiting" ? t.waiting : t.inProgress}
+                          </Badge>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            className="bg-blue-600 hover:bg-blue-700"
+                            onClick={() => handleCallPatient(patient.id)}
+                          >
+                            {t.callPatient}
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => handleMarkComplete(patient.id)}>
+                            {t.markComplete}
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
@@ -644,12 +848,12 @@ export default function DoctorDashboard() {
                                 ? "Available"
                                 : "E teng"
                               : equipment.status === "busy"
-                              ? language === "en"
-                                ? "Busy"
-                                : "E dirisiwa"
-                              : language === "en"
-                              ? "Maintenance"
-                              : "Tokafatso"}
+                                ? language === "en"
+                                  ? "Busy"
+                                  : "E dirisiwa"
+                                : language === "en"
+                                  ? "Maintenance"
+                                  : "Tokafatso"}
                           </Badge>
                         </div>
                       </CardHeader>
@@ -684,12 +888,12 @@ export default function DoctorDashboard() {
                                 ? "Book Now"
                                 : "Beela Jaanong"
                               : equipment.status === "busy"
-                              ? language === "en"
-                                ? "Schedule Later"
-                                : "Rulaganya Morago"
-                              : language === "en"
-                              ? "Under Maintenance"
-                              : "Mo Tokafatsong"}
+                                ? language === "en"
+                                  ? "Schedule Later"
+                                  : "Rulaganya Morago"
+                                : language === "en"
+                                  ? "Under Maintenance"
+                                  : "Mo Tokafatsong"}
                           </Button>
                         </div>
                       </CardContent>
@@ -832,9 +1036,7 @@ export default function DoctorDashboard() {
               <CheckCircle className="h-6 w-6 text-green-500" />
               {t.success.appointment}
             </DialogTitle>
-            <DialogDescription>
-              {t.success.description}
-            </DialogDescription>
+            <DialogDescription>{t.success.description}</DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <p className="text-sm text-gray-600">
@@ -868,9 +1070,7 @@ export default function DoctorDashboard() {
               <CheckCircle className="h-6 w-6 text-green-500" />
               {t.success.equipment}
             </DialogTitle>
-            <DialogDescription>
-              {t.success.description}
-            </DialogDescription>
+            <DialogDescription>{t.success.description}</DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <p className="text-sm text-gray-600">
@@ -904,9 +1104,7 @@ export default function DoctorDashboard() {
               <CheckCircle className="h-6 w-6 text-green-500" />
               {t.success.referral}
             </DialogTitle>
-            <DialogDescription>
-              {t.success.description}
-            </DialogDescription>
+            <DialogDescription>{t.success.description}</DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <p className="text-sm text-gray-600">

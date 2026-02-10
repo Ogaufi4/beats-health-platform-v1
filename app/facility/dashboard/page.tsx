@@ -6,6 +6,14 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
+import { WalkInQueue } from "@/components/walk-in-queue"
+import { PredictiveAnalytics } from "@/components/predictive-analytics"
+import { NewAppointmentDialog } from "@/components/new-appointment-dialog"
+import { NewPatientRegistrationDialog } from "@/components/new-patient-registration-dialog"
+import { MedicalEquipmentBookingDialog } from "@/components/medical-equipment-booking-dialog"
+import { AddMedicationDialog } from "@/components/add-medication-dialog"
+import { NewReferralDialog } from "@/components/new-referral-dialog"
+import { PatientRecordsViewer } from "@/components/patient-records-viewer"
 import {
   Calendar,
   Package,
@@ -16,7 +24,6 @@ import {
   Settings,
   LogOut,
   Search,
-  Plus,
   Scan,
   Phone,
   MessageSquare,
@@ -455,6 +462,14 @@ export default function FacilityDashboard() {
                   </Card>
                 ))}
             </div>
+          </TabsContent>
+
+          <TabsContent value="walkins" className="space-y-6">
+            <WalkInQueue />
+          </TabsContent>
+
+          <TabsContent value="analytics" className="space-y-6">
+            <PredictiveAnalytics />
           </TabsContent>
         </Tabs>
       </div>
