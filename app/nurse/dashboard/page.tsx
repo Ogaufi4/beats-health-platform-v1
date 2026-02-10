@@ -1,6 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { addPatient, getPatients, addTask } from "@/components/mock-service"
+import NurseAvailabilityPanel from "@/app/nurse/components/availability-panel"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -27,7 +29,34 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 
-export default function NurseDashboard() {
+export default function NurseDashboardPage() {
+  const [name, setName] = useState("")
+  const [age, setAge] = useState<number | "">("")
+  const [complaint, setComplaint] = useState("")
+  const [patients, setPatients] = useState<any[]>([])
+  const [adding, setAdding] = useState(false)
+
+  useEffect(() => {
+    getPatients().then(setPatients)
+  }, [])
+
+  const onAddPatient = async () => {
+    if (!name) return
+    setAdding(true)
+    const p = await addPatient({ name, age: typeof age === "number" ? age : undefined, complaint })
+    setPatients((s) => [p, ...s])
+    setName("")
+    setAge("")
+    setComplaint("")
+    setAdding(false)
+  }
+
+  const quickSendToPharmacy = async (patient: any, medicine: string) => {
+    // Simulate sending a task
+    await addTask({ type: "patient_referral", payload: { patientId: patient.id, patientName: patient.name, medicine } })
+    alert(`Mock: sent patient ${patient.name} -> pharmacy for "${medicine}"`)
+  }
+
   const [language, setLanguage] = useState<"en" | "tn">("en")
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0])
 

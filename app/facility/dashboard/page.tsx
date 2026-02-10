@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -21,221 +21,158 @@ import {
   Phone,
   MessageSquare,
   Activity,
+  MapPin,
+  Truck,
+  ArrowRight,
+  ShieldCheck,
 } from "lucide-react"
 import Link from "next/link"
+import { findMedicine, findEquipment, findSpecialists, getTasks, addTask, updateTaskStatus, subscribe, getFacilities } from "@/components/mock-service"
+import { useToast } from "@/components/ui/use-toast"
 
 export default function FacilityDashboard() {
   const [language, setLanguage] = useState<"en" | "tn">("en")
-  const [activeTab, setActiveTab] = useState("appointments")
+  const [activeTab, setActiveTab] = useState("radar")
+  const [searchQuery, setSearchQuery] = useState("")
+  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [tasks, setTasks] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+  const { toast } = useToast()
+  const [localFacility, setLocalFacility] = useState<any>(null)
 
   const content = {
     en: {
-      title: "Princess Marina Hospital",
-      subtitle: "Facility Dashboard",
-      appointments: "Appointments",
-      stock: "Medicine Stock",
-      patients: "Patients",
-      sms: "SMS/USSD",
-      todayAppointments: "Today's Appointments",
-      upcomingAppointments: "Upcoming Appointments",
-      newAppointment: "New Appointment",
-      searchPatients: "Search patients...",
-      stockLevels: "Current Stock Levels",
-      lowStock: "Low Stock Alerts",
-      scanBarcode: "Scan Barcode",
-      reorderMedicine: "Reorder Medicine",
-      patientRecords: "Patient Records",
-      ruralPatients: "Rural Patients",
-      smsNotifications: "SMS Notifications",
-      ussdAccess: "USSD Access",
+      title: "UB Clinic - Station 01",
+      subtitle: "Command & Control Center",
+      radar: "Resource Radar",
+      inventory: "Inventory Logistics",
+      equipment: "Equipment Coordination",
+      specialists: "Specialist Network",
+      tasks: "Pending Requests",
+      searchPlaceholder: "Search for medicines, equipment, or specialists...",
+      todayActivity: "Operational Overview",
+      facilityRadar: "National Resource Radar",
+      requestTransfer: "Request Transfer",
+      bookEquipment: "Book Resource",
+      contactSpecialist: "Contact / Request",
     },
     tn: {
-      title: "Sepetlele sa Princess Marina",
-      subtitle: "Dashboard ya Lefelo",
-      appointments: "Dikopano",
-      stock: "Stock ya Dihlare",
-      patients: "Balwetse",
-      sms: "SMS/USSD",
-      todayAppointments: "Dikopano tsa Gompieno",
-      upcomingAppointments: "Dikopano tse di Tlang",
-      newAppointment: "Kopano e Ntšha",
-      searchPatients: "Batla balwetse...",
-      stockLevels: "Maemo a Stock a Jaana",
-      lowStock: "Dikitsiso tsa Stock e e Kwa Tlase",
-      scanBarcode: "Scan Barcode",
-      reorderMedicine: "Odara Dihlare Gape",
-      patientRecords: "Direkoto tsa Balwetse",
-      ruralPatients: "Balwetse ba Magae",
-      smsNotifications: "Dikitsiso tsa SMS",
-      ussdAccess: "Phitlhelelo ya USSD",
+      title: "UB Clinic - Station 01",
+      subtitle: "Lefelo la Taolo ya Ditiro",
+      radar: "Radar ya Didirisiwa",
+      inventory: "Taolo ya Stock",
+      equipment: "Thulaganyo ya Didirisiwa",
+      specialists: "Network ya Dingaka",
+      tasks: "Dikopo tse di Emetsweng",
+      searchPlaceholder: "Batla dihlare, didirisiwa, kapa dingaka...",
+      todayActivity: "Tlhatlhobo ya Ditiro",
+      facilityRadar: "Radar ya Didirisiwa ya Sechaba",
+      requestTransfer: "Kopo ya go Romela",
+      bookEquipment: "Beela Didirisiwa",
+      contactSpecialist: "Ikanye / Kopa",
     },
   }
 
   const t = content[language]
 
-  const todayAppointments = [
-    {
-      id: 1,
-      time: "09:00",
-      patient: "Thabo Mogale",
-      type: "Cardiology Consultation",
-      doctor: "Dr. Sekai Moyo",
-      status: "confirmed",
-      location: "Room 204",
-    },
-    {
-      id: 2,
-      time: "10:30",
-      patient: "Keabetswe Tsheko",
-      type: "MRI Scan",
-      doctor: "Dr. James Kgathi",
-      status: "pending",
-      location: "Radiology Dept",
-    },
-    {
-      id: 3,
-      time: "14:00",
-      patient: "Mpho Setlhare",
-      type: "Orthopedic Follow-up",
-      doctor: "Dr. Sarah Molefe",
-      status: "confirmed",
-      location: "Room 301",
-    },
-    {
-      id: 4,
-      time: "15:30",
-      patient: "Gorata Mmusi",
-      type: "Diabetes Check-up",
-      doctor: "Dr. Peter Sebego",
-      status: "confirmed",
-      location: "Room 105",
-    },
-  ]
+  useEffect(() => {
+    loadFacilityData()
+    loadTasks()
+    const unsubAdded = subscribe("tasks:added", loadTasks)
+    const unsubUpdated = subscribe("tasks:updated", loadTasks)
+    const unsubFac = subscribe("facilities:changed", loadFacilityData)
+    return () => {
+      unsubAdded()
+      unsubUpdated()
+      unsubFac()
+    }
+  }, [])
 
-  const stockData = [
-    {
-      medicine: "Amlodipine 5mg",
-      current: 45,
-      minimum: 100,
-      status: "critical",
-      lastOrdered: "2024-01-08",
-    },
-    {
-      medicine: "Metformin 500mg",
-      current: 230,
-      minimum: 200,
-      status: "good",
-      lastOrdered: "2024-01-05",
-    },
-    {
-      medicine: "Paracetamol 500mg",
-      current: 89,
-      minimum: 150,
-      status: "low",
-      lastOrdered: "2024-01-10",
-    },
-    {
-      medicine: "Insulin (Rapid Acting)",
-      current: 12,
-      minimum: 50,
-      status: "critical",
-      lastOrdered: "2024-01-09",
-    },
-  ]
+  const loadFacilityData = async () => {
+    const facilities = await getFacilities()
+    const found = facilities.find(f => f.id === "ub_clinic")
+    if (found) setLocalFacility(found)
+  }
 
-  const equipmentStatus = [
-    {
-      equipment: "MRI Scanner",
-      status: "operational",
-      uptime: "98.5%",
-      lastMaintenance: "2024-01-05",
-      nextMaintenance: "2024-02-05",
-      bookingsToday: 8,
-    },
-    {
-      equipment: "CT Scanner",
-      status: "maintenance",
-      uptime: "85.2%",
-      lastMaintenance: "2024-01-10",
-      nextMaintenance: "2024-01-11",
-      bookingsToday: 0,
-    },
-    {
-      equipment: "X-Ray Machine",
-      status: "operational",
-      uptime: "99.1%",
-      lastMaintenance: "2024-01-08",
-      nextMaintenance: "2024-02-08",
-      bookingsToday: 15,
-    },
-    {
-      equipment: "Ultrasound",
-      status: "operational",
-      uptime: "97.8%",
-      lastMaintenance: "2024-01-07",
-      nextMaintenance: "2024-02-07",
-      bookingsToday: 12,
-    },
-  ]
+  const loadTasks = async () => {
+    const data = await getTasks()
+    setTasks(data)
+  }
 
-  const smsQueue = [
-    {
-      id: 1,
-      patient: "Mma Kgomotso",
-      message:
-        language === "en"
-          ? "Appointment confirmed for tomorrow 10:00 AM with Dr. Moyo"
-          : "Kopano e netefatsitswe kamoso 10:00 AM le Dr. Moyo",
-      status: "sent",
-      time: "2 min ago",
-    },
-    {
-      id: 2,
-      patient: "Rra Tebogo",
-      message: language === "en" ? "Your medication is ready for collection" : "Dihlare tsa gago di siametse go tsewa",
-      status: "pending",
-      time: "5 min ago",
-    },
-    {
-      id: 3,
-      patient: "Mma Lesego",
-      message:
-        language === "en"
-          ? "Reminder: Blood test tomorrow at 8:00 AM"
-          : "Segopotso: Tlhatlhobo ya madi kamoso ka 8:00 AM",
-      status: "sent",
-      time: "15 min ago",
-    },
-  ]
+  const handleSearch = async () => {
+    if (!searchQuery) return
+    setLoading(true)
+    let results: any[] = []
+    
+    // Search across all types
+    const meds = await findMedicine(searchQuery)
+    const equip = await findEquipment(searchQuery)
+    const spec = await findSpecialists(searchQuery)
+    
+    results = [
+      ...meds.map(m => ({ ...m, type: "medicine" })),
+      ...equip.map(e => ({ ...e, type: "equipment" })),
+      ...spec.map(s => ({ ...s, type: "specialist" }))
+    ]
+    
+    setSearchResults(results)
+    setLoading(false)
+  }
+
+  const handleAction = async (item: any) => {
+    const type = item.type === "medicine" ? "transfer_request" : item.type === "equipment" ? "booking_request" : "specialist_request"
+    
+    await addTask({
+      type,
+      fromFacility: "ub_clinic",
+      toFacility: item.facilityId,
+      payload: {
+        item: item.item,
+        qty: item.type === "medicine" ? 10 : 1,
+        requestedAt: new Date().toISOString()
+      }
+    })
+
+    toast({
+      title: "Request Sent",
+      description: `Sent a ${type.replace("_", " ")} for ${item.item} to ${item.facilityName}.`
+    })
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-50">
+    <div className="min-h-screen bg-[#0f172a] text-white">
+      {/* Premium Dark Header */}
+      <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Heart className="h-8 w-8 text-red-500" />
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/20">
+                  <Activity className="h-6 w-6 text-white" />
+                </div>
                 <div>
-                  <h1 className="text-xl font-bold text-gray-900">{t.title}</h1>
-                  <p className="text-sm text-gray-600">{t.subtitle}</p>
+                  <h1 className="text-xl font-bold tracking-tight">{t.title}</h1>
+                  <p className="text-xs font-medium text-blue-400 uppercase tracking-widest flex items-center gap-1">
+                    <ShieldCheck className="h-3 w-3" />
+                    {t.subtitle}
+                  </p>
                 </div>
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <Button variant="outline" size="sm" onClick={() => setLanguage(language === "en" ? "tn" : "en")}>
+              <div className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-400 mr-8">
+                <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" /> Network: Online</span>
+                <span className="flex items-center gap-2">Region: Gaborone Central</span>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setLanguage(language === "en" ? "tn" : "en")} className="text-slate-400 hover:text-white font-bold">
                 <Globe className="h-4 w-4 mr-2" />
                 {language === "en" ? "Setswana" : "English"}
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="ghost" size="icon" className="text-slate-400">
                 <Bell className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="sm">
-                <Settings className="h-4 w-4" />
-              </Button>
               <Link href="/login">
-                <Button variant="outline" size="sm">
+                <Button variant="ghost" size="icon" className="text-slate-400">
                   <LogOut className="h-4 w-4" />
                 </Button>
               </Link>
@@ -244,407 +181,279 @@ export default function FacilityDashboard() {
         </div>
       </header>
 
-      <div className="p-6">
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-blue-600" />
-                <div>
-                  <p className="text-sm text-gray-600">Today's Appointments</p>
-                  <p className="text-2xl font-bold text-blue-600">12</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      <div className="p-6 max-w-7xl mx-auto">
+        {/* Resource Radar Top Section */}
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Activity className="h-5 w-5 text-blue-500" />
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">{t.facilityRadar}</h2>
+          </div>
+          <div className="relative group">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500 group-focus-within:text-blue-500 transition-colors" />
+            <Input 
+              placeholder={t.searchPlaceholder} 
+              className="pl-12 py-7 bg-slate-900 border-slate-800 text-lg rounded-xl focus-visible:ring-blue-500/50 shadow-2xl transition-all"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+            />
+            <Button 
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-500 px-6"
+              onClick={handleSearch}
+              disabled={loading}
+            >
+              {loading ? "Searching..." : "Scan Network"}
+            </Button>
+          </div>
 
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <Package className="h-5 w-5 text-red-600" />
-                <div>
-                  <p className="text-sm text-gray-600">Stock Alerts</p>
-                  <p className="text-2xl font-bold text-red-600">4</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-green-600" />
-                <div>
-                  <p className="text-sm text-gray-600">Active Patients</p>
-                  <p className="text-2xl font-bold text-green-600">89</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5 text-purple-600" />
-                <div>
-                  <p className="text-sm text-gray-600">SMS Sent Today</p>
-                  <p className="text-2xl font-bold text-purple-600">47</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="appointments">{t.appointments}</TabsTrigger>
-            <TabsTrigger value="stock">{t.stock}</TabsTrigger>
-            <TabsTrigger value="patients">{t.patients}</TabsTrigger>
-            <TabsTrigger value="equipment">Equipment</TabsTrigger>
-            <TabsTrigger value="sms">{t.sms}</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="appointments" className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">{t.todayAppointments}</h2>
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="h-4 w-4 mr-2" />
-                {t.newAppointment}
-              </Button>
-            </div>
-
-            <div className="grid gap-4">
-              {todayAppointments.map((appointment) => (
-                <Card key={appointment.id}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="text-center">
-                          <div className="text-lg font-bold text-blue-600">{appointment.time}</div>
-                          <div className="text-xs text-gray-500">{appointment.location}</div>
-                        </div>
-                        <div>
-                          <h3 className="font-semibold">{appointment.patient}</h3>
-                          <p className="text-sm text-gray-600">{appointment.type}</p>
-                          <p className="text-sm text-gray-500">{appointment.doctor}</p>
-                        </div>
+          {searchResults.length > 0 && (
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
+              {searchResults.map((item, idx) => (
+                <Card key={idx} className="bg-slate-900 border-slate-800 hover:border-blue-500/50 transition-all group overflow-hidden">
+                  <div className="absolute top-0 right-0 p-3">
+                    <Badge variant="outline" className="text-slate-500 border-slate-800">
+                      {item.type.toUpperCase()}
+                    </Badge>
+                  </div>
+                  <CardContent className="p-5">
+                    <div className="flex items-start gap-4">
+                      <div className={`p-3 rounded-lg ${
+                        item.type === "medicine" ? "bg-purple-500/10 text-purple-400" : 
+                        item.type === "equipment" ? "bg-emerald-500/10 text-emerald-400" : "bg-orange-500/10 text-orange-400"
+                      }`}>
+                        {item.type === "medicine" ? <Package className="h-6 w-6" /> : 
+                         item.type === "equipment" ? <Activity className="h-6 w-6" /> : <Users className="h-6 w-6" />}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={appointment.status === "confirmed" ? "default" : "secondary"}>
-                          {appointment.status === "confirmed"
-                            ? language === "en"
-                              ? "Confirmed"
-                              : "E netefatsitswe"
-                            : language === "en"
-                              ? "Pending"
-                              : "E emetse"}
-                        </Badge>
-                        <Button variant="outline" size="sm">
-                          <Phone className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="stock" className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">{t.stockLevels}</h2>
-              <div className="flex gap-2">
-                <Button variant="outline">
-                  <Scan className="h-4 w-4 mr-2" />
-                  {t.scanBarcode}
-                </Button>
-                <Button className="bg-green-600 hover:bg-green-700">
-                  <Package className="h-4 w-4 mr-2" />
-                  {t.reorderMedicine}
-                </Button>
-              </div>
-            </div>
-
-            <div className="grid gap-4">
-              {stockData.map((item, index) => (
-                <Card
-                  key={index}
-                  className={`border-l-4 ${
-                    item.status === "critical"
-                      ? "border-red-500"
-                      : item.status === "low"
-                        ? "border-orange-500"
-                        : "border-green-500"
-                  }`}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-semibold">{item.medicine}</h3>
-                        <p className="text-sm text-gray-600">
-                          {language === "en" ? "Last ordered:" : "Ya bofelo e odarilwe:"} {item.lastOrdered}
+                      <div className="flex-1">
+                        <h3 className="font-bold text-slate-100">{item.item}</h3>
+                        <p className="text-sm text-slate-400 flex items-center gap-1 mt-1">
+                          <MapPin className="h-3 w-3" /> {item.facilityName}
                         </p>
-                      </div>
-                      <div className="text-right">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`text-lg font-bold ${
-                              item.status === "critical"
-                                ? "text-red-600"
-                                : item.status === "low"
-                                  ? "text-orange-600"
-                                  : "text-green-600"
-                            }`}
-                          >
-                            {item.current}
-                          </span>
-                          <span className="text-gray-500">/ {item.minimum}</span>
-                        </div>
-                        <Badge
-                          variant={
-                            item.status === "critical" ? "destructive" : item.status === "low" ? "secondary" : "default"
-                          }
-                        >
-                          {item.status === "critical"
-                            ? language === "en"
-                              ? "Critical"
-                              : "Botlhokwa"
-                            : item.status === "low"
-                              ? language === "en"
-                                ? "Low"
-                                : "Kwa tlase"
-                              : language === "en"
-                                ? "Good"
-                                : "Siame"}
-                        </Badge>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="patients" className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">{t.patientRecords}</h2>
-              <div className="flex gap-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input placeholder={t.searchPatients} className="pl-10 w-64" />
-                </div>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  {language === "en" ? "New Patient" : "Molwetse o Moša"}
-                </Button>
-              </div>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    {language === "en" ? "Recent Patients" : "Balwetse ba Bosheng"}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {[
-                      { name: "Mma Boitumelo", id: "BW123456", lastVisit: "2024-01-10", condition: "Hypertension" },
-                      { name: "Rra Kagiso", id: "BW789012", lastVisit: "2024-01-09", condition: "Diabetes" },
-                      { name: "Mma Naledi", id: "BW345678", lastVisit: "2024-01-08", condition: "Pregnancy Check" },
-                      { name: "Rra Thabo", id: "BW901234", lastVisit: "2024-01-07", condition: "Chest Pain" },
-                    ].map((patient, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
-                        <div>
-                          <p className="font-medium">{patient.name}</p>
-                          <p className="text-sm text-gray-600">
-                            {patient.id} • {patient.condition}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm text-gray-500">{patient.lastVisit}</p>
-                          <Button variant="outline" size="sm">
-                            {language === "en" ? "View" : "Bona"}
+                        <div className="mt-4 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${item.status === "In Stock" || item.status === "Available" || item.status === "On Duty" ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-rose-500"}`} />
+                            <span className="text-xs font-semibold text-slate-300">{item.status}</span>
+                            {item.qty > 1 && <span className="text-xs text-slate-500">({item.qty} units)</span>}
+                          </div>
+                          <Button size="sm" onClick={() => handleAction(item)} className="bg-slate-800 hover:bg-blue-600 text-xs border-none h-8">
+                            {item.type === "medicine" ? t.requestTransfer : item.type === "equipment" ? t.bookEquipment : t.contactSpecialist}
                           </Button>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Activity className="h-5 w-5" />
-                    {t.ruralPatients}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="p-3 rounded-lg bg-blue-50 border-l-4 border-blue-500">
-                      <p className="font-medium">
-                        {language === "en" ? "CHW Assisted Bookings" : "Dikopano tse di Thusitsweng ke CHW"}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        {language === "en"
-                          ? "15 appointments booked via Community Health Workers this week"
-                          : "Dikopano di le 15 tse di beelwang ka CHW beke eno"}
-                      </p>
-                    </div>
-                    <div className="p-3 rounded-lg bg-green-50 border-l-4 border-green-500">
-                      <p className="font-medium">{language === "en" ? "USSD Access" : "Phitlhelelo ya USSD"}</p>
-                      <p className="text-sm text-gray-600">
-                        {language === "en"
-                          ? "23 patients accessed services via USSD today"
-                          : "Balwetse ba 23 ba dirisitse USSD gompieno"}
-                      </p>
-                    </div>
-                    <div className="p-3 rounded-lg bg-purple-50 border-l-4 border-purple-500">
-                      <p className="font-medium">
-                        {language === "en" ? "Transport Arranged" : "Dipalangwa di Rulagantse"}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        {language === "en"
-                          ? "8 rural patients have transport arranged for specialist visits"
-                          : "Balwetse ba 8 ba magae ba na le dipalangwa tsa go ya go dingaka"}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="equipment" className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">Medical Equipment Status</h2>
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                <Activity className="h-4 w-4 mr-2" />
-                Schedule Maintenance
-              </Button>
-            </div>
-
-            <div className="grid gap-4">
-              {equipmentStatus.map((item, index) => (
-                <Card
-                  key={index}
-                  className={`border-l-4 ${
-                    item.status === "operational"
-                      ? "border-green-500"
-                      : item.status === "maintenance"
-                        ? "border-red-500"
-                        : "border-orange-500"
-                  }`}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-semibold">{item.equipment}</h3>
-                        <p className="text-sm text-gray-600">
-                          Uptime: {item.uptime} • Bookings today: {item.bookingsToday}
-                        </p>
-                        <p className="text-sm text-gray-500">Last maintenance: {item.lastMaintenance}</p>
-                      </div>
-                      <div className="text-right">
-                        <Badge variant={item.status === "operational" ? "default" : "destructive"}>
-                          {item.status === "operational" ? "Operational" : "Maintenance"}
-                        </Badge>
-                        <p className="text-sm text-gray-500 mt-1">Next: {item.nextMaintenance}</p>
-                      </div>
                     </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
+          )}
+        </div>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="bg-slate-900 border border-slate-800 p-1 w-full md:w-auto h-auto grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
+            <TabsTrigger value="radar" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white py-2 px-6">{t.radar}</TabsTrigger>
+            <TabsTrigger value="inventory" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white py-2 px-6">{t.inventory}</TabsTrigger>
+            <TabsTrigger value="equipment" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white py-2 px-6">{t.equipment}</TabsTrigger>
+            <TabsTrigger value="specialists" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white py-2 px-6">{t.specialists}</TabsTrigger>
+            <TabsTrigger value="tasks" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white py-2 px-6 relative">
+              {t.tasks}
+              {tasks.filter(tk => tk.status === "pending").length > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-4 w-4 bg-blue-500 text-[10px] items-center justify-center font-bold text-white">
+                    {tasks.filter(tk => tk.status === "pending").length}
+                  </span>
+                </span>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="radar" className="space-y-6 animate-in fade-in duration-500">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <Card className="lg:col-span-2 bg-slate-900 border-slate-800">
+                <CardHeader>
+                  <CardTitle className="text-slate-100 flex items-center gap-2">
+                    <Globe className="h-5 w-5 text-blue-500" />
+                    Operational Overview Map
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="aspect-video bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-center relative overflow-hidden">
+                    <div className="absolute inset-0 opacity-10 bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+                    <div className="z-10 text-center">
+                      <Globe className="h-20 w-20 text-slate-800 mb-4 mx-auto" strokeWidth={0.5} />
+                      <p className="text-slate-500 font-medium font-mono text-xs tracking-widest uppercase">Initializing Radar Array...</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-slate-900 border-slate-800">
+                <CardHeader>
+                  <CardTitle className="text-slate-100 text-sm font-bold uppercase tracking-wider">{language === "en" ? "Recent Network Activity" : "Ditiro tsa Network tsa Bosheng"}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {tasks.slice(0, 5).map((tk, idx) => (
+                    <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-slate-950/50 border border-slate-800/50 hover:bg-slate-800/40 transition-colors underline-offset-4 cursor-default">
+                      <div className={`p-2 rounded-full ${tk.type === "transfer_request" ? "bg-purple-500/20 text-purple-400" : "bg-emerald-500/20 text-emerald-400"}`}>
+                        {tk.type === "transfer_request" ? <Truck className="h-4 w-4" /> : <Calendar className="h-4 w-4" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold truncate text-slate-200">{tk.payload.item}</p>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">Origin: {tk.fromFacility}</p>
+                      </div>
+                      <Badge variant="outline" className={`text-[9px] font-bold uppercase tracking-wider ${tk.status === "pending" ? "border-blue-500/50 text-blue-400" : "border-slate-800 text-slate-600"}`}>
+                        {tk.status}
+                      </Badge>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
-          <TabsContent value="sms" className="space-y-6">
+          <TabsContent value="tasks" className="space-y-6 animate-in fade-in duration-300">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">{t.smsNotifications}</h2>
-              <Button className="bg-purple-600 hover:bg-purple-700">
-                <MessageSquare className="h-4 w-4 mr-2" />
-                {language === "en" ? "Send SMS" : "Romela SMS"}
-              </Button>
+              <h2 className="text-2xl font-bold text-slate-100">Regional Coordination Desk</h2>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>{language === "en" ? "Recent SMS Activity" : "Ditiro tsa SMS tsa Bosheng"}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {smsQueue.map((sms) => (
-                      <div key={sms.id} className="flex items-start gap-3 p-3 rounded-lg bg-gray-50">
-                        <div
-                          className={`w-2 h-2 rounded-full mt-2 ${
-                            sms.status === "sent" ? "bg-green-500" : "bg-orange-500"
-                          }`}
-                        />
-                        <div className="flex-1">
-                          <p className="font-medium text-sm">{sms.patient}</p>
-                          <p className="text-sm text-gray-600">{sms.message}</p>
-                          <p className="text-xs text-gray-500">{sms.time}</p>
+            <div className="grid gap-4">
+              {tasks.length === 0 ? (
+                <div className="py-20 text-center bg-slate-900 rounded-xl border border-slate-800 border-dashed">
+                  <Activity className="h-12 w-12 text-slate-800 mx-auto mb-4" strokeWidth={1} />
+                  <p className="text-slate-500">No active resource requests at this time.</p>
+                </div>
+              ) : (
+                tasks.map((task) => (
+                  <Card key={task.id} className="bg-slate-900 border-slate-800 border-l-4 border-l-blue-600 hover:bg-slate-800/50 transition-colors shadow-lg shadow-slate-950/20">
+                    <CardContent className="p-5">
+                      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                        <div className="flex items-center gap-8">
+                          <div className="text-center w-24">
+                            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{new Date(task.createdAt).toLocaleDateString()}</div>
+                            <div className="text-lg font-bold text-blue-400 tabular-nums">{new Date(task.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                          </div>
+                          <div className="hidden md:block h-12 w-px bg-slate-800" />
+                          <div>
+                            <div className="flex items-center gap-3">
+                              <h3 className="font-bold text-slate-100 text-lg">{task.payload.item}</h3>
+                              <Badge className="bg-slate-950 text-[10px] h-5 border-slate-800">{task.payload.qty} UNITS</Badge>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-slate-400 mt-1">
+                              <MapPin className="h-3 w-3 text-slate-600" />
+                              <span className="font-medium text-slate-300">{task.fromFacility}</span>
+                              <ArrowRight className="h-3 w-3 text-slate-600" />
+                              <span className="font-medium text-slate-300">{task.toFacility}</span>
+                            </div>
+                          </div>
                         </div>
-                        <Badge variant={sms.status === "sent" ? "default" : "secondary"}>
-                          {sms.status === "sent"
-                            ? language === "en"
-                              ? "Sent"
-                              : "E rometswe"
-                            : language === "en"
-                              ? "Pending"
-                              : "E emetse"}
+                        <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+                          <Badge className={`${
+                            task.status === "pending" ? "bg-amber-500/10 text-amber-500 border-amber-500/20" : 
+                            task.status === "approved" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-slate-800 text-slate-500"
+                          } font-bold px-3 py-1 border`}>
+                            {task.status.toUpperCase()}
+                          </Badge>
+                          <div className="flex gap-2">
+                            {task.status === "pending" && (
+                              <>
+                                <Button variant="ghost" size="sm" className="text-rose-500 hover:text-rose-400 hover:bg-rose-500/5 h-9 font-bold" onClick={() => updateTaskStatus(task.id, "cancelled")}>Deny</Button>
+                                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 h-9 font-bold px-4" onClick={() => updateTaskStatus(task.id, "approved")}>Approve</Button>
+                              </>
+                            )}
+                            {task.status === "approved" && (
+                              <Button size="sm" className="bg-blue-600 hover:bg-blue-500 h-9 font-bold px-4" onClick={() => updateTaskStatus(task.id, "in-transit")}>Dispatch</Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="inventory" className="animate-in fade-in duration-300">
+             <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold flex items-center gap-2">
+                   <Package className="h-6 w-6 text-blue-500" /> Local Unit Inventory
+                </h2>
+                <Button className="bg-blue-600 hover:bg-blue-500">
+                  <Plus className="h-4 w-4 mr-2" /> Adjust Stock
+                </Button>
+             </div>
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {localFacility && Object.entries(localFacility.stock).map(([med, qty]: [string, any], idx) => (
+                  <Card key={idx} className="bg-slate-900 border-slate-800">
+                    <CardContent className="p-5">
+                      <div className="flex justify-between items-start mb-4">
+                        <p className="font-bold text-slate-100 text-lg">{med}</p>
+                        <Badge variant={Number(qty) < 50 ? "destructive" : "secondary"} className="bg-slate-950 font-bold">
+                          {qty} units
                         </Badge>
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                      <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                        <div className={`h-full ${Number(qty) < 50 ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]' : 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.4)]'}`} style={{ width: `${Math.min(100, Number(qty) * 2)}%` }} />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+             </div>
+          </TabsContent>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>{t.ussdAccess}</CardTitle>
-                  <CardDescription>
-                    {language === "en"
-                      ? "USSD code: *123*4# for basic health services"
-                      : "Khoutu ya USSD: *123*4# ya ditirelo tsa motheo tsa boitekanelo"}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="p-4 rounded-lg border bg-gray-50">
-                      <h4 className="font-medium mb-2">
-                        {language === "en" ? "USSD Menu Structure" : "Thulaganyo ya Menu ya USSD"}
-                      </h4>
-                      <div className="text-sm space-y-1 font-mono">
-                        <div>1. {language === "en" ? "Check Appointment" : "Tlhola Kopano"}</div>
-                        <div>2. {language === "en" ? "Medicine Collection" : "Go Tsaya Dihlare"}</div>
-                        <div>3. {language === "en" ? "Emergency Contact" : "Mogala wa Maemo a a Maswe"}</div>
-                        <div>4. {language === "en" ? "Health Tips" : "Dikgakololo tsa Boitekanelo"}</div>
-                        <div>5. {language === "en" ? "Facility Locations" : "Mafelo a Boitekanelo"}</div>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 text-center">
-                      <div className="p-3 rounded-lg bg-blue-50">
-                        <div className="text-2xl font-bold text-blue-600">156</div>
-                        <div className="text-sm text-gray-600">
-                          {language === "en" ? "USSD Sessions Today" : "Dithulaganyo tsa USSD Gompieno"}
+          <TabsContent value="equipment" className="animate-in fade-in duration-300">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <Activity className="h-6 w-6 text-blue-500" /> Unit Equipment Status
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {localFacility && Object.entries(localFacility.equipment).map(([name, status]: [string, any], idx) => (
+                  <Card key={idx} className="bg-slate-900 border-slate-800 overflow-hidden group">
+                    <CardContent className="p-5">
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 bg-slate-950 rounded-xl text-blue-400 group-hover:scale-110 transition-transform">
+                          <Activity className="h-6 w-6" />
                         </div>
-                      </div>
-                      <div className="p-3 rounded-lg bg-green-50">
-                        <div className="text-2xl font-bold text-green-600">89%</div>
-                        <div className="text-sm text-gray-600">
-                          {language === "en" ? "Success Rate" : "Seelo sa Katlego"}
+                        <div className="flex-1">
+                          <h3 className="font-bold text-slate-100">{name}</h3>
+                          <div className="flex items-center gap-2 mt-2">
+                             <div className={`w-2 h-2 rounded-full ${status === 'available' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-amber-500'}`} />
+                             <span className="text-xs font-bold uppercase tracking-wider text-slate-400">{status}</span>
+                          </div>
                         </div>
+                        <Button variant="outline" size="sm" className="border-slate-800 hover:bg-slate-800">Maintain</Button>
                       </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                    </CardContent>
+                  </Card>
+                ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="specialists" className="animate-in fade-in duration-300">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <Users className="h-6 w-6 text-blue-500" /> Specialist Roster
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {localFacility && Object.entries(localFacility.specialists).map(([name, status]: [string, any], idx) => (
+                  <Card key={idx} className="bg-slate-900 border-slate-800 group relative">
+                    <CardContent className="p-6 text-center">
+                       <div className="w-20 h-20 bg-slate-950 rounded-full mx-auto mb-4 flex items-center justify-center border-2 border-slate-800 group-hover:border-blue-500/50 transition-colors">
+                          <Users className="h-10 w-10 text-slate-700" />
+                       </div>
+                       <h3 className="font-bold text-slate-100 text-lg mb-1">{name}</h3>
+                       <Badge className={`${status === 'available' ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-slate-800 text-slate-500'} font-bold uppercase text-[9px] tracking-widest`}>
+                          {status === 'available' ? 'Active on Station' : status}
+                       </Badge>
+                       <div className="mt-6 flex justify-center gap-2">
+                          <Button size="icon" variant="ghost" className="rounded-full hover:bg-blue-600/10 hover:text-blue-400 h-10 w-10"><Phone className="h-4 w-4" /></Button>
+                          <Button size="icon" variant="ghost" className="rounded-full hover:bg-blue-600/10 hover:text-blue-400 h-10 w-10"><MessageSquare className="h-4 w-4" /></Button>
+                       </div>
+                    </CardContent>
+                  </Card>
+                ))}
             </div>
           </TabsContent>
         </Tabs>

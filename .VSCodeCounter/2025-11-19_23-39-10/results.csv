@@ -1,0 +1,47 @@
+"filename", "language", "JSON with Comments", "TypeScript", "JSON", "JavaScript", "Markdown", "XML", "PostCSS", "TypeScript JSX", "YAML", "comment", "blank", "total"
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\README.md", "Markdown", 0, 0, 0, 0, 18, 0, 0, 0, 0, 0, 13, 31
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\admin\dashboard\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 422, 0, 6, 24, 452
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\chw\dashboard\loading.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 1, 4
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\chw\dashboard\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 47, 0, 0, 6, 53
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\cms\dashboard\loading.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 1, 4
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\cms\dashboard\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 813, 0, 11, 31, 855
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\doctor\components\availability-suggestion.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 172, 0, 7, 16, 195
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\doctor\dashboard\loading.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 1, 4
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\doctor\dashboard\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 884, 0, 15, 38, 937
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\facility\dashboard\loading.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 1, 4
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\facility\dashboard\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 626, 0, 2, 27, 655
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\globals.css", "PostCSS", 0, 0, 0, 0, 0, 0, 89, 0, 0, 0, 4, 93
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\layout.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 22, 0, 0, 4, 26
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\login\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 215, 0, 2, 16, 233
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\nurse\dashboard\loading.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 1, 4
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\nurse\dashboard\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 408, 0, 8, 26, 442
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 322, 0, 7, 18, 347
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\pharmacist\dashboard\loading.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 1, 4
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\pharmacist\dashboard\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 843, 0, 33, 45, 921
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\components.json", "JSON", 0, 0, 21, 0, 0, 0, 0, 0, 0, 0, 1, 22
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\components\care-coordination.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 286, 0, 2, 19, 307
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\components\medicine-availability.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 99, 0, 3, 11, 113
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\components\mock-service.ts", "TypeScript", 0, 154, 0, 0, 0, 0, 0, 0, 0, 4, 17, 175
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\components\stock-management.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 318, 0, 4, 19, 341
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\components\theme-provider.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 3, 12
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\components\ui\badge.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 31, 0, 0, 6, 37
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\components\ui\button.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 51, 0, 0, 6, 57
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\components\ui\card.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 71, 0, 0, 9, 80
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\components\ui\dialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 130, 0, 0, 14, 144
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\components\ui\input.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 19, 0, 0, 4, 23
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\components\ui\label.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 6, 27
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\components\ui\select.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 146, 0, 0, 15, 161
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\components\ui\tabs.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 48, 0, 0, 8, 56
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\components\ui\toast.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 116, 0, 0, 14, 130
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\components\ui\use-toast.ts", "TypeScript", 0, 157, 0, 0, 0, 0, 0, 0, 0, 3, 32, 192
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\lib\utils.ts", "TypeScript", 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 2, 7
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\next.config.mjs", "JavaScript", 0, 0, 0, 12, 0, 0, 0, 0, 0, 1, 2, 15
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\package.json", "JSON", 0, 0, 73, 0, 0, 0, 0, 0, 0, 0, 0, 73
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\pnpm-lock.yaml", "YAML", 0, 0, 0, 0, 0, 0, 0, 0, 3635, 0, 728, 4363
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\postcss.config.mjs", "JavaScript", 0, 0, 0, 7, 0, 0, 0, 0, 0, 1, 2, 10
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\public\placeholder-logo.svg", "XML", 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\public\placeholder.svg", "XML", 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\styles\globals.css", "PostCSS", 0, 0, 0, 0, 0, 0, 89, 0, 0, 0, 4, 93
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\tailwind.config.ts", "TypeScript", 0, 95, 0, 0, 0, 0, 0, 0, 0, 1, 3, 99
+"c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\tsconfig.json", "JSON with Comments", 27, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 28
+"Total", "-", 27, 411, 94, 19, 18, 2, 178, 6137, 3635, 110, 1200, 11831

@@ -1,0 +1,102 @@
+Date : 2025-11-19 23:39:10
+Directory : c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1
+Total : 45 files,  10521 codes, 110 comments, 1200 blanks, all 11831 lines
+
+Languages
++--------------------+------------+------------+------------+------------+------------+
+| language           | files      | code       | comment    | blank      | total      |
++--------------------+------------+------------+------------+------------+------------+
+| TypeScript JSX     |         30 |      6,137 |        100 |        391 |      6,628 |
+| YAML               |          1 |      3,635 |          0 |        728 |      4,363 |
+| TypeScript         |          4 |        411 |          8 |         54 |        473 |
+| PostCSS            |          2 |        178 |          0 |          8 |        186 |
+| JSON               |          2 |         94 |          0 |          1 |         95 |
+| JSON with Comments |          1 |         27 |          0 |          1 |         28 |
+| JavaScript         |          2 |         19 |          2 |          4 |         25 |
+| Markdown           |          1 |         18 |          0 |         13 |         31 |
+| XML                |          2 |          2 |          0 |          0 |          2 |
++--------------------+------------+------------+------------+------------+------------+
+
+Directories
++---------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                                                | files      | code       | comment    | blank      | total      |
++---------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                                                   |         45 |     10,521 |        110 |      1,200 |     11,831 |
+| . (Files)                                                                                                           |          8 |      3,888 |          3 |        750 |      4,641 |
+| app                                                                                                                 |         18 |      4,881 |         91 |        261 |      5,233 |
+| app (Files)                                                                                                         |          3 |        433 |          7 |         26 |        466 |
+| app\admin                                                                                                           |          1 |        422 |          6 |         24 |        452 |
+| app\admin\dashboard                                                                                                 |          1 |        422 |          6 |         24 |        452 |
+| app\chw                                                                                                             |          2 |         50 |          0 |          7 |         57 |
+| app\chw\dashboard                                                                                                   |          2 |         50 |          0 |          7 |         57 |
+| app\cms                                                                                                             |          2 |        816 |         11 |         32 |        859 |
+| app\cms\dashboard                                                                                                   |          2 |        816 |         11 |         32 |        859 |
+| app\doctor                                                                                                          |          3 |      1,059 |         22 |         55 |      1,136 |
+| app\doctor\components                                                                                               |          1 |        172 |          7 |         16 |        195 |
+| app\doctor\dashboard                                                                                                |          2 |        887 |         15 |         39 |        941 |
+| app\facility                                                                                                        |          2 |        629 |          2 |         28 |        659 |
+| app\facility\dashboard                                                                                              |          2 |        629 |          2 |         28 |        659 |
+| app\login                                                                                                           |          1 |        215 |          2 |         16 |        233 |
+| app\nurse                                                                                                           |          2 |        411 |          8 |         27 |        446 |
+| app\nurse\dashboard                                                                                                 |          2 |        411 |          8 |         27 |        446 |
+| app\pharmacist                                                                                                      |          2 |        846 |         33 |         46 |        925 |
+| app\pharmacist\dashboard                                                                                            |          2 |        846 |         33 |         46 |        925 |
+| components                                                                                                          |         15 |      1,656 |         16 |        183 |      1,855 |
+| components (Files)                                                                                                  |          5 |        866 |         13 |         69 |        948 |
+| components\ui                                                                                                       |         10 |        790 |          3 |        114 |        907 |
+| lib                                                                                                                 |          1 |          5 |          0 |          2 |          7 |
+| public                                                                                                              |          2 |          2 |          0 |          0 |          2 |
+| styles                                                                                                              |          1 |         89 |          0 |          4 |         93 |
++---------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++---------------------------------------------------------------------------------------------------------------------+--------------------+------------+------------+------------+------------+
+| filename                                                                                                            | language           | code       | comment    | blank      | total      |
++---------------------------------------------------------------------------------------------------------------------+--------------------+------------+------------+------------+------------+
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\README.md                                         | Markdown           |         18 |          0 |         13 |         31 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\admin\dashboard\page.tsx                      | TypeScript JSX     |        422 |          6 |         24 |        452 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\chw\dashboard\loading.tsx                     | TypeScript JSX     |          3 |          0 |          1 |          4 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\chw\dashboard\page.tsx                        | TypeScript JSX     |         47 |          0 |          6 |         53 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\cms\dashboard\loading.tsx                     | TypeScript JSX     |          3 |          0 |          1 |          4 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\cms\dashboard\page.tsx                        | TypeScript JSX     |        813 |         11 |         31 |        855 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\doctor\components\availability-suggestion.tsx | TypeScript JSX     |        172 |          7 |         16 |        195 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\doctor\dashboard\loading.tsx                  | TypeScript JSX     |          3 |          0 |          1 |          4 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\doctor\dashboard\page.tsx                     | TypeScript JSX     |        884 |         15 |         38 |        937 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\facility\dashboard\loading.tsx                | TypeScript JSX     |          3 |          0 |          1 |          4 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\facility\dashboard\page.tsx                   | TypeScript JSX     |        626 |          2 |         27 |        655 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\globals.css                                   | PostCSS            |         89 |          0 |          4 |         93 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\layout.tsx                                    | TypeScript JSX     |         22 |          0 |          4 |         26 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\login\page.tsx                                | TypeScript JSX     |        215 |          2 |         16 |        233 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\nurse\dashboard\loading.tsx                   | TypeScript JSX     |          3 |          0 |          1 |          4 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\nurse\dashboard\page.tsx                      | TypeScript JSX     |        408 |          8 |         26 |        442 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\page.tsx                                      | TypeScript JSX     |        322 |          7 |         18 |        347 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\pharmacist\dashboard\loading.tsx              | TypeScript JSX     |          3 |          0 |          1 |          4 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\app\pharmacist\dashboard\page.tsx                 | TypeScript JSX     |        843 |         33 |         45 |        921 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\components.json                                   | JSON               |         21 |          0 |          1 |         22 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\components\care-coordination.tsx                  | TypeScript JSX     |        286 |          2 |         19 |        307 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\components\medicine-availability.tsx              | TypeScript JSX     |         99 |          3 |         11 |        113 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\components\mock-service.ts                        | TypeScript         |        154 |          4 |         17 |        175 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\components\stock-management.tsx                   | TypeScript JSX     |        318 |          4 |         19 |        341 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\components\theme-provider.tsx                     | TypeScript JSX     |          9 |          0 |          3 |         12 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\components\ui\badge.tsx                           | TypeScript JSX     |         31 |          0 |          6 |         37 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\components\ui\button.tsx                          | TypeScript JSX     |         51 |          0 |          6 |         57 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\components\ui\card.tsx                            | TypeScript JSX     |         71 |          0 |          9 |         80 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\components\ui\dialog.tsx                          | TypeScript JSX     |        130 |          0 |         14 |        144 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\components\ui\input.tsx                           | TypeScript JSX     |         19 |          0 |          4 |         23 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\components\ui\label.tsx                           | TypeScript JSX     |         21 |          0 |          6 |         27 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\components\ui\select.tsx                          | TypeScript JSX     |        146 |          0 |         15 |        161 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\components\ui\tabs.tsx                            | TypeScript JSX     |         48 |          0 |          8 |         56 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\components\ui\toast.tsx                           | TypeScript JSX     |        116 |          0 |         14 |        130 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\components\ui\use-toast.ts                        | TypeScript         |        157 |          3 |         32 |        192 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\lib\utils.ts                                      | TypeScript         |          5 |          0 |          2 |          7 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\next.config.mjs                                   | JavaScript         |         12 |          1 |          2 |         15 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\package.json                                      | JSON               |         73 |          0 |          0 |         73 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\pnpm-lock.yaml                                    | YAML               |      3,635 |          0 |        728 |      4,363 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\postcss.config.mjs                                | JavaScript         |          7 |          1 |          2 |         10 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\public\placeholder-logo.svg                       | XML                |          1 |          0 |          0 |          1 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\public\placeholder.svg                            | XML                |          1 |          0 |          0 |          1 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\styles\globals.css                                | PostCSS            |         89 |          0 |          4 |         93 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\tailwind.config.ts                                | TypeScript         |         95 |          1 |          3 |         99 |
+| c:\Users\User\Documents\MyProjects\beats\beats-health-platform-v1\tsconfig.json                                     | JSON with Comments |         27 |          0 |          1 |         28 |
+| Total                                                                                                               |                    |     10,521 |        110 |      1,200 |     11,831 |
++---------------------------------------------------------------------------------------------------------------------+--------------------+------------+------------+------------+------------+
