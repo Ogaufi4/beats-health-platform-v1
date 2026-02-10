@@ -25,6 +25,7 @@ import {
   LogOut,
   Search,
   Scan,
+  Plus,
   Phone,
   MessageSquare,
   Activity,

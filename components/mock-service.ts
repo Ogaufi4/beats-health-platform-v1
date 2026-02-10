@@ -26,6 +26,7 @@ type Task = {
 const STORAGE_KEYS = {
   FACILITIES: "mock:facilities",
   TASKS: "mock:tasks",
+  PATIENTS: "mock:patients",
 };
 
 
@@ -45,6 +46,7 @@ const defaultFacilities: Facility[] = [
       Cardiologist: "available",
       Radiographer: "busy",
       Dentist: "available",
+      "General Practitioner": "available",
     },
     mapUrl: "https://maps.google.com/?q=Princess+Marina+Hospital",
   },
@@ -78,6 +80,31 @@ const defaultFacilities: Facility[] = [
   },
 ];
 
+const defaultPatients = [
+  {
+    id: "BW123456",
+    name: "Mma Boitumelo",
+    age: 58,
+    room: "Ward 3B, Bed 4",
+    condition: "Post-op Cardiac",
+    nextMed: "10:30 AM – Aspirin",
+    vitals: { bp: "128/82", hr: 76, temp: "36.8°C", spo2: "98%" },
+    alerts: [],
+    complaint: "Recovery"
+  },
+  {
+    id: "BW789012",
+    name: "Rra Kagiso",
+    age: 62,
+    room: "Ward 3B, Bed 2",
+    condition: "Heart Failure",
+    nextMed: "09:00 AM – Furosemide",
+    vitals: { bp: "142/90", hr: 88, temp: "37.1°C", spo2: "94%" },
+    alerts: ["High BP", "Low SpO₂"],
+    complaint: "Shortness of breath"
+  }
+];
+
 const evtTarget = new EventTarget();
 
 function read<T>(key: string, fallback: T): T {
@@ -103,6 +130,29 @@ export function initMock() {
   if (!localStorage.getItem(STORAGE_KEYS.TASKS)) {
     write(STORAGE_KEYS.TASKS, []);
   }
+  if (!localStorage.getItem(STORAGE_KEYS.PATIENTS)) {
+    write(STORAGE_KEYS.PATIENTS, defaultPatients);
+  }
+}
+
+export async function getPatients(): Promise<any[]> {
+  initMock();
+  const p = read<any[]>(STORAGE_KEYS.PATIENTS, defaultPatients);
+  return delay(p);
+}
+
+export async function addPatient(patient: any): Promise<any> {
+  initMock();
+  const patients = read<any[]>(STORAGE_KEYS.PATIENTS, defaultPatients);
+  const newP = {
+    id: "BW" + Math.floor(Math.random() * 899999 + 100000),
+    ...patient,
+    vitals: { bp: "120/80", hr: 72, temp: "36.6°C", spo2: "98%" },
+    alerts: []
+  };
+  patients.unshift(newP);
+  write(STORAGE_KEYS.PATIENTS, patients);
+  return delay(newP);
 }
 
 /** Simulate network latency */
