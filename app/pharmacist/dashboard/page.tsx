@@ -105,7 +105,7 @@ export default function PharmacistDashboard() {
     setLoading(false)
   }
 
-  const handleRequestTransfer = async (item: any) => {
+  const handleRequestTransfer = async (item: { facilityId: string; item: string; facilityName: string }) => {
     await addTask({
       type: "transfer_request",
       fromFacility: item.facilityId,
@@ -125,9 +125,9 @@ export default function PharmacistDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-100">
+    <div className="min-h-screen bg-gray-50 text-slate-900">
       {/* Premium Dashboard Header */}
-      <header className="border-b border-slate-800 bg-slate-900/40 backdrop-blur-xl sticky top-0 z-50">
+      <header className="border-b bg-white backdrop-blur-md sticky top-0 z-50">
         <div className="px-6 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -135,7 +135,7 @@ export default function PharmacistDashboard() {
                 <Pill className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-bold tracking-tight">{t.title}</h1>
+                <h1 className="text-lg font-bold tracking-tight text-slate-900">{t.title}</h1>
                 <p className="text-[10px] font-bold text-purple-400 uppercase tracking-[0.2em] flex items-center gap-1">
                   <ShieldCheck className="h-3 w-3" />
                   {t.subtitle}
@@ -143,7 +143,7 @@ export default function PharmacistDashboard() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="px-3 py-1 bg-slate-800/50 rounded-full border border-slate-700/50 flex items-center gap-2">
+              <div className="px-3 py-1 bg-slate-100 rounded-full border border-slate-200 flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">CMS Link Active</span>
               </div>
@@ -166,7 +166,7 @@ export default function PharmacistDashboard() {
       <main className="p-6 max-w-7xl mx-auto">
         {/* Quick Stats Banner */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card className="bg-slate-900/50 border-slate-800 shadow-xl shadow-slate-950/20">
+          <Card className="bg-white border-slate-200 shadow-sm">
             <CardContent className="p-4 flex items-center gap-4">
               <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400"><Database className="h-5 w-5" /></div>
               <div>
@@ -175,7 +175,7 @@ export default function PharmacistDashboard() {
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-slate-900/50 border-slate-800 shadow-xl shadow-slate-950/20">
+          <Card className="bg-white border-slate-200 shadow-sm">
             <CardContent className="p-4 flex items-center gap-4">
               <div className="p-2 bg-amber-500/10 rounded-lg text-amber-400"><AlertTriangle className="h-5 w-5" /></div>
               <div>
@@ -184,7 +184,7 @@ export default function PharmacistDashboard() {
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-slate-900/50 border-slate-800 shadow-xl shadow-slate-950/20">
+          <Card className="bg-white border-slate-200 shadow-sm">
             <CardContent className="p-4 flex items-center gap-4">
               <div className="p-2 bg-purple-500/10 rounded-lg text-purple-400"><Truck className="h-5 w-5" /></div>
               <div>
@@ -193,7 +193,7 @@ export default function PharmacistDashboard() {
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-slate-900/50 border-slate-800 shadow-xl shadow-slate-950/20">
+          <Card className="bg-white border-slate-200 shadow-sm">
             <CardContent className="p-4 flex items-center gap-4">
               <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-400"><TrendingUp className="h-5 w-5" /></div>
               <div>
@@ -205,7 +205,7 @@ export default function PharmacistDashboard() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="bg-slate-900 border border-slate-800 p-1 w-full md:w-auto overflow-x-auto justify-start">
+          <TabsList className="bg-white border border-slate-200 p-1 w-full md:w-auto overflow-x-auto justify-start">
             <TabsTrigger value="inventory" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white px-6">
               {t.inventory}
             </TabsTrigger>
@@ -229,10 +229,10 @@ export default function PharmacistDashboard() {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-2xl font-bold flex items-center gap-2">
-                  <Database className="h-6 w-6 text-purple-500" />
+                  <Database className="h-6 w-6 text-purple-600" />
                   Local Station Stock
                 </h2>
-                <p className="text-slate-400 text-sm">Real-time inventory for Station 01</p>
+                <p className="text-slate-500 text-sm">Real-time inventory for Station 01</p>
               </div>
               <Button className="bg-purple-600 hover:bg-purple-500 shadow-lg shadow-purple-600/20">
                 <Plus className="h-4 w-4 mr-2" /> Adjust Stock
@@ -241,19 +241,19 @@ export default function PharmacistDashboard() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {localInventory.map((item, idx) => (
-                <Card key={idx} className="bg-slate-900 border-slate-800 hover:border-slate-700 transition-colors group overflow-hidden">
+                <Card key={idx} className="bg-white border-slate-200 hover:border-purple-500/50 transition-all group overflow-hidden shadow-sm">
                   <div className="absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 bg-purple-600/5 rounded-full blur-2xl group-hover:bg-purple-600/10 transition-colors" />
                   <CardContent className="p-5 relative">
                     <div className="flex justify-between items-start mb-4">
                       <div>
-                        <p className="font-bold text-slate-100 text-lg">{item.med}</p>
+                        <p className="font-bold text-slate-900 text-lg">{item.med}</p>
                         <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mt-1">Dispensing Station A</p>
                       </div>
-                      <Badge variant={item.qty < 50 ? "destructive" : "secondary"} className={`${item.qty < 50 ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'} px-2 py-0.5`}>
+                      <Badge variant={item.qty < 50 ? "destructive" : "secondary"} className={`${item.qty < 50 ? 'bg-rose-50 text-rose-600 border-rose-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'} px-2 py-0.5`}>
                         {item.qty} units
                       </Badge>
                     </div>
-                    <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                    <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
                       <div className={`h-full ${item.qty < 50 ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]' : 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]'}`} style={{ width: `${Math.min(100, item.qty / 2)}%` }} />
                     </div>
                     <div className="flex justify-between items-center mt-4">
@@ -278,7 +278,7 @@ export default function PharmacistDashboard() {
             <div className="relative group max-w-2xl">
               <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 group-focus-within:text-purple-400 transition-colors" />
               <Input 
-                className="pl-12 py-6 bg-slate-900 border-slate-800 text-lg rounded-xl focus:ring-purple-500/50 transition-all border-2"
+                className="pl-12 py-6 bg-white border-slate-200 text-lg rounded-xl focus:ring-purple-500/50 transition-all border-2 shadow-sm text-slate-900"
                 placeholder={t.searchPlaceholder}
                 value={searchQuery}
                 onKeyDown={(e) => e.key === 'Enter' && handleNetworkSearch()}
@@ -291,18 +291,18 @@ export default function PharmacistDashboard() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4">
               {networkResults.map((item, idx) => (
-                <Card key={idx} className="bg-slate-900 border-slate-800 hover:border-purple-500/50 transition-all overflow-hidden relative group">
+                <Card key={idx} className="bg-white border-slate-200 hover:border-purple-500/50 transition-all overflow-hidden relative group shadow-sm">
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-600/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   <CardContent className="p-5">
                     <div className="flex items-start justify-between mb-4">
                       <div className="p-3 bg-purple-500/10 rounded-xl text-purple-400">
                         <Pill className="h-6 w-6" />
                       </div>
-                      <Badge variant="outline" className="border-slate-800 text-slate-500 uppercase text-[10px] tracking-widest bg-slate-950/50 px-2 py-1">
+                      <Badge variant="outline" className="border-slate-200 text-slate-500 uppercase text-[10px] tracking-widest bg-slate-50 px-2 py-1">
                         {item.location || "3.2km away"}
                       </Badge>
                     </div>
-                    <h3 className="text-lg font-bold text-slate-100 mb-1">{item.item}</h3>
+                    <h3 className="text-lg font-bold text-slate-900 mb-1">{item.item}</h3>
                     <p className="text-sm text-slate-400 flex items-center gap-1 mb-6">
                       <MapPin className="h-3 w-3 text-slate-500" /> {item.facilityName}
                     </p>
@@ -325,8 +325,8 @@ export default function PharmacistDashboard() {
                 </Card>
               ))}
               {searchQuery && networkResults.length === 0 && !loading && (
-                <div className="col-span-full py-12 text-center bg-slate-900/40 rounded-3xl border border-slate-800 border-dashed">
-                  <Search className="h-10 w-10 text-slate-800 mx-auto mb-3" />
+                <div className="col-span-full py-12 text-center bg-white rounded-3xl border border-slate-200 border-dashed">
+                  <Search className="h-10 w-10 text-slate-200 mx-auto mb-3" />
                   <p className="text-slate-500">No match found for "{searchQuery}" in the regional hub.</p>
                 </div>
               )}
@@ -342,14 +342,14 @@ export default function PharmacistDashboard() {
             </div>
             
             {tasks.filter(t => t.type === 'transfer_request').length === 0 ? (
-              <div className="py-20 text-center bg-slate-900/50 rounded-2xl border border-slate-800">
-                <Truck className="h-10 w-10 text-slate-800 mx-auto mb-4" />
+              <div className="py-20 text-center bg-white rounded-2xl border border-slate-200 border-dashed shadow-sm">
+                <Truck className="h-10 w-10 text-slate-200 mx-auto mb-4" />
                 <p className="text-slate-500">No active logistics requests found.</p>
               </div>
             ) : (
               <div className="grid gap-4">
                 {tasks.filter(t => t.type === 'transfer_request').map((task) => (
-                  <Card key={task.id} className="bg-slate-900 border-slate-800 border-l-4 border-l-purple-600 hover:bg-slate-800/80 transition-all shadow-lg shadow-slate-950/20">
+                  <Card key={task.id} className="bg-white border-slate-200 border-l-4 border-l-purple-600 hover:bg-slate-50 transition-all shadow-sm">
                     <CardContent className="p-5">
                       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                         <div className="flex items-center gap-8">
@@ -357,11 +357,11 @@ export default function PharmacistDashboard() {
                             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{new Date(task.createdAt).toLocaleDateString()}</p>
                             <p className="text-lg font-bold text-purple-400 tabular-nums">{new Date(task.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                           </div>
-                          <div className="hidden md:block h-12 w-px bg-slate-800" />
+                          <div className="hidden md:block h-12 w-px bg-slate-100" />
                           <div>
                             <div className="flex items-center gap-3">
-                              <h3 className="font-bold text-slate-100 text-lg">{task.payload.item}</h3>
-                              <Badge className="bg-slate-800 text-[10px] h-5 border-slate-700">{task.payload.qty} UNITS</Badge>
+                              <h3 className="font-bold text-slate-900 text-lg">{task.payload.item}</h3>
+                              <Badge className="bg-slate-50 text-[10px] h-5 border-slate-200 text-slate-600">{task.payload.qty} UNITS</Badge>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-slate-400 mt-1">
                               <MapPin className="h-3 w-3" />
@@ -376,10 +376,10 @@ export default function PharmacistDashboard() {
                           <div className="flex flex-col items-end">
                             <p className="text-[10px] text-slate-500 uppercase font-black tracking-tighter mb-1">Network Status</p>
                             <Badge className={`${
-                              task.status === 'pending' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
-                              task.status === 'approved' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20 shadow-[0_0_10px_rgba(59,130,246,0.2)]' :
-                              task.status === 'in-transit' ? 'bg-purple-500/10 text-purple-500 border-purple-500/20 animate-pulse' :
-                              'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                              task.status === 'pending' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                              task.status === 'approved' ? 'bg-blue-50 text-blue-600 border-blue-100 shadow-sm' :
+                              task.status === 'in-transit' ? 'bg-purple-50 text-purple-600 border-purple-100 animate-pulse' :
+                              'bg-emerald-50 text-emerald-600 border-emerald-100'
                             } border px-3 py-1 font-bold text-[10px] tracking-wider`}>
                               {task.status.toUpperCase().replace('-', ' ')}
                             </Badge>
@@ -399,7 +399,7 @@ export default function PharmacistDashboard() {
                               <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 font-bold px-4" onClick={() => updateTaskStatus(task.id, 'fulfilled')}>Confirm Delivery</Button>
                             )}
                             {task.status === 'fulfilled' && (
-                              <Badge className="bg-slate-800 text-slate-500 border-slate-700 h-9 px-4 flex items-center gap-2">
+                              <Badge className="bg-slate-50 text-slate-500 border-slate-200 h-9 px-4 flex items-center gap-2">
                                 <CheckCircle2 className="h-4 w-4" /> Logged
                               </Badge>
                             )}
@@ -413,18 +413,18 @@ export default function PharmacistDashboard() {
             )}
           </TabsContent>
 
-          <TabsContent value="analytics" className="py-20 text-center bg-slate-900/50 rounded-2xl border border-slate-800 border-dashed animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <Activity className="h-16 w-16 text-slate-800 mx-auto mb-4" strokeWidth={1} />
-            <h3 className="text-slate-300 font-bold text-2xl mb-2">Network Demand Intelligence</h3>
+          <TabsContent value="analytics" className="py-20 text-center bg-white rounded-2xl border border-slate-200 border-dashed animate-in fade-in slide-in-from-bottom-2 duration-300 shadow-sm">
+            <Activity className="h-16 w-16 text-slate-100 mx-auto mb-4" strokeWidth={1} />
+            <h3 className="text-slate-900 font-bold text-2xl mb-2">Network Demand Intelligence</h3>
             <p className="text-slate-500 max-w-sm mx-auto">Forecasting regional demand based on inter-facility transfer requests. Link active to National Health Data Hub in Gaborone.</p>
             <div className="mt-8 flex justify-center gap-2">
-               <div className="px-4 py-2 bg-slate-900/50 border border-slate-800 rounded-lg">
-                  <p className="text-[10px] text-slate-600 font-black uppercase mb-1">Avg Request Latency</p>
-                  <p className="text-xl font-bold text-blue-500">42 min</p>
+               <div className="px-4 py-2 bg-slate-50 border border-slate-100 rounded-lg">
+                  <p className="text-[10px] text-slate-400 font-black uppercase mb-1">Avg Request Latency</p>
+                  <p className="text-xl font-bold text-blue-600">42 min</p>
                </div>
-               <div className="px-4 py-2 bg-slate-900/50 border border-slate-800 rounded-lg">
-                  <p className="text-[10px] text-slate-600 font-black uppercase mb-1">Network Saving</p>
-                  <p className="text-xl font-bold text-emerald-500">24%</p>
+               <div className="px-4 py-2 bg-slate-50 border border-slate-100 rounded-lg">
+                  <p className="text-[10px] text-slate-400 font-black uppercase mb-1">Network Saving</p>
+                  <p className="text-xl font-bold text-emerald-600">24%</p>
                </div>
             </div>
           </TabsContent>

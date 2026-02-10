@@ -148,9 +148,9 @@ export default function FacilityDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-white">
+    <div className="min-h-screen bg-gray-50 text-slate-900">
       {/* Premium Dark Header */}
-      <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
+      <header className="border-b bg-white backdrop-blur-md sticky top-0 z-50">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -159,7 +159,7 @@ export default function FacilityDashboard() {
                   <Activity className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold tracking-tight">{t.title}</h1>
+                  <h1 className="text-xl font-bold tracking-tight text-slate-900">{t.title}</h1>
                   <p className="text-xs font-medium text-blue-400 uppercase tracking-widest flex items-center gap-1">
                     <ShieldCheck className="h-3 w-3" />
                     {t.subtitle}
@@ -200,7 +200,7 @@ export default function FacilityDashboard() {
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500 group-focus-within:text-blue-500 transition-colors" />
             <Input 
               placeholder={t.searchPlaceholder} 
-              className="pl-12 py-7 bg-slate-900 border-slate-800 text-lg rounded-xl focus-visible:ring-blue-500/50 shadow-2xl transition-all"
+              className="pl-12 py-7 bg-white border-slate-200 text-lg rounded-xl focus-visible:ring-blue-500/50 shadow-sm transition-all"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -217,7 +217,7 @@ export default function FacilityDashboard() {
           {searchResults.length > 0 && (
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
               {searchResults.map((item, idx) => (
-                <Card key={idx} className="bg-slate-900 border-slate-800 hover:border-blue-500/50 transition-all group overflow-hidden">
+                <Card key={idx} className="bg-white border-slate-200 hover:border-blue-500/50 transition-all group overflow-hidden shadow-sm">
                   <div className="absolute top-0 right-0 p-3">
                     <Badge variant="outline" className="text-slate-500 border-slate-800">
                       {item.type.toUpperCase()}
@@ -233,7 +233,7 @@ export default function FacilityDashboard() {
                          item.type === "equipment" ? <Activity className="h-6 w-6" /> : <Users className="h-6 w-6" />}
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-bold text-slate-100">{item.item}</h3>
+                        <h3 className="font-bold text-slate-900">{item.item}</h3>
                         <p className="text-sm text-slate-400 flex items-center gap-1 mt-1">
                           <MapPin className="h-3 w-3" /> {item.facilityName}
                         </p>
@@ -257,7 +257,7 @@ export default function FacilityDashboard() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="bg-slate-900 border border-slate-800 p-1 w-full md:w-auto h-auto grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
+          <TabsList className="bg-white border border-slate-200 p-1 w-full md:w-auto h-auto grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
             <TabsTrigger value="radar" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white py-2 px-6">{t.radar}</TabsTrigger>
             <TabsTrigger value="inventory" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white py-2 px-6">{t.inventory}</TabsTrigger>
             <TabsTrigger value="equipment" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white py-2 px-6">{t.equipment}</TabsTrigger>
@@ -277,15 +277,15 @@ export default function FacilityDashboard() {
 
           <TabsContent value="radar" className="space-y-6 animate-in fade-in duration-500">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <Card className="lg:col-span-2 bg-slate-900 border-slate-800">
+              <Card className="lg:col-span-2 bg-white border-slate-200 shadow-sm">
                 <CardHeader>
-                  <CardTitle className="text-slate-100 flex items-center gap-2">
+                  <CardTitle className="text-slate-900 flex items-center gap-2">
                     <Globe className="h-5 w-5 text-blue-500" />
                     Operational Overview Map
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="aspect-video bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-center relative overflow-hidden">
+                  <div className="aspect-video bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-center relative overflow-hidden">
                     <div className="absolute inset-0 opacity-10 bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
                     <div className="z-10 text-center">
                       <Globe className="h-20 w-20 text-slate-800 mb-4 mx-auto" strokeWidth={0.5} />
@@ -295,21 +295,21 @@ export default function FacilityDashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-slate-900 border-slate-800">
+              <Card className="bg-white border-slate-200 shadow-sm">
                 <CardHeader>
-                  <CardTitle className="text-slate-100 text-sm font-bold uppercase tracking-wider">{language === "en" ? "Recent Network Activity" : "Ditiro tsa Network tsa Bosheng"}</CardTitle>
+                  <CardTitle className="text-slate-900 text-sm font-bold uppercase tracking-wider">{language === "en" ? "Recent Network Activity" : "Ditiro tsa Network tsa Bosheng"}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {tasks.slice(0, 5).map((tk, idx) => (
-                    <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-slate-950/50 border border-slate-800/50 hover:bg-slate-800/40 transition-colors underline-offset-4 cursor-default">
+                    <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 border border-slate-100 hover:bg-slate-100/50 transition-colors underline-offset-4 cursor-default">
                       <div className={`p-2 rounded-full ${tk.type === "transfer_request" ? "bg-purple-500/20 text-purple-400" : "bg-emerald-500/20 text-emerald-400"}`}>
                         {tk.type === "transfer_request" ? <Truck className="h-4 w-4" /> : <Calendar className="h-4 w-4" />}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold truncate text-slate-200">{tk.payload.item}</p>
+                        <p className="text-sm font-semibold truncate text-slate-900">{tk.payload.item}</p>
                         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">Origin: {tk.fromFacility}</p>
                       </div>
-                      <Badge variant="outline" className={`text-[9px] font-bold uppercase tracking-wider ${tk.status === "pending" ? "border-blue-500/50 text-blue-400" : "border-slate-800 text-slate-600"}`}>
+                      <Badge variant="outline" className={`text-[9px] font-bold uppercase tracking-wider ${tk.status === "pending" ? "border-blue-500/50 text-blue-400" : "border-slate-200 text-slate-400"}`}>
                         {tk.status}
                       </Badge>
                     </div>
@@ -321,18 +321,18 @@ export default function FacilityDashboard() {
 
           <TabsContent value="tasks" className="space-y-6 animate-in fade-in duration-300">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-slate-100">Regional Coordination Desk</h2>
+              <h2 className="text-2xl font-bold text-slate-900">Regional Coordination Desk</h2>
             </div>
 
             <div className="grid gap-4">
               {tasks.length === 0 ? (
-                <div className="py-20 text-center bg-slate-900 rounded-xl border border-slate-800 border-dashed">
-                  <Activity className="h-12 w-12 text-slate-800 mx-auto mb-4" strokeWidth={1} />
+                <div className="py-20 text-center bg-white rounded-xl border border-slate-200 border-dashed">
+                  <Activity className="h-12 w-12 text-slate-300 mx-auto mb-4" strokeWidth={1} />
                   <p className="text-slate-500">No active resource requests at this time.</p>
                 </div>
               ) : (
                 tasks.map((task) => (
-                  <Card key={task.id} className="bg-slate-900 border-slate-800 border-l-4 border-l-blue-600 hover:bg-slate-800/50 transition-colors shadow-lg shadow-slate-950/20">
+                  <Card key={task.id} className="bg-white border-slate-200 border-l-4 border-l-blue-600 hover:bg-slate-50 transition-colors shadow-sm">
                     <CardContent className="p-5">
                       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                         <div className="flex items-center gap-8">
@@ -340,11 +340,11 @@ export default function FacilityDashboard() {
                             <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{new Date(task.createdAt).toLocaleDateString()}</div>
                             <div className="text-lg font-bold text-blue-400 tabular-nums">{new Date(task.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                           </div>
-                          <div className="hidden md:block h-12 w-px bg-slate-800" />
+                          <div className="hidden md:block h-12 w-px bg-slate-100" />
                           <div>
                             <div className="flex items-center gap-3">
                               <h3 className="font-bold text-slate-100 text-lg">{task.payload.item}</h3>
-                              <Badge className="bg-slate-950 text-[10px] h-5 border-slate-800">{task.payload.qty} UNITS</Badge>
+                              <Badge className="bg-slate-100 text-[10px] h-5 border-slate-200 text-slate-600">{task.payload.qty} UNITS</Badge>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-slate-400 mt-1">
                               <MapPin className="h-3 w-3 text-slate-600" />
@@ -392,15 +392,15 @@ export default function FacilityDashboard() {
              </div>
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {localFacility && Object.entries(localFacility.stock).map(([med, qty]: [string, any], idx) => (
-                  <Card key={idx} className="bg-slate-900 border-slate-800">
+                  <Card key={idx} className="bg-white border-slate-200 shadow-sm">
                     <CardContent className="p-5">
                       <div className="flex justify-between items-start mb-4">
-                        <p className="font-bold text-slate-100 text-lg">{med}</p>
-                        <Badge variant={Number(qty) < 50 ? "destructive" : "secondary"} className="bg-slate-950 font-bold">
+                        <p className="font-bold text-slate-900 text-lg">{med}</p>
+                        <Badge variant={Number(qty) < 50 ? "destructive" : "secondary"} className="bg-slate-50 text-slate-900 font-bold border-slate-200">
                           {qty} units
                         </Badge>
                       </div>
-                      <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                      <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
                         <div className={`h-full ${Number(qty) < 50 ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]' : 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.4)]'}`} style={{ width: `${Math.min(100, Number(qty) * 2)}%` }} />
                       </div>
                     </CardContent>
@@ -417,20 +417,20 @@ export default function FacilityDashboard() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {localFacility && Object.entries(localFacility.equipment).map(([name, status]: [string, any], idx) => (
-                  <Card key={idx} className="bg-slate-900 border-slate-800 overflow-hidden group">
+                  <Card key={idx} className="bg-white border-slate-200 shadow-sm overflow-hidden group">
                     <CardContent className="p-5">
                       <div className="flex items-center gap-4">
-                        <div className="p-3 bg-slate-950 rounded-xl text-blue-400 group-hover:scale-110 transition-transform">
+                        <div className="p-3 bg-slate-50 rounded-xl text-blue-600 group-hover:scale-110 transition-transform">
                           <Activity className="h-6 w-6" />
                         </div>
                         <div className="flex-1">
-                          <h3 className="font-bold text-slate-100">{name}</h3>
+                          <h3 className="font-bold text-slate-900">{name}</h3>
                           <div className="flex items-center gap-2 mt-2">
                              <div className={`w-2 h-2 rounded-full ${status === 'available' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-amber-500'}`} />
-                             <span className="text-xs font-bold uppercase tracking-wider text-slate-400">{status}</span>
+                             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{status}</span>
                           </div>
                         </div>
-                        <Button variant="outline" size="sm" className="border-slate-800 hover:bg-slate-800">Maintain</Button>
+                        <Button variant="outline" size="sm" className="border-slate-200 hover:bg-slate-50">Maintain</Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -446,13 +446,13 @@ export default function FacilityDashboard() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {localFacility && Object.entries(localFacility.specialists).map(([name, status]: [string, any], idx) => (
-                  <Card key={idx} className="bg-slate-900 border-slate-800 group relative">
+                  <Card key={idx} className="bg-white border-slate-200 group relative shadow-sm">
                     <CardContent className="p-6 text-center">
-                       <div className="w-20 h-20 bg-slate-950 rounded-full mx-auto mb-4 flex items-center justify-center border-2 border-slate-800 group-hover:border-blue-500/50 transition-colors">
-                          <Users className="h-10 w-10 text-slate-700" />
+                       <div className="w-20 h-20 bg-slate-50 rounded-full mx-auto mb-4 flex items-center justify-center border-2 border-slate-100 group-hover:border-blue-500/50 transition-colors">
+                          <Users className="h-10 w-10 text-slate-400" />
                        </div>
-                       <h3 className="font-bold text-slate-100 text-lg mb-1">{name}</h3>
-                       <Badge className={`${status === 'available' ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-slate-800 text-slate-500'} font-bold uppercase text-[9px] tracking-widest`}>
+                       <h3 className="font-bold text-slate-900 text-lg mb-1">{name}</h3>
+                       <Badge className={`${status === 'available' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-slate-100 text-slate-500'} font-bold uppercase text-[9px] tracking-widest`}>
                           {status === 'available' ? 'Active on Station' : status}
                        </Badge>
                        <div className="mt-6 flex justify-center gap-2">
