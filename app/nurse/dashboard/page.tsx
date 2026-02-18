@@ -1,8 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import dynamic from "next/dynamic"
 import { addPatient, getPatients, addTask } from "@/components/mock-service"
-import NurseAvailabilityPanel from "@/app/nurse/components/availability-panel"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -29,6 +29,11 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 
+const Map = dynamic(() => import("@/components/Map"), { 
+  ssr: false,
+  loading: () => <div className="h-[400px] w-full bg-gray-100 animate-pulse rounded-lg flex items-center justify-center text-gray-400">Loading Facility Map...</div>
+})
+
 export default function NurseDashboardPage() {
   const [name, setName] = useState("")
   const [age, setAge] = useState<number | "">("")
@@ -53,7 +58,12 @@ export default function NurseDashboardPage() {
 
   const quickSendToPharmacy = async (patient: any, medicine: string) => {
     // Simulate sending a task
-    await addTask({ type: "patient_referral", payload: { patientId: patient.id, patientName: patient.name, medicine } })
+    await addTask({ 
+      type: "patient_referral", 
+      fromFacility: "Princess Marina Hospital",
+      toFacility: "In-house Pharmacy",
+      payload: { patientId: patient.id, patientName: patient.name, medicine } 
+    })
     alert(`Mock: sent patient ${patient.name} -> pharmacy for "${medicine}"`)
   }
 
@@ -259,11 +269,12 @@ export default function NurseDashboardPage() {
         </div>
 
         <Tabs defaultValue="patients" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="patients">{t.patients}</TabsTrigger>
             <TabsTrigger value="tasks">{t.tasksTab}</TabsTrigger>
             <TabsTrigger value="appointments">{t.appointments}</TabsTrigger>
             <TabsTrigger value="vitals">{t.vitalsTab}</TabsTrigger>
+            <TabsTrigger value="map">{language === "en" ? "Map" : "Mmapa"}</TabsTrigger>
           </TabsList>
 
           {/* Patients Tab */}
@@ -432,6 +443,57 @@ export default function NurseDashboardPage() {
                   </CardContent>
                 </Card>
               ))}
+            </div>
+          </TabsContent>
+
+          {/* Map Tab */}
+          <TabsContent value="map" className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold">{language === "en" ? "Facility & Logistics Map" : "Mmapa wa Mafelo le Dilosepa"}</h2>
+              <Badge variant="outline" className="bg-blue-50">Gaborone Central</Badge>
+            </div>
+            <Card>
+              <CardContent className="p-0 overflow-hidden h-[500px]">
+                <Map 
+                  center={[-24.658, 25.923]} 
+                  zoom={14}
+                  markers={[
+                    { position: [-24.658, 25.923], label: "Princess Marina Hospital" },
+                    { position: [-24.665, 25.942], label: "Sir Ketumile Masire Hospital" },
+                    { position: [-24.662, 25.937], label: "UB Clinic" },
+                    { position: [-24.640, 25.910], label: "Bokamoso Private Hospital" },
+                  ]} 
+                />
+              </CardContent>
+            </Card>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">Active Ambulances</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600">4</div>
+                  <p className="text-xs text-gray-500">2 on route, 2 standby</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">Nearest Blood Bank</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-blue-600">1.2 km</div>
+                  <p className="text-xs text-gray-500">Ministry of Health HQ</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">Referral Time (Avg)</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-orange-600">18 min</div>
+                  <p className="text-xs text-gray-500">To SKMTH via A1</p>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
         </Tabs>
