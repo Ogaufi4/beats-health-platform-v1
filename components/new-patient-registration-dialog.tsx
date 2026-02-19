@@ -211,7 +211,7 @@ export function NewPatientRegistrationDialog({ onRegister }: NewPatientRegistrat
   ]
 
   return (
-    <Dialog open={open} onValueChange={setOpen}>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className="bg-green-600 hover:bg-green-700">
           <UserPlus className="h-4 w-4 mr-2" />

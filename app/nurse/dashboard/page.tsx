@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import dynamic from "next/dynamic"
 import { addPatient, getPatients, addTask } from "@/components/mock-service"
+import BeatsLogo from "@/components/BeatsLogo"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -186,11 +187,7 @@ export default function NurseDashboardPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <Heart className="h-8 w-8 text-red-500" />
-                <div>
-                  <h1 className="text-xl font-bold text-gray-900">{t.title}</h1>
-                  <p className="text-sm text-gray-600">{t.subtitle}</p>
-                </div>
+                <BeatsLogo size={40} />
               </div>
             </div>
             <div className="flex items-center gap-4">

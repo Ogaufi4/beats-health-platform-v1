@@ -18,6 +18,7 @@ import {
   LogOut,
   BarChart3,
 } from "lucide-react"
+import BeatsLogo from "@/components/BeatsLogo"
 import Link from "next/link"
 
 // Recharts imports
@@ -320,11 +321,7 @@ export default function CMSDashboard() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <Heart className="h-8 w-8 text-red-500" />
-                <div>
-                  <h1 className="text-xl font-bold text-gray-900">Beats Health - CMS</h1>
-                  <p className="text-sm text-gray-600">{t.subtitle}</p>
-                </div>
+                <BeatsLogo size={40} />
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -803,7 +800,7 @@ export default function CMSDashboard() {
                           cx="50%"
                           cy="50%"
                           labelLine={false}
-                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                          label={({ name, percent }: { name?: string; percent?: number }) => `${name ?? ""}: ${(((percent ?? 0)) * 100).toFixed(0)}%`}
                           outerRadius={80}
                           fill="#8b5cf6"
                           dataKey="value"

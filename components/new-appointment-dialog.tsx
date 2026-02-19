@@ -171,7 +171,7 @@ export function NewAppointmentDialog({ onBook }: NewAppointmentDialogProps) {
   }
 
   return (
-    <Dialog open={open} onValueChange={setOpen}>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className="bg-blue-600 hover:bg-blue-700">
           <Plus className="h-4 w-4 mr-2" />

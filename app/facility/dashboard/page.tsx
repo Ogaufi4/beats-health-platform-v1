@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import dynamic from "next/dynamic"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -36,6 +37,12 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { findMedicine, findEquipment, findSpecialists, getTasks, addTask, updateTaskStatus, subscribe, getFacilities } from "@/components/mock-service"
+
+const Map = dynamic(() => import("@/components/Map"), {
+  ssr: false,
+  loading: () => <div className="w-full h-full bg-slate-100 animate-pulse rounded-xl flex items-center justify-center text-slate-400 text-sm">Loading Map...</div>
+})
+import BeatsLogo from "@/components/BeatsLogo"
 import { useToast } from "@/components/ui/use-toast"
 
 export default function FacilityDashboard() {
@@ -158,6 +165,7 @@ export default function FacilityDashboard() {
                 <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/20">
                   <Activity className="h-6 w-6 text-white" />
                 </div>
+                <BeatsLogo size={32} />
                 <div>
                   <h1 className="text-xl font-bold tracking-tight text-slate-900">{t.title}</h1>
                   <p className="text-xs font-medium text-blue-400 uppercase tracking-widest flex items-center gap-1">
@@ -285,12 +293,18 @@ export default function FacilityDashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="aspect-video bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-center relative overflow-hidden">
-                    <div className="absolute inset-0 opacity-10 bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
-                    <div className="z-10 text-center">
-                      <Globe className="h-20 w-20 text-slate-800 mb-4 mx-auto" strokeWidth={0.5} />
-                      <p className="text-slate-500 font-medium font-mono text-xs tracking-widest uppercase">Initializing Radar Array...</p>
-                    </div>
+                  <div className="aspect-video bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
+                    <Map
+                      center={[-24.658, 25.923]}
+                      zoom={13}
+                      markers={[
+                        { position: [-24.658, 25.923], label: "UB Clinic (You)" },
+                        { position: [-24.653, 25.906], label: "Princess Marina Hospital" },
+                        { position: [-24.665, 25.942], label: "Sir Ketumile Masire Hospital" },
+                        { position: [-24.640, 25.910], label: "Bokamoso Private Hospital" },
+                        { position: [-24.670, 25.930], label: "BDF Clinic" },
+                      ]}
+                    />
                   </div>
                 </CardContent>
               </Card>
@@ -343,14 +357,14 @@ export default function FacilityDashboard() {
                           <div className="hidden md:block h-12 w-px bg-slate-100" />
                           <div>
                             <div className="flex items-center gap-3">
-                              <h3 className="font-bold text-slate-100 text-lg">{task.payload.item}</h3>
+                              <h3 className="font-bold text-slate-900 text-lg">{task.payload.item}</h3>
                               <Badge className="bg-slate-100 text-[10px] h-5 border-slate-200 text-slate-600">{task.payload.qty} UNITS</Badge>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-slate-400 mt-1">
-                              <MapPin className="h-3 w-3 text-slate-600" />
-                              <span className="font-medium text-slate-300">{task.fromFacility}</span>
-                              <ArrowRight className="h-3 w-3 text-slate-600" />
-                              <span className="font-medium text-slate-300">{task.toFacility}</span>
+                              <MapPin className="h-3 w-3 text-slate-500" />
+                              <span className="font-medium text-slate-600">{task.fromFacility}</span>
+                              <ArrowRight className="h-3 w-3 text-slate-400" />
+                              <span className="font-medium text-slate-600">{task.toFacility}</span>
                             </div>
                           </div>
                         </div>

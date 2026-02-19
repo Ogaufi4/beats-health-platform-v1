@@ -24,6 +24,7 @@ import {
   Truck,
 } from "lucide-react"
 import Link from "next/link"
+import BeatsLogo from "@/components/BeatsLogo"
 
 export default function AdminDashboard() {
   const [language, setLanguage] = useState<"en" | "tn">("en")
@@ -159,11 +160,7 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <Heart className="h-8 w-8 text-red-500" />
-                <div>
-                  <h1 className="text-xl font-bold text-gray-900">Beats Health</h1>
-                  <p className="text-sm text-gray-600">{t.subtitle}</p>
-                </div>
+                <BeatsLogo size={40} />
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -386,63 +383,163 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="facilities">
-            <Card>
-              <CardHeader>
-                <CardTitle>Health Facilities Management</CardTitle>
-                <CardDescription>Monitor and manage all health facilities across Botswana</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <Stethoscope className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">Facilities management interface would be implemented here</p>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[
+                { name: "Princess Marina Hospital", region: "Central (Gaborone)", type: "Referral Hospital", beds: 560, status: "operational", alerts: 2 },
+                { name: "Nyangabgwe Referral Hospital", region: "Northern (Francistown)", type: "Referral Hospital", beds: 370, status: "operational", alerts: 1 },
+                { name: "Scottish Livingstone Hospital", region: "Southern (Molepolole)", type: "District Hospital", beds: 280, status: "operational", alerts: 0 },
+                { name: "Maun General Hospital", region: "Western (Maun)", type: "District Hospital", beds: 200, status: "partial", alerts: 3 },
+                { name: "Ghanzi Primary Hospital", region: "Western (Ghanzi)", type: "Primary Hospital", beds: 100, status: "partial", alerts: 4 },
+                { name: "Kasane Primary Hospital", region: "Northern (Kasane)", type: "Primary Hospital", beds: 80, status: "operational", alerts: 1 },
+                { name: "Tsabong District Hospital", region: "Southern (Tsabong)", type: "District Hospital", beds: 120, status: "maintenance", alerts: 2 },
+                { name: "Gaborone Main Clinic", region: "Central (Gaborone)", type: "Clinic", beds: 0, status: "operational", alerts: 0 },
+                { name: "Bokamoso Private Hospital", region: "Central (Gaborone)", type: "Private", beds: 174, status: "operational", alerts: 0 },
+              ].map((fac, idx) => (
+                <Card key={idx} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-5">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <h3 className="font-bold text-gray-900">{fac.name}</h3>
+                        <p className="text-sm text-gray-500">{fac.region}</p>
+                      </div>
+                      <Badge variant={fac.status === "operational" ? "default" : fac.status === "partial" ? "secondary" : "destructive"}
+                        className={`text-[10px] font-bold uppercase ${
+                          fac.status === "operational" ? "bg-green-100 text-green-700 border-green-200" :
+                          fac.status === "partial" ? "bg-amber-100 text-amber-700 border-amber-200" :
+                          "bg-red-100 text-red-700 border-red-200"
+                        }`}>
+                        {fac.status}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600">{fac.type}</span>
+                      {fac.beds > 0 && <span className="text-gray-500">{fac.beds} beds</span>}
+                    </div>
+                    {fac.alerts > 0 && (
+                      <div className="mt-3 flex items-center gap-2 text-xs text-red-600 font-medium">
+                        <AlertTriangle className="h-3 w-3" />
+                        {fac.alerts} active alert{fac.alerts > 1 ? "s" : ""}
+                      </div>
+                    )}
+                    <Button size="sm" variant="outline" className="mt-4 w-full text-xs">View Details</Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </TabsContent>
 
           <TabsContent value="specialists">
-            <Card>
-              <CardHeader>
-                <CardTitle>Medical Specialists Directory</CardTitle>
-                <CardDescription>Manage specialist availability and scheduling</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">Specialists management interface would be implemented here</p>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[
+                { name: "Dr. Sarah Molefe", specialty: "Cardiologist", facility: "Princess Marina Hospital", status: "available", patients: 8 },
+                { name: "Dr. James Kgathi", specialty: "Cardiac Surgeon", facility: "Princess Marina Hospital", status: "busy", patients: 12 },
+                { name: "Dr. Peter Sebego", specialty: "Electrophysiologist", facility: "Nyangabgwe Hospital", status: "available", patients: 5 },
+                { name: "Dr. Naledi Moatlhodi", specialty: "Oncologist", facility: "Nyangabgwe Hospital", status: "available", patients: 7 },
+                { name: "Dr. Keabetswe Tau", specialty: "Radiologist", facility: "Princess Marina Hospital", status: "busy", patients: 14 },
+                { name: "Dr. Thabo Moeng", specialty: "Neurologist", facility: "Scottish Livingstone Hospital", status: "off-duty", patients: 0 },
+                { name: "Dr. Lesego Kgang", specialty: "General Surgeon", facility: "Maun General Hospital", status: "available", patients: 6 },
+                { name: "Dr. Gorata Mmusi", specialty: "Pediatrician", facility: "Gaborone Main Clinic", status: "available", patients: 9 },
+                { name: "Dr. Boitumelo Seele", specialty: "Orthopedic Surgeon", facility: "Princess Marina Hospital", status: "busy", patients: 11 },
+              ].map((spec, idx) => (
+                <Card key={idx} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-5 text-center">
+                    <div className="w-16 h-16 bg-blue-100 rounded-full mx-auto mb-3 flex items-center justify-center">
+                      <Stethoscope className="h-8 w-8 text-blue-600" />
+                    </div>
+                    <h3 className="font-bold text-gray-900">{spec.name}</h3>
+                    <p className="text-sm text-blue-600 font-medium">{spec.specialty}</p>
+                    <p className="text-xs text-gray-500 mt-1">{spec.facility}</p>
+                    <div className="mt-3 flex items-center justify-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${
+                        spec.status === "available" ? "bg-green-500" :
+                        spec.status === "busy" ? "bg-amber-500" : "bg-gray-400"
+                      }`} />
+                      <span className="text-xs font-medium capitalize text-gray-600">{spec.status}</span>
+                      {spec.patients > 0 && <span className="text-xs text-gray-400">• {spec.patients} pts today</span>}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </TabsContent>
 
           <TabsContent value="stock">
-            <Card>
-              <CardHeader>
-                <CardTitle>National Medicine Stock Overview</CardTitle>
-                <CardDescription>Monitor medicine inventory across all facilities</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <Pill className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">Stock management interface would be implemented here</p>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[
+                  { name: "Paracetamol 500mg", total: 45000, critical: 3, regions: [85, 78, 72, 62, 88] },
+                  { name: "Amlodipine 5mg", total: 12000, critical: 5, regions: [64, 55, 80, 48, 75] },
+                  { name: "Metformin 500mg", total: 28000, critical: 2, regions: [90, 85, 70, 65, 82] },
+                  { name: "Amoxicillin 250mg", total: 18000, critical: 1, regions: [88, 92, 76, 71, 86] },
+                  { name: "Insulin (Rapid Acting)", total: 6500, critical: 4, regions: [72, 68, 55, 45, 79] },
+                  { name: "Furosemide 40mg", total: 9200, critical: 0, regions: [95, 91, 87, 83, 93] },
+                ].map((med, idx) => (
+                  <Card key={idx} className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-5">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h3 className="font-semibold text-gray-900">{med.name}</h3>
+                          <p className="text-xs text-gray-500 mt-0.5">{med.total.toLocaleString()} units national</p>
+                        </div>
+                        {med.critical > 0 && (
+                          <Badge variant="destructive" className="text-[10px]">{med.critical} critical</Badge>
+                        )}
+                      </div>
+                      <div className="space-y-1.5">
+                        {["Central", "Southern", "Northern", "Western", "Eastern"].map((r, i) => (
+                          <div key={r} className="flex items-center gap-2">
+                            <span className="text-[10px] text-gray-500 w-14">{r}</span>
+                            <div className="flex-1 bg-gray-100 h-2 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full ${
+                                  med.regions[i] >= 80 ? "bg-green-500" :
+                                  med.regions[i] >= 65 ? "bg-amber-500" : "bg-red-500"
+                                }`}
+                                style={{ width: `${med.regions[i]}%` }}
+                              />
+                            </div>
+                            <span className={`text-[10px] font-bold w-8 text-right ${
+                              med.regions[i] >= 80 ? "text-green-600" :
+                              med.regions[i] >= 65 ? "text-amber-600" : "text-red-600"
+                            }`}>{med.regions[i]}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="reports">
-            <Card>
-              <CardHeader>
-                <CardTitle>Analytics & Reports</CardTitle>
-                <CardDescription>Generate comprehensive healthcare reports</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <TrendingUp className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">Reports and analytics interface would be implemented here</p>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {[
+                { title: "Monthly Facility Report", desc: "Performance metrics for all 188 facilities", date: "Jan 2026", icon: <Activity className="h-6 w-6 text-blue-600" />, color: "bg-blue-50" },
+                { title: "Medicine Stock Summary", desc: "National inventory levels and critical alerts", date: "Jan 2026", icon: <Package className="h-6 w-6 text-green-600" />, color: "bg-green-50" },
+                { title: "Specialist Utilisation", desc: "Specialist booking rates by facility and region", date: "Jan 2026", icon: <Stethoscope className="h-6 w-6 text-purple-600" />, color: "bg-purple-50" },
+                { title: "Referral Network", desc: "Inter-facility referral patterns and outcomes", date: "Jan 2026", icon: <Users className="h-6 w-6 text-orange-600" />, color: "bg-orange-50" },
+                { title: "Equipment Uptime", desc: "Diagnostic equipment uptime and maintenance logs", date: "Jan 2026", icon: <TrendingUp className="h-6 w-6 text-teal-600" />, color: "bg-teal-50" },
+                { title: "Rural Coverage Index", desc: "CHW activity and rural community health metrics", date: "Jan 2026", icon: <MapPin className="h-6 w-6 text-rose-600" />, color: "bg-rose-50" },
+              ].map((report, idx) => (
+                <Card key={idx} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-6 flex items-start gap-4">
+                    <div className={`p-3 rounded-xl ${report.color} shrink-0`}>
+                      {report.icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-gray-900">{report.title}</h3>
+                      <p className="text-sm text-gray-500 mt-1">{report.desc}</p>
+                      <p className="text-xs text-gray-400 mt-2">{report.date}</p>
+                    </div>
+                    <div className="flex flex-col gap-2 shrink-0">
+                      <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-xs">Download</Button>
+                      <Button size="sm" variant="outline" className="text-xs">Preview</Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </TabsContent>
         </Tabs>
       </div>

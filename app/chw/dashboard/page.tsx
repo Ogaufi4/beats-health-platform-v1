@@ -25,6 +25,7 @@ import {
   ClipboardCheck,
   AlertCircle,
 } from "lucide-react"
+import BeatsLogo from "@/components/BeatsLogo"
 import Link from "next/link"
 
 export default function CHWDashboard() {
@@ -235,11 +236,7 @@ export default function CHWDashboard() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <Heart className="h-8 w-8 text-green-500" />
-                <div>
-                  <h1 className="text-xl font-bold text-gray-900">{t.title}</h1>
-                  <p className="text-sm text-gray-600">{t.subtitle}</p>
-                </div>
+                <BeatsLogo size={40} />
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -253,7 +250,7 @@ export default function CHWDashboard() {
               <Button variant="outline" size="sm">
                 <Settings className="h-4 w-4" />
               </Button>
-              <Link href="/auth/signin">
+              <Link href="/login">
                 <Button variant="outline" size="sm">
                   <LogOut className="h-4 w-4" />
                 </Button>

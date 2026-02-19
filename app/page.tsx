@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import BeatsLogo from "@/components/BeatsLogo"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -100,8 +101,7 @@ export default function HomePage() {
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Heart className="h-8 w-8 text-red-500" />
-            <span className="text-2xl font-bold text-gray-900">{t.title}</span>
+            <BeatsLogo size={40} />
           </div>
           <div className="flex items-center gap-4">
             <Button variant="outline" size="sm" onClick={() => setLanguage(language === "en" ? "tn" : "en")}>

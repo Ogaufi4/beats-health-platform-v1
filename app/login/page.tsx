@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-
+import BeatsLogo from "@/components/BeatsLogo"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -126,8 +126,7 @@ export default function LoginPage() {
             {t.backHome}
           </Link>
           <div className="flex items-center justify-center gap-2 mb-4">
-            <Heart className="h-8 w-8 text-red-500" />
-            <span className="text-2xl font-bold text-gray-900">Beats Health</span>
+            <BeatsLogo size={44} />
           </div>
           <Button
             variant="outline"

@@ -172,6 +172,8 @@ export function CareCoordination({ language }: CareCoordinationProps) {
           break
       }
 
+      if (!result) throw new Error("No result returned")
+
       setActionModal({
         ...actionModal,
         isLoading: false,
@@ -418,11 +420,11 @@ export function CareCoordination({ language }: CareCoordinationProps) {
         actionLabel="Execute"
         isLoading={actionModal.isLoading}
         result={actionModal.result}
-        onAction={() => {}}
+        onAction={async () => { /* action handled via handleAction */ }}
         language={language}
       />
 
-      <ActionToastContainer toasts={toasts} onClose={(id) => setToasts((prev) => prev.filter((t) => t.id !== id))} />
+      <ActionToastContainer toasts={toasts} onClose={(id: string) => setToasts((prev) => prev.filter((t) => t.id !== id))} />
     </div>
   )
 }

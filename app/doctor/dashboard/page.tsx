@@ -25,6 +25,7 @@ import {
   CheckCircle,
   UserPlus,
 } from "lucide-react"
+import BeatsLogo from "@/components/BeatsLogo"
 import Link from "next/link"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
@@ -449,11 +450,7 @@ export default function DoctorDashboard() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <Heart className="h-8 w-8 text-red-500" />
-                <div>
-                  <h1 className="text-xl font-bold text-gray-900">{t.title}</h1>
-                  <p className="text-sm text-gray-600">{t.subtitle}</p>
-                </div>
+                <BeatsLogo size={40} />
               </div>
             </div>
             <div className="flex items-center gap-4">
