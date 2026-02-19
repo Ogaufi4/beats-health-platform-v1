@@ -81,7 +81,7 @@ export default function DoctorDashboard() {
   const content = {
     en: {
       title: "Dr. Sarah Molefe - Cardiologist",
-      subtitle: "Princess Marina Hospital",
+      subtitle: "Sedilega Private Hospital",
       appointments: "Appointments",
       patients: "Patients",
       equipment: "Medical Equipment",
@@ -128,8 +128,8 @@ export default function DoctorDashboard() {
       },
     },
     tn: {
-      title: "Dr. Sarah Molefe - Ngaka ya Pelo",
-      subtitle: "Sepetlele sa Princess Marina",
+      title: "Dr. Sarah Molefe - Modiri wa Dipelo",
+      subtitle: "Sepetlele sa Sedilega",
       appointments: "Dikopano",
       patients: "Balwetse",
       equipment: "Didirisiwa tsa Bongaka",

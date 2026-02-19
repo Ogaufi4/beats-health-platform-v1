@@ -43,12 +43,18 @@ export default function LoginPage() {
         cms: "Central Medical Stores",
       },
       facilities: {
-        pmh: "Princess Marina Hospital",
-        nyangabgwe: "Nyangabgwe Referral Hospital",
-        scottish: "Scottish Livingstone Hospital",
-        gaborone_clinic: "Gaborone Main Clinic",
-        maun_clinic: "Maun General Hospital",
-        francistown_clinic: "Francistown Clinic",
+        sedilega: "Sedilega Private Hospital",
+        skmth: "Sir Ketumile Masire Teaching Hospital",
+        athlone: "Athlone District Hospital",
+        bamalete: "Bamalete Lutheran Hospital",
+        mahalapye: "Mahalapye District Hospital",
+        letsholathebe: "Letsholathebe II Memorial Hospital",
+        deborah_retief: "Deborah Retief Memorial Hospital",
+        rakops: "Rakops Primary Hospital",
+        gph: "Gaborone Private Hospital",
+        bdf_glen_valley: "BDF Clinic (Glen Valley)",
+        bdf_sskb: "BDF Clinic (SSKB)",
+        bdf_thebephatshwa: "BDF Clinic (Thebephatshwa)",
       },
     },
     tn: {
@@ -74,12 +80,18 @@ export default function LoginPage() {
         cms: "Central Medical Stores",
       },
       facilities: {
-        pmh: "Sepetlele sa Princess Marina",
-        nyangabgwe: "Sepetlele sa Nyangabgwe",
-        scottish: "Sepetlele sa Scottish Livingstone",
-        gaborone_clinic: "Kliniki Kgolo ya Gaborone",
-        maun_clinic: "Sepetlele sa Maun",
-        francistown_clinic: "Kliniki ya Francistown",
+        sedilega: "Sepetlele sa Sedilega",
+        skmth: "Sepetlele sa Thuto sa Sir Ketumile Masire",
+        athlone: "Sepetlele sa Kgaolo sa Athlone",
+        bamalete: "Sepetlele sa Bamalete Lutheran",
+        mahalapye: "Sepetlele sa Kgaolo sa Mahalapye",
+        letsholathebe: "Sepetlele sa Segopotso sa Letsholathebe II",
+        deborah_retief: "Sepetlele sa Segopotso sa Deborah Retief",
+        rakops: "Sepetlele sa Kotlhao sa Rakops",
+        gph: "Sepetlele sa Segolo sa Gaborone",
+        bdf_glen_valley: "Kliniki ya BDF (Glen Valley)",
+        bdf_sskb: "Kliniki ya BDF (SSKB)",
+        bdf_thebephatshwa: "Kliniki ya BDF (Thebephatshwa)",
       },
     },
   }
@@ -177,12 +189,18 @@ export default function LoginPage() {
                     <SelectValue placeholder={t.selectFacility} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="pmh">{t.facilities.pmh}</SelectItem>
-                    <SelectItem value="nyangabgwe">{t.facilities.nyangabgwe}</SelectItem>
-                    <SelectItem value="scottish">{t.facilities.scottish}</SelectItem>
-                    <SelectItem value="gaborone_clinic">{t.facilities.gaborone_clinic}</SelectItem>
-                    <SelectItem value="maun_clinic">{t.facilities.maun_clinic}</SelectItem>
-                    <SelectItem value="francistown_clinic">{t.facilities.francistown_clinic}</SelectItem>
+                    <SelectItem value="sedilega">{t.facilities.sedilega}</SelectItem>
+                    <SelectItem value="skmth">{t.facilities.skmth}</SelectItem>
+                    <SelectItem value="athlone">{t.facilities.athlone}</SelectItem>
+                    <SelectItem value="bamalete">{t.facilities.bamalete}</SelectItem>
+                    <SelectItem value="mahalapye">{t.facilities.mahalapye}</SelectItem>
+                    <SelectItem value="letsholathebe">{t.facilities.letsholathebe}</SelectItem>
+                    <SelectItem value="deborah_retief">{t.facilities.deborah_retief}</SelectItem>
+                    <SelectItem value="rakops">{t.facilities.rakops}</SelectItem>
+                    <SelectItem value="gph">{t.facilities.gph}</SelectItem>
+                    <SelectItem value="bdf_glen_valley">{t.facilities.bdf_glen_valley}</SelectItem>
+                    <SelectItem value="bdf_sskb">{t.facilities.bdf_sskb}</SelectItem>
+                    <SelectItem value="bdf_thebephatshwa">{t.facilities.bdf_thebephatshwa}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

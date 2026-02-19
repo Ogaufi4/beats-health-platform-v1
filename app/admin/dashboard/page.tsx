@@ -385,15 +385,18 @@ export default function AdminDashboard() {
           <TabsContent value="facilities">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[
-                { name: "Princess Marina Hospital", region: "Central (Gaborone)", type: "Referral Hospital", beds: 560, status: "operational", alerts: 2 },
-                { name: "Nyangabgwe Referral Hospital", region: "Northern (Francistown)", type: "Referral Hospital", beds: 370, status: "operational", alerts: 1 },
-                { name: "Scottish Livingstone Hospital", region: "Southern (Molepolole)", type: "District Hospital", beds: 280, status: "operational", alerts: 0 },
-                { name: "Maun General Hospital", region: "Western (Maun)", type: "District Hospital", beds: 200, status: "partial", alerts: 3 },
-                { name: "Ghanzi Primary Hospital", region: "Western (Ghanzi)", type: "Primary Hospital", beds: 100, status: "partial", alerts: 4 },
-                { name: "Kasane Primary Hospital", region: "Northern (Kasane)", type: "Primary Hospital", beds: 80, status: "operational", alerts: 1 },
-                { name: "Tsabong District Hospital", region: "Southern (Tsabong)", type: "District Hospital", beds: 120, status: "maintenance", alerts: 2 },
-                { name: "Gaborone Main Clinic", region: "Central (Gaborone)", type: "Clinic", beds: 0, status: "operational", alerts: 0 },
-                { name: "Bokamoso Private Hospital", region: "Central (Gaborone)", type: "Private", beds: 174, status: "operational", alerts: 0 },
+                { name: "Sedilega Private Hospital", region: "Central (Gaborone)", type: "Private Hospital", beds: 100, status: "operational", alerts: 0 },
+                { name: "Sir Ketumile Masire Teaching Hospital", region: "Central (Gaborone)", type: "Teaching Hospital", beds: 450, status: "operational", alerts: 1 },
+                { name: "Athlone District Hospital", region: "Southern (Lobatse)", type: "District Hospital", beds: 150, status: "operational", alerts: 0 },
+                { name: "Bamalete Lutheran Hospital", region: "Southern (Ramotswa)", type: "Mission Hospital", beds: 120, status: "operational", alerts: 0 },
+                { name: "Mahalapye District Hospital", region: "Central (Mahalapye)", type: "District Hospital", beds: 200, status: "operational", alerts: 2 },
+                { name: "Letsholathebe II Memorial Hospital", region: "North West (Maun)", type: "District Hospital", beds: 180, status: "operational", alerts: 1 },
+                { name: "Deborah Retief Memorial Hospital", region: "Kgatleng (Mochudi)", type: "District Hospital", beds: 140, status: "operational", alerts: 0 },
+                { name: "Rakops Primary Hospital", region: "Boteti (Rakops)", type: "Primary Hospital", beds: 40, status: "operational", alerts: 3 },
+                { name: "Gaborone Private Hospital", region: "Central (Gaborone)", type: "Private Hospital", beds: 150, status: "operational", alerts: 0 },
+                { name: "BDF Clinic (Glen Valley)", region: "Central (Gaborone)", type: "Military Clinic", beds: 10, status: "operational", alerts: 0 },
+                { name: "BDF Clinic (SSKB)", region: "Central (Gaborone)", type: "Military Clinic", beds: 15, status: "operational", alerts: 0 },
+                { name: "BDF Clinic (Thebephatshwa)", region: "Kweneng (Thebephatshwa)", type: "Military Clinic", beds: 12, status: "operational", alerts: 0 },
               ].map((fac, idx) => (
                 <Card key={idx} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-5">

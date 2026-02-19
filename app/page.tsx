@@ -330,8 +330,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Heart className="h-6 w-6 text-red-500" />
-              <span className="text-xl font-bold">{t.title}</span>
+              <BeatsLogo size={32} variant="white" />
             </div>
             <div className="text-sm text-gray-400">
               {language === "en"

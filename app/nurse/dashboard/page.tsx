@@ -74,7 +74,7 @@ export default function NurseDashboardPage() {
   const content = {
     en: {
       title: "Nurse Keitumetse Mokgathi",
-      subtitle: "Princess Marina Hospital",
+      subtitle: "Sir Ketumile Masire Teaching Hospital",
       patients: "Patients",
       tasks: "Tasks",
       appointments: "Appointments",
@@ -97,7 +97,7 @@ export default function NurseDashboardPage() {
     },
     tn: {
       title: "Ngaka ya Bodulo Keitumetse Mokgathi",
-      subtitle: "Sepetlele sa Princess Marina",
+      subtitle: "Sepetlele sa Thuto sa Sir Ketumile Masire",
       patients: "Balwetse",
       tasks: "Ditiro",
       appointments: "Dikopano",
@@ -455,10 +455,18 @@ export default function NurseDashboardPage() {
                   center={[-24.658, 25.923]} 
                   zoom={14}
                   markers={[
-                    { position: [-24.658, 25.923], label: "Princess Marina Hospital" },
+                    { position: [-24.658, 25.923], label: "Sedilega Private Hospital" },
                     { position: [-24.665, 25.942], label: "Sir Ketumile Masire Hospital" },
-                    { position: [-24.662, 25.937], label: "UB Clinic" },
-                    { position: [-24.640, 25.910], label: "Bokamoso Private Hospital" },
+                    { position: [-24.715, 25.860], label: "Athlone District Hospital" },
+                    { position: [-24.862, 25.850], label: "Bamalete Lutheran Hospital" },
+                    { position: [-23.102, 26.832], label: "Mahalapye District Hospital" },
+                    { position: [-19.982, 23.425], label: "Letsholathebe II Memorial Hospital" },
+                    { position: [-24.417, 26.150], label: "Deborah Retief Memorial Hospital" },
+                    { position: [-21.083, 25.267], label: "Rakops Primary Hospital" },
+                    { position: [-24.655, 25.930], label: "Gaborone Private Hospital" },
+                    { position: [-24.600, 25.980], label: "BDF Clinic (Glen Valley)" },
+                    { position: [-24.580, 25.900], label: "BDF Clinic (SSKB)" },
+                    { position: [-24.200, 25.500], label: "BDF Clinic (Thebephatshwa)" },
                   ]} 
                 />
               </CardContent>
