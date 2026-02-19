@@ -41,33 +41,6 @@ export default function NurseDashboardPage() {
   const [complaint, setComplaint] = useState("")
   const [patients, setPatients] = useState<any[]>([])
   const [adding, setAdding] = useState(false)
-
-  useEffect(() => {
-    getPatients().then(setPatients)
-  }, [])
-
-  const onAddPatient = async () => {
-    if (!name) return
-    setAdding(true)
-    const p = await addPatient({ name, age: typeof age === "number" ? age : undefined, complaint })
-    setPatients((s) => [p, ...s])
-    setName("")
-    setAge("")
-    setComplaint("")
-    setAdding(false)
-  }
-
-  const quickSendToPharmacy = async (patient: any, medicine: string) => {
-    // Simulate sending a task
-    await addTask({ 
-      type: "patient_referral", 
-      fromFacility: "Princess Marina Hospital",
-      toFacility: "In-house Pharmacy",
-      payload: { patientId: patient.id, patientName: patient.name, medicine } 
-    })
-    alert(`Mock: sent patient ${patient.name} -> pharmacy for "${medicine}"`)
-  }
-
   const [language, setLanguage] = useState<"en" | "tn">("en")
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0])
 
@@ -120,7 +93,44 @@ export default function NurseDashboardPage() {
     },
   }
 
-  const t = content[language]
+  const [displayFacility, setDisplayFacility] = useState({ en: content.en.subtitle, tn: content.tn.subtitle })
+
+  useEffect(() => {
+    const savedEn = localStorage.getItem("userFacilityNameEn")
+    const savedTn = localStorage.getItem("userFacilityNameTn")
+    if (savedEn && savedTn) {
+      setDisplayFacility({ en: savedEn, tn: savedTn })
+    }
+    
+    getPatients().then(setPatients)
+  }, [])
+
+  const t = {
+    ...content[language],
+    subtitle: language === "en" ? displayFacility.en : displayFacility.tn
+  }
+
+  const onAddPatient = async () => {
+    if (!name) return
+    setAdding(true)
+    const p = await addPatient({ name, age: typeof age === "number" ? age : undefined, complaint })
+    setPatients((s) => [p, ...s])
+    setName("")
+    setAge("")
+    setComplaint("")
+    setAdding(false)
+  }
+
+  const quickSendToPharmacy = async (patient: any, medicine: string) => {
+    // Simulate sending a task
+    await addTask({ 
+      type: "patient_referral", 
+      fromFacility: displayFacility.en,
+      toFacility: "In-house Pharmacy",
+      payload: { patientId: patient.id, patientName: patient.name, medicine } 
+    })
+    alert(`Mock: sent patient ${patient.name} -> pharmacy for "${medicine}"`)
+  }
 
   // Mock data
   const assignedPatients = [
@@ -188,6 +198,13 @@ export default function NurseDashboardPage() {
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <BeatsLogo size={40} />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold tracking-tight text-slate-900">{t.title}</h1>
+                <p className="text-xs font-medium text-blue-600 uppercase tracking-widest flex items-center gap-1">
+                  <Activity className="h-3 w-3" />
+                  {t.subtitle}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-4">

@@ -99,9 +99,20 @@ export default function LoginPage() {
   const t = content[language]
 
   const handleLogin = (e: React.FormEvent) => {
-  e.preventDefault()
+    e.preventDefault()
 
-  switch (userType) {
+    // Save selected facility info for the dashboard to display
+    if (facility && userType) {
+      const facilityNameEn = content.en.facilities[facility as keyof typeof content.en.facilities]
+      const facilityNameTn = content.tn.facilities[facility as keyof typeof content.tn.facilities]
+      
+      localStorage.setItem("userFacilityKey", facility)
+      localStorage.setItem("userFacilityNameEn", facilityNameEn || "")
+      localStorage.setItem("userFacilityNameTn", facilityNameTn || "")
+      localStorage.setItem("userRole", userType)
+    }
+
+    switch (userType) {
     case "admin":
       router.push("/admin/dashboard")
       break

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -89,7 +89,20 @@ export default function CHWDashboard() {
     },
   }
 
-  const t = content[language]
+  const [displayArea, setDisplayArea] = useState({ en: content.en.subtitle, tn: content.tn.subtitle })
+
+  useEffect(() => {
+    const savedEn = localStorage.getItem("userFacilityNameEn")
+    const savedTn = localStorage.getItem("userFacilityNameTn")
+    if (savedEn && savedTn) {
+      setDisplayArea({ en: savedEn, tn: savedTn })
+    }
+  }, [])
+
+  const t = {
+    ...content[language],
+    subtitle: language === "en" ? displayArea.en : displayArea.tn
+  }
 
   const myPatients = [
     {
@@ -237,6 +250,13 @@ export default function CHWDashboard() {
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <BeatsLogo size={40} />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold tracking-tight text-slate-900">{t.title}</h1>
+                <p className="text-xs font-medium text-blue-600 uppercase tracking-widest flex items-center gap-1">
+                  <MapPin className="h-3 w-3" />
+                  {t.subtitle}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -421,7 +441,7 @@ export default function CHWDashboard() {
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <h3 className="font-semibold">{visit.patient}</h3>
+                           <h3 className="font-semibold">{visit.patient}</h3>
                           <Badge variant={visit.priority === "urgent" ? "destructive" : "default"}>
                             {visit.priority === "urgent" ? t.urgent : t.routine}
                           </Badge>

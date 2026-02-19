@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -22,6 +22,7 @@ import {
   Stethoscope,
   Pill,
   Truck,
+  ShieldCheck,
 } from "lucide-react"
 import Link from "next/link"
 import BeatsLogo from "@/components/BeatsLogo"
@@ -72,7 +73,20 @@ export default function AdminDashboard() {
     },
   }
 
-  const t = content[language]
+  const [displayRegion, setDisplayRegion] = useState({ en: content.en.subtitle, tn: content.tn.subtitle })
+
+  useEffect(() => {
+    const savedEn = localStorage.getItem("userFacilityNameEn")
+    const savedTn = localStorage.getItem("userFacilityNameTn")
+    if (savedEn && savedTn) {
+      setDisplayRegion({ en: savedEn, tn: savedTn })
+    }
+  }, [])
+
+  const t = {
+    ...content[language],
+    subtitle: language === "en" ? displayRegion.en : displayRegion.tn
+  }
 
   const recentActivities = [
     {
@@ -161,6 +175,13 @@ export default function AdminDashboard() {
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <BeatsLogo size={40} />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold tracking-tight text-slate-900">{t.title}</h1>
+                <p className="text-xs font-medium text-blue-600 uppercase tracking-widest flex items-center gap-1">
+                  <ShieldCheck className="h-3 w-3" />
+                  {t.subtitle}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-4">

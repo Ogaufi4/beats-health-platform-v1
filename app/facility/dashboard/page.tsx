@@ -88,9 +88,15 @@ export default function FacilityDashboard() {
     },
   }
 
-  const t = content[language]
+  const [displayName, setDisplayName] = useState({ en: content.en.title, tn: content.tn.title })
 
   useEffect(() => {
+    const savedEn = localStorage.getItem("userFacilityNameEn")
+    const savedTn = localStorage.getItem("userFacilityNameTn")
+    if (savedEn && savedTn) {
+      setDisplayName({ en: savedEn, tn: savedTn })
+    }
+    
     loadFacilityData()
     loadTasks()
     const unsubAdded = subscribe("tasks:added", loadTasks)
@@ -103,9 +109,15 @@ export default function FacilityDashboard() {
     }
   }, [])
 
+  const t = {
+    ...content[language],
+    title: language === "en" ? displayName.en : displayName.tn
+  }
+
   const loadFacilityData = async () => {
+    const facilityKey = localStorage.getItem("userFacilityKey") || "ub_clinic"
     const facilities = await getFacilities()
-    const found = facilities.find(f => f.id === "ub_clinic")
+    const found = facilities.find(f => f.id === facilityKey)
     if (found) setLocalFacility(found)
   }
 
@@ -135,11 +147,12 @@ export default function FacilityDashboard() {
   }
 
   const handleAction = async (item: any) => {
+    const facilityKey = localStorage.getItem("userFacilityKey") || "ub_clinic"
     const type = item.type === "medicine" ? "transfer_request" : item.type === "equipment" ? "booking_request" : "specialist_request"
     
     await addTask({
       type,
-      fromFacility: "ub_clinic",
+      fromFacility: facilityKey,
       toFacility: item.facilityId,
       payload: {
         item: item.item,

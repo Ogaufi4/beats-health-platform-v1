@@ -70,9 +70,15 @@ export default function PharmacistDashboard() {
     },
   }
 
-  const t = content[language]
+  const [displayFacility, setDisplayFacility] = useState({ en: content.en.subtitle, tn: content.tn.subtitle })
 
   useEffect(() => {
+    const savedEn = localStorage.getItem("userFacilityNameEn")
+    const savedTn = localStorage.getItem("userFacilityNameTn")
+    if (savedEn && savedTn) {
+      setDisplayFacility({ en: savedEn, tn: savedTn })
+    }
+
     loadLocalInventory()
     loadTasks()
     const unsubAdded = subscribe("tasks:added", loadTasks)
@@ -86,11 +92,17 @@ export default function PharmacistDashboard() {
   }, [])
 
   const loadLocalInventory = async () => {
+    const facilityKey = localStorage.getItem("userFacilityKey") || "pmh"
     const facilities = await getFacilities()
-    const pmh = facilities.find(f => f.id === "pmh") // Pretend we are PMH for now
-    if (pmh) {
-      setLocalInventory(Object.entries(pmh.stock).map(([med, qty]) => ({ med, qty: Number(qty) })))
+    const currentFac = facilities.find(f => f.id === facilityKey)
+    if (currentFac) {
+      setLocalInventory(Object.entries(currentFac.stock).map(([med, qty]) => ({ med, qty: Number(qty) })))
     }
+  }
+
+  const t = {
+    ...content[language],
+    subtitle: language === "en" ? displayFacility.en : displayFacility.tn
   }
 
   const loadTasks = async () => {

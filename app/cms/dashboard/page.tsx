@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -123,7 +123,20 @@ export default function CMSDashboard() {
     },
   }
 
-  const t = content[language]
+  const [displaySubtitle, setDisplaySubtitle] = useState({ en: content.en.subtitle, tn: content.tn.subtitle })
+
+  useEffect(() => {
+    const savedEn = localStorage.getItem("userFacilityNameEn")
+    const savedTn = localStorage.getItem("userFacilityNameTn")
+    if (savedEn && savedTn) {
+      setDisplaySubtitle({ en: savedEn, tn: savedTn })
+    }
+  }, [])
+
+  const t = {
+    ...content[language],
+    subtitle: language === "en" ? displaySubtitle.en : displaySubtitle.tn
+  }
 
   const criticalAlerts = [
     {
@@ -322,6 +335,13 @@ export default function CMSDashboard() {
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <BeatsLogo size={40} />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold tracking-tight text-slate-900">{t.title}</h1>
+                <p className="text-xs font-medium text-blue-600 uppercase tracking-widest flex items-center gap-1">
+                  <Truck className="h-3 w-3" />
+                  {t.subtitle}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-4">
