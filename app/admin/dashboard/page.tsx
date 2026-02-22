@@ -393,18 +393,18 @@ export default function AdminDashboard() {
           <TabsContent value="facilities">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[
-                { name: "Sedilega Private Hospital", region: "Central (Gaborone)", type: "Private Hospital", beds: 100, status: "operational", alerts: 0 },
-                { name: "Sir Ketumile Masire Teaching Hospital", region: "Central (Gaborone)", type: "Teaching Hospital", beds: 450, status: "operational", alerts: 1 },
-                { name: "Athlone District Hospital", region: "Southern (Lobatse)", type: "District Hospital", beds: 150, status: "operational", alerts: 0 },
-                { name: "Bamalete Lutheran Hospital", region: "Southern (Ramotswa)", type: "Mission Hospital", beds: 120, status: "operational", alerts: 0 },
-                { name: "Mahalapye District Hospital", region: "Central (Mahalapye)", type: "District Hospital", beds: 200, status: "operational", alerts: 2 },
-                { name: "Letsholathebe II Memorial Hospital", region: "North West (Maun)", type: "District Hospital", beds: 180, status: "operational", alerts: 1 },
-                { name: "Deborah Retief Memorial Hospital", region: "Kgatleng (Mochudi)", type: "District Hospital", beds: 140, status: "operational", alerts: 0 },
-                { name: "Rakops Primary Hospital", region: "Boteti (Rakops)", type: "Primary Hospital", beds: 40, status: "operational", alerts: 3 },
-                { name: "Gaborone Private Hospital", region: "Central (Gaborone)", type: "Private Hospital", beds: 150, status: "operational", alerts: 0 },
-                { name: "BDF Clinic (Glen Valley)", region: "Central (Gaborone)", type: "Military Clinic", beds: 10, status: "operational", alerts: 0 },
-                { name: "BDF Clinic (SSKB)", region: "Central (Gaborone)", type: "Military Clinic", beds: 15, status: "operational", alerts: 0 },
-                { name: "BDF Clinic (Thebephatshwa)", region: "Kweneng (Thebephatshwa)", type: "Military Clinic", beds: 12, status: "operational", alerts: 0 },
+                { name: "Sedilega Private Hospital", region: "Central (Gaborone)", type: "Private Hospital", beds: 100, specialists: 12, tools: ["MRI", "CT Scanner"], status: "operational", alerts: 0 },
+                { name: "Sir Ketumile Masire Teaching Hospital", region: "Central (Gaborone)", type: "Teaching Hospital", beds: 450, specialists: 45, tools: ["Radiotherapy", "ICU", "Dialysis"], status: "operational", alerts: 1 },
+                { name: "Athlone District Hospital", region: "Southern (Lobatse)", type: "District Hospital", beds: 150, specialists: 8, tools: ["X-Ray", "Laboratory"], status: "operational", alerts: 0 },
+                { name: "Bamalete Lutheran Hospital", region: "Southern (Ramotswa)", type: "Mission Hospital", beds: 120, specialists: 6, tools: ["X-Ray", "Ultrasound"], status: "operational", alerts: 0 },
+                { name: "Mahalapye District Hospital", region: "Central (Mahalapye)", type: "District Hospital", beds: 200, specialists: 10, tools: ["CT Scanner", "Dialysis"], status: "operational", alerts: 2 },
+                { name: "Letsholathebe II Memorial Hospital", region: "North West (Maun)", type: "District Hospital", beds: 180, specialists: 7, tools: ["MRI", "X-Ray"], status: "operational", alerts: 1 },
+                { name: "Deborah Retief Memorial Hospital", region: "Kgatleng (Mochudi)", type: "District Hospital", beds: 140, specialists: 5, tools: ["X-Ray", "Ultrasound"], status: "operational", alerts: 0 },
+                { name: "Rakops Primary Hospital", region: "Boteti (Rakops)", type: "Primary Hospital", beds: 40, specialists: 2, tools: ["Basic Diagnostics"], status: "operational", alerts: 3 },
+                { name: "Gaborone Private Hospital", region: "Central (Gaborone)", type: "Private Hospital", beds: 150, specialists: 18, tools: ["MRI", "CT Scanner", "Cardiology Lab"], status: "operational", alerts: 0 },
+                { name: "BDF Clinic (Glen Valley)", region: "Central (Gaborone)", type: "Military Clinic", beds: 10, specialists: 1, tools: ["Clinic"], status: "operational", alerts: 0 },
+                { name: "BDF Clinic (SSKB)", region: "Central (Gaborone)", type: "Military Clinic", beds: 15, specialists: 2, tools: ["Clinic"], status: "operational", alerts: 0 },
+                { name: "BDF Clinic (Thebephatshwa)", region: "Kweneng (Thebephatshwa)", type: "Military Clinic", beds: 12, specialists: 1, tools: ["Clinic"], status: "operational", alerts: 0 },
               ].map((fac, idx) => (
                 <Card key={idx} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-5">
@@ -422,9 +422,39 @@ export default function AdminDashboard() {
                         {fac.status}
                       </Badge>
                     </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">{fac.type}</span>
-                      {fac.beds > 0 && <span className="text-gray-500">{fac.beds} beds</span>}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between text-xs py-1 border-b border-gray-50">
+                        <span className="text-gray-500 font-medium">Facility Type</span>
+                        <span className="text-gray-700">{fac.type}</span>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-2 mt-2">
+                        <div className="bg-blue-50/50 p-2 rounded-lg border border-blue-100/50">
+                          <p className="text-[10px] text-blue-600 font-semibold uppercase tracking-wider">Capacity</p>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-lg font-bold text-blue-700">{fac.beds}</span>
+                            <span className="text-[10px] text-blue-500">beds</span>
+                          </div>
+                        </div>
+                        <div className="bg-green-50/50 p-2 rounded-lg border border-green-100/50">
+                          <p className="text-[10px] text-green-600 font-semibold uppercase tracking-wider">Staff</p>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-lg font-bold text-green-700">{(fac as any).specialists || 0}</span>
+                            <span className="text-[10px] text-green-500">specialists</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Equipped Tools</p>
+                        <div className="flex flex-wrap gap-1">
+                          {((fac as any).tools || []).map((tool: string, tIdx: number) => (
+                            <Badge key={tIdx} variant="outline" className="text-[9px] py-0 px-1.5 h-4 bg-white text-gray-600 border-gray-200 font-normal">
+                              {tool}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                     {fac.alerts > 0 && (
                       <div className="mt-3 flex items-center gap-2 text-xs text-red-600 font-medium">
