@@ -55,13 +55,42 @@ export default function FacilityDashboard() {
   const { toast } = useToast()
   const [localFacility, setLocalFacility] = useState<any>(null)
 
+  const fallbackTasks = [
+    {
+      id: "fallback-1",
+      type: "transfer_request",
+      fromFacility: "ub_clinic",
+      toFacility: "pmh",
+      payload: { item: "paracetamol", qty: 80, requestedAt: "2026-02-22T08:30:00.000Z" },
+      createdAt: "2026-02-22T08:30:00.000Z",
+      status: "pending",
+    },
+    {
+      id: "fallback-2",
+      type: "booking_request",
+      fromFacility: "bdf_clinic",
+      toFacility: "pmh",
+      payload: { item: "Ultrasound", qty: 1, requestedAt: "2026-02-22T09:10:00.000Z" },
+      createdAt: "2026-02-22T09:10:00.000Z",
+      status: "pending",
+    },
+  ]
+
+  const workloadFacilities = [
+    { name: "Princess Marina Hospital", patient: 78, equipment: 64, specialist: 71 },
+    { name: "Sir Ketumile Masire Hospital", patient: 66, equipment: 58, specialist: 62 },
+    { name: "Nyangabgwe Hospital", patient: 54, equipment: 47, specialist: 59 },
+    { name: "Maun General Hospital", patient: 81, equipment: 73, specialist: 68 },
+  ]
+
   const content = {
     en: {
       title: "UB Clinic - Station 01",
       subtitle: "Command & Control Center",
       radar: "Resource Radar",
-      inventory: "Inventory Logistics",
+      inventory: "Medication Logistics",
       equipment: "Equipment Coordination",
+      workload: "Facility Workload",
       specialists: "Specialist Network",
       tasks: "Pending Requests",
       searchPlaceholder: "Search for medicines, equipment, or specialists...",
@@ -75,8 +104,9 @@ export default function FacilityDashboard() {
       title: "UB Clinic - Station 01",
       subtitle: "Lefelo la Taolo ya Ditiro",
       radar: "Radar ya Didirisiwa",
-      inventory: "Taolo ya Stock",
+      inventory: "Taolo ya Dihlare",
       equipment: "Thulaganyo ya Didirisiwa",
+      workload: "Boloko jwa Mošomo",
       specialists: "Network ya Dingaka",
       tasks: "Dikopo tse di Emetsweng",
       searchPlaceholder: "Batla dihlare, didirisiwa, kapa dingaka...",
@@ -108,6 +138,9 @@ export default function FacilityDashboard() {
       unsubFac()
     }
   }, [])
+
+  const displayTasks =
+    tasks.length >= 2 ? tasks : [...tasks, ...fallbackTasks.slice(0, 2 - tasks.length)]
 
   const t = {
     ...content[language],
@@ -178,7 +211,7 @@ export default function FacilityDashboard() {
                 <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/20">
                   <Activity className="h-6 w-6 text-white" />
                 </div>
-                <BeatsLogo size={32} />
+                <BeatsLogo size={44} />
                 <div>
                   <h1 className="text-xl font-bold tracking-tight text-slate-900">{t.title}</h1>
                   <p className="text-xs font-medium text-blue-400 uppercase tracking-widest flex items-center gap-1">
@@ -278,18 +311,19 @@ export default function FacilityDashboard() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="bg-white border border-slate-200 p-1 w-full md:w-auto h-auto grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
+          <TabsList className="bg-white border border-slate-200 p-1 w-full md:w-auto h-auto grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
             <TabsTrigger value="radar" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white py-2 px-6">{t.radar}</TabsTrigger>
             <TabsTrigger value="inventory" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white py-2 px-6">{t.inventory}</TabsTrigger>
             <TabsTrigger value="equipment" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white py-2 px-6">{t.equipment}</TabsTrigger>
             <TabsTrigger value="specialists" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white py-2 px-6">{t.specialists}</TabsTrigger>
+            <TabsTrigger value="workload" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white py-2 px-6">{t.workload}</TabsTrigger>
             <TabsTrigger value="tasks" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white py-2 px-6 relative">
               {t.tasks}
-              {tasks.filter(tk => tk.status === "pending").length > 0 && (
+              {displayTasks.filter(tk => tk.status === "pending").length > 0 && (
                 <span className="absolute -top-1 -right-1 flex h-4 w-4">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-4 w-4 bg-blue-500 text-[10px] items-center justify-center font-bold text-white">
-                    {tasks.filter(tk => tk.status === "pending").length}
+                    {displayTasks.filter(tk => tk.status === "pending").length}
                   </span>
                 </span>
               )}
@@ -327,7 +361,7 @@ export default function FacilityDashboard() {
                   <CardTitle className="text-slate-900 text-sm font-bold uppercase tracking-wider">{language === "en" ? "Recent Network Activity" : "Ditiro tsa Network tsa Bosheng"}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {tasks.slice(0, 5).map((tk, idx) => (
+                  {displayTasks.slice(0, 5).map((tk, idx) => (
                     <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 border border-slate-100 hover:bg-slate-100/50 transition-colors underline-offset-4 cursor-default">
                       <div className={`p-2 rounded-full ${tk.type === "transfer_request" ? "bg-purple-500/20 text-purple-400" : "bg-emerald-500/20 text-emerald-400"}`}>
                         {tk.type === "transfer_request" ? <Truck className="h-4 w-4" /> : <Calendar className="h-4 w-4" />}
@@ -352,13 +386,13 @@ export default function FacilityDashboard() {
             </div>
 
             <div className="grid gap-4">
-              {tasks.length === 0 ? (
+              {displayTasks.length === 0 ? (
                 <div className="py-20 text-center bg-white rounded-xl border border-slate-200 border-dashed">
                   <Activity className="h-12 w-12 text-slate-300 mx-auto mb-4" strokeWidth={1} />
                   <p className="text-slate-500">No active resource requests at this time.</p>
                 </div>
               ) : (
-                tasks.map((task) => (
+                displayTasks.map((task) => (
                   <Card key={task.id} className="bg-white border-slate-200 border-l-4 border-l-blue-600 hover:bg-slate-50 transition-colors shadow-sm">
                     <CardContent className="p-5">
                       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -411,10 +445,10 @@ export default function FacilityDashboard() {
           <TabsContent value="inventory" className="animate-in fade-in duration-300">
              <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold flex items-center gap-2">
-                   <Package className="h-6 w-6 text-blue-500" /> Local Unit Inventory
+                   <Package className="h-6 w-6 text-blue-500" /> Local Medication Inventory
                 </h2>
                 <Button className="bg-blue-600 hover:bg-blue-500">
-                  <Plus className="h-4 w-4 mr-2" /> Adjust Stock
+                  <Plus className="h-4 w-4 mr-2" /> Adjust Medication
                 </Button>
              </div>
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -438,9 +472,12 @@ export default function FacilityDashboard() {
 
           <TabsContent value="equipment" className="animate-in fade-in duration-300">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold flex items-center gap-2">
-                <Activity className="h-6 w-6 text-blue-500" /> Unit Equipment Status
-              </h2>
+              <div>
+                <h2 className="text-2xl font-bold flex items-center gap-2">
+                  <Activity className="h-6 w-6 text-blue-500" /> Unit Equipment Status
+                </h2>
+                <p className="text-sm text-slate-500">Machines available at this facility</p>
+              </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {localFacility && Object.entries(localFacility.equipment).map(([name, status]: [string, any], idx) => (
@@ -489,6 +526,55 @@ export default function FacilityDashboard() {
                     </CardContent>
                   </Card>
                 ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="workload" className="animate-in fade-in duration-300">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold flex items-center gap-2">
+                  <Activity className="h-6 w-6 text-blue-500" /> Facility Workload
+                </h2>
+                <p className="text-sm text-slate-500">Capacity across patient, equipment, and specialist workloads</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {workloadFacilities.map((fac) => (
+                <Card key={fac.name} className="bg-white border-slate-200 shadow-sm">
+                  <CardContent className="p-5">
+                    <h3 className="font-bold text-slate-900 mb-4">{fac.name}</h3>
+                    <div className="space-y-3 text-sm">
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-500">Patient workload</span>
+                          <span className="font-semibold text-slate-700">{fac.patient}%</span>
+                        </div>
+                        <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden mt-1">
+                          <div className="h-full bg-blue-500" style={{ width: `${fac.patient}%` }} />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-500">Equipment workload</span>
+                          <span className="font-semibold text-slate-700">{fac.equipment}%</span>
+                        </div>
+                        <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden mt-1">
+                          <div className="h-full bg-emerald-500" style={{ width: `${fac.equipment}%` }} />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-500">Specialist workload</span>
+                          <span className="font-semibold text-slate-700">{fac.specialist}%</span>
+                        </div>
+                        <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden mt-1">
+                          <div className="h-full bg-amber-500" style={{ width: `${fac.specialist}%` }} />
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </TabsContent>
 

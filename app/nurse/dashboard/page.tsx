@@ -2,13 +2,11 @@
 
 import { useEffect, useState } from "react"
 import dynamic from "next/dynamic"
-import { addPatient, getPatients, addTask } from "@/components/mock-service"
 import BeatsLogo from "@/components/BeatsLogo"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Input } from "@/components/ui/input"
 import {
   Users,
   Activity,
@@ -17,7 +15,6 @@ import {
   Bell,
   Settings,
   LogOut,
-  Search,
   Plus,
   Clock,
   FileText,
@@ -36,13 +33,7 @@ const Map = dynamic(() => import("@/components/Map"), {
 })
 
 export default function NurseDashboardPage() {
-  const [name, setName] = useState("")
-  const [age, setAge] = useState<number | "">("")
-  const [complaint, setComplaint] = useState("")
-  const [patients, setPatients] = useState<any[]>([])
-  const [adding, setAdding] = useState(false)
   const [language, setLanguage] = useState<"en" | "tn">("en")
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0])
 
   const content = {
     en: {
@@ -102,34 +93,11 @@ export default function NurseDashboardPage() {
       setDisplayFacility({ en: savedEn, tn: savedTn })
     }
     
-    getPatients().then(setPatients)
   }, [])
 
   const t = {
     ...content[language],
     subtitle: language === "en" ? displayFacility.en : displayFacility.tn
-  }
-
-  const onAddPatient = async () => {
-    if (!name) return
-    setAdding(true)
-    const p = await addPatient({ name, age: typeof age === "number" ? age : undefined, complaint })
-    setPatients((s) => [p, ...s])
-    setName("")
-    setAge("")
-    setComplaint("")
-    setAdding(false)
-  }
-
-  const quickSendToPharmacy = async (patient: any, medicine: string) => {
-    // Simulate sending a task
-    await addTask({ 
-      type: "patient_referral", 
-      fromFacility: displayFacility.en,
-      toFacility: "In-house Pharmacy",
-      payload: { patientId: patient.id, patientName: patient.name, medicine } 
-    })
-    alert(`Mock: sent patient ${patient.name} -> pharmacy for "${medicine}"`)
   }
 
   // Mock data
@@ -197,7 +165,7 @@ export default function NurseDashboardPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <BeatsLogo size={40} />
+                <BeatsLogo size={52} />
               </div>
               <div>
                 <h1 className="text-xl font-bold tracking-tight text-slate-900">{t.title}</h1>
@@ -282,67 +250,13 @@ export default function NurseDashboardPage() {
           </Card>
         </div>
 
-        <Tabs defaultValue="patients" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="patients">{t.patients}</TabsTrigger>
+        <Tabs defaultValue="tasks" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="tasks">{t.tasksTab}</TabsTrigger>
             <TabsTrigger value="appointments">{t.appointments}</TabsTrigger>
             <TabsTrigger value="vitals">{t.vitalsTab}</TabsTrigger>
             <TabsTrigger value="map">{language === "en" ? "Map" : "Mmapa"}</TabsTrigger>
           </TabsList>
-
-          {/* Patients Tab */}
-          <TabsContent value="patients" className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">{t.patientRecords}</h2>
-              <div className="relative w-64">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input placeholder={t.searchPatients} className="pl-10" />
-              </div>
-            </div>
-
-            <div className="grid gap-4">
-              {assignedPatients.map((patient) => (
-                <Card key={patient.id}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                          <Users className="h-6 w-6 text-blue-600" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold">{patient.name}</h3>
-                          <p className="text-sm text-gray-600">
-                            {patient.id} • {language === "en" ? "Age" : "Dingwaga"}: {patient.age}
-                          </p>
-                          <p className="text-sm text-gray-600">{patient.condition}</p>
-                          <p className="text-sm text-gray-500">{patient.room}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="flex gap-1 mb-2">
-                          {patient.alerts.map((alert, i) => (
-                            <Badge key={i} variant="destructive" className="text-xs">
-                              {alert}
-                            </Badge>
-                          ))}
-                          {patient.alerts.length === 0 && (
-                            <Badge variant="outline" className="text-xs text-green-600 border-green-300">
-                              {language === "en" ? "Stable" : "Siame"}
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-sm text-gray-600 font-medium">{patient.nextMed}</p>
-                        <Button variant="outline" size="sm" className="mt-2">
-                          {t.viewRecord}
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
 
           {/* Tasks Tab */}
           <TabsContent value="tasks" className="space-y-6">

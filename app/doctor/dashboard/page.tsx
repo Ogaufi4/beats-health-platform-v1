@@ -14,7 +14,6 @@ import {
   Bell,
   Settings,
   LogOut,
-  Search,
   Plus,
   Clock,
   FileText,
@@ -239,36 +238,6 @@ export default function DoctorDashboard() {
     },
   ]
 
-  const recentPatients = [
-    {
-      id: "BW123456",
-      name: "Mma Boitumelo",
-      age: 58,
-      lastVisit: "2024-01-10",
-      condition: "Atrial Fibrillation",
-      nextAppointment: "2024-01-18",
-      status: "stable",
-    },
-    {
-      id: "BW789012",
-      name: "Rra Kagiso",
-      age: 62,
-      lastVisit: "2024-01-09",
-      condition: "Heart Failure",
-      nextAppointment: "2024-01-16",
-      status: "monitoring",
-    },
-    {
-      id: "BW345678",
-      name: "Mma Naledi",
-      age: 35,
-      lastVisit: "2024-01-08",
-      condition: "Mitral Valve Prolapse",
-      nextAppointment: "2024-01-22",
-      status: "stable",
-    },
-  ]
-
   const medicalEquipment = [
     {
       id: 1,
@@ -463,7 +432,7 @@ export default function DoctorDashboard() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <BeatsLogo size={40} />
+                <BeatsLogo size={52} />
               </div>
               <div>
                 <h1 className="text-xl font-bold tracking-tight text-slate-900">{t.title}</h1>
@@ -571,10 +540,9 @@ export default function DoctorDashboard() {
         </div>
 
         <Tabs defaultValue="appointments" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="appointments">{t.appointments}</TabsTrigger>
             <TabsTrigger value="walk-ins">{t.walkInQueue}</TabsTrigger>
-            <TabsTrigger value="patients">{t.patients}</TabsTrigger>
             <TabsTrigger value="equipment">{t.equipment}</TabsTrigger>
             <TabsTrigger value="referrals">{t.referrals}</TabsTrigger>
             <TabsTrigger value="results">{t.results}</TabsTrigger>
@@ -739,75 +707,6 @@ export default function DoctorDashboard() {
                             {t.markComplete}
                           </Button>
                         </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="patients" className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">{t.patientRecords}</h2>
-              <div className="flex gap-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input placeholder={t.searchPatients} className="pl-10 w-64" />
-                </div>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  {language === "en" ? "New Patient" : "Molwetse o Moša"}
-                </Button>
-              </div>
-            </div>
-
-            <div className="grid gap-4">
-              {recentPatients.map((patient) => (
-                <Card key={patient.id}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                          <Users className="h-6 w-6 text-blue-600" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold">{patient.name}</h3>
-                          <p className="text-sm text-gray-600">
-                            {patient.id} • {language === "en" ? "Age" : "Dingwaga"}: {patient.age}
-                          </p>
-                          <p className="text-sm text-gray-600">{patient.condition}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Badge
-                            variant={
-                              patient.status === "stable"
-                                ? "default"
-                                : patient.status === "monitoring"
-                                  ? "secondary"
-                                  : "destructive"
-                            }
-                          >
-                            {patient.status === "stable"
-                              ? language === "en"
-                                ? "Stable"
-                                : "Siame"
-                              : language === "en"
-                                ? "Monitoring"
-                                : "Tlhokomelo"}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-gray-500">
-                          {language === "en" ? "Last visit:" : "Etela ya bofelo:"} {patient.lastVisit}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {language === "en" ? "Next:" : "E latelang:"} {patient.nextAppointment}
-                        </p>
-                        <Button variant="outline" size="sm" className="mt-2 bg-transparent">
-                          {t.viewRecord}
-                        </Button>
                       </div>
                     </div>
                   </CardContent>

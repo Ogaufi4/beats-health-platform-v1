@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -73,20 +73,7 @@ export default function AdminDashboard() {
     },
   }
 
-  const [displayRegion, setDisplayRegion] = useState({ en: content.en.subtitle, tn: content.tn.subtitle })
-
-  useEffect(() => {
-    const savedEn = localStorage.getItem("userFacilityNameEn")
-    const savedTn = localStorage.getItem("userFacilityNameTn")
-    if (savedEn && savedTn) {
-      setDisplayRegion({ en: savedEn, tn: savedTn })
-    }
-  }, [])
-
-  const t = {
-    ...content[language],
-    subtitle: language === "en" ? displayRegion.en : displayRegion.tn
-  }
+  const t = content[language]
 
   const recentActivities = [
     {
@@ -174,7 +161,7 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <BeatsLogo size={40} />
+                <BeatsLogo size={52} />
               </div>
               <div>
                 <h1 className="text-xl font-bold tracking-tight text-slate-900">{t.title}</h1>

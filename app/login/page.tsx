@@ -2,7 +2,7 @@
 
 import type React from "react"
 import BeatsLogo from "@/components/BeatsLogo"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -43,6 +43,7 @@ export default function LoginPage() {
         cms: "Central Medical Stores",
       },
       facilities: {
+        pmh: "Princess Marina Hospital",
         sedilega: "Sedilega Private Hospital",
         skmth: "Sir Ketumile Masire Teaching Hospital",
         athlone: "Athlone District Hospital",
@@ -52,6 +53,7 @@ export default function LoginPage() {
         deborah_retief: "Deborah Retief Memorial Hospital",
         rakops: "Rakops Primary Hospital",
         gph: "Gaborone Private Hospital",
+        ub_clinic: "UB Clinic",
         bdf_glen_valley: "BDF Clinic (Glen Valley)",
         bdf_sskb: "BDF Clinic (SSKB)",
         bdf_thebephatshwa: "BDF Clinic (Thebephatshwa)",
@@ -80,6 +82,7 @@ export default function LoginPage() {
         cms: "Central Medical Stores",
       },
       facilities: {
+        pmh: "Sepetlele sa Princess Marina",
         sedilega: "Sepetlele sa Sedilega",
         skmth: "Sepetlele sa Thuto sa Sir Ketumile Masire",
         athlone: "Sepetlele sa Kgaolo sa Athlone",
@@ -89,6 +92,7 @@ export default function LoginPage() {
         deborah_retief: "Sepetlele sa Segopotso sa Deborah Retief",
         rakops: "Sepetlele sa Kotlhao sa Rakops",
         gph: "Sepetlele sa Segolo sa Gaborone",
+        ub_clinic: "Kliniki ya UB",
         bdf_glen_valley: "Kliniki ya BDF (Glen Valley)",
         bdf_sskb: "Kliniki ya BDF (SSKB)",
         bdf_thebephatshwa: "Kliniki ya BDF (Thebephatshwa)",
@@ -98,17 +102,25 @@ export default function LoginPage() {
 
   const t = content[language]
 
+  const isNationalRole = userType === "admin" || userType === "cms"
+
+  useEffect(() => {
+    if (isNationalRole) setFacility("")
+  }, [isNationalRole])
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
 
     // Save selected facility info for the dashboard to display
-    if (facility && userType) {
+    if (facility && userType && !isNationalRole) {
       const facilityNameEn = content.en.facilities[facility as keyof typeof content.en.facilities]
       const facilityNameTn = content.tn.facilities[facility as keyof typeof content.tn.facilities]
       
       localStorage.setItem("userFacilityKey", facility)
       localStorage.setItem("userFacilityNameEn", facilityNameEn || "")
       localStorage.setItem("userFacilityNameTn", facilityNameTn || "")
+    }
+    if (userType) {
       localStorage.setItem("userRole", userType)
     }
 
@@ -149,7 +161,7 @@ export default function LoginPage() {
             {t.backHome}
           </Link>
           <div className="flex items-center justify-center gap-2 mb-4">
-            <BeatsLogo size={44} />
+            <BeatsLogo size={64} />
           </div>
           <Button
             variant="outline"
@@ -195,11 +207,12 @@ export default function LoginPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="facility">{t.facility}</Label>
-                <Select value={facility} onValueChange={setFacility} required>
+                <Select value={facility} onValueChange={setFacility} required={!isNationalRole} disabled={isNationalRole}>
                   <SelectTrigger>
                     <SelectValue placeholder={t.selectFacility} />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="pmh">{t.facilities.pmh}</SelectItem>
                     <SelectItem value="sedilega">{t.facilities.sedilega}</SelectItem>
                     <SelectItem value="skmth">{t.facilities.skmth}</SelectItem>
                     <SelectItem value="athlone">{t.facilities.athlone}</SelectItem>
@@ -209,11 +222,15 @@ export default function LoginPage() {
                     <SelectItem value="deborah_retief">{t.facilities.deborah_retief}</SelectItem>
                     <SelectItem value="rakops">{t.facilities.rakops}</SelectItem>
                     <SelectItem value="gph">{t.facilities.gph}</SelectItem>
+                    <SelectItem value="ub_clinic">{t.facilities.ub_clinic}</SelectItem>
                     <SelectItem value="bdf_glen_valley">{t.facilities.bdf_glen_valley}</SelectItem>
                     <SelectItem value="bdf_sskb">{t.facilities.bdf_sskb}</SelectItem>
                     <SelectItem value="bdf_thebephatshwa">{t.facilities.bdf_thebephatshwa}</SelectItem>
                   </SelectContent>
                 </Select>
+                {isNationalRole && (
+                  <p className="text-xs text-slate-500">Facility selection not required for this role.</p>
+                )}
               </div>
 
               <div className="space-y-2">

@@ -147,7 +147,7 @@ export default function PharmacistDashboard() {
               <div className="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/20">
                 <Pill className="h-6 w-6 text-white" />
               </div>
-              <BeatsLogo size={32} />
+              <BeatsLogo size={44} />
               <div>
                 <h1 className="text-lg font-bold tracking-tight text-slate-900">{t.title}</h1>
                 <p className="text-[10px] font-bold text-purple-400 uppercase tracking-[0.2em] flex items-center gap-1">

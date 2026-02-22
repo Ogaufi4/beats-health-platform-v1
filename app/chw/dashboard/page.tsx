@@ -249,7 +249,7 @@ export default function CHWDashboard() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <BeatsLogo size={40} />
+                <BeatsLogo size={52} />
               </div>
               <div>
                 <h1 className="text-xl font-bold tracking-tight text-slate-900">{t.title}</h1>

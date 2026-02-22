@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -123,20 +123,7 @@ export default function CMSDashboard() {
     },
   }
 
-  const [displaySubtitle, setDisplaySubtitle] = useState({ en: content.en.subtitle, tn: content.tn.subtitle })
-
-  useEffect(() => {
-    const savedEn = localStorage.getItem("userFacilityNameEn")
-    const savedTn = localStorage.getItem("userFacilityNameTn")
-    if (savedEn && savedTn) {
-      setDisplaySubtitle({ en: savedEn, tn: savedTn })
-    }
-  }, [])
-
-  const t = {
-    ...content[language],
-    subtitle: language === "en" ? displaySubtitle.en : displaySubtitle.tn
-  }
+  const t = content[language]
 
   const criticalAlerts = [
     {
@@ -145,7 +132,7 @@ export default function CMSDashboard() {
       medicine: "Amlodipine 5mg",
       currentStock: 2,
       daysRemaining: 2,
-      region: "Chobe",
+      region: "Central",
       priority: "critical",
       requestDate: "2024-01-10",
       estimatedNeed: 200,
@@ -156,7 +143,7 @@ export default function CMSDashboard() {
       medicine: "Insulin (Rapid Acting)",
       currentStock: 5,
       daysRemaining: 3,
-      region: "Ghanzi",
+      region: "Southern",
       priority: "critical",
       requestDate: "2024-01-10",
       estimatedNeed: 100,
@@ -167,7 +154,7 @@ export default function CMSDashboard() {
       medicine: "Paracetamol 500mg",
       currentStock: 15,
       daysRemaining: 5,
-      region: "Boteti",
+      region: "Northern",
       priority: "high",
       requestDate: "2024-01-09",
       estimatedNeed: 300,
@@ -178,7 +165,7 @@ export default function CMSDashboard() {
       medicine: "Metformin 500mg",
       currentStock: 25,
       daysRemaining: 7,
-      region: "North West",
+      region: "Western",
       priority: "medium",
       requestDate: "2024-01-09",
       estimatedNeed: 400,
@@ -334,7 +321,7 @@ export default function CMSDashboard() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <BeatsLogo size={40} />
+                <BeatsLogo size={64} />
               </div>
               <div>
                 <h1 className="text-xl font-bold tracking-tight text-slate-900">{t.title}</h1>

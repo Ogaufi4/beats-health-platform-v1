@@ -30,6 +30,26 @@ const STORAGE_KEYS = {
   PATIENTS: "mock:patients",
 };
 
+const defaultTasks: Task[] = [
+  {
+    id: "t_seed_1",
+    type: "transfer_request",
+    fromFacility: "ub_clinic",
+    toFacility: "pmh",
+    payload: { item: "amoxicillin", qty: 120, requestedAt: "2026-02-22T08:10:00.000Z" },
+    createdAt: "2026-02-22T08:10:00.000Z",
+    status: "pending",
+  },
+  {
+    id: "t_seed_2",
+    type: "booking_request",
+    fromFacility: "bdf_clinic",
+    toFacility: "pmh",
+    payload: { item: "MRI Scanner", qty: 1, requestedAt: "2026-02-22T09:05:00.000Z" },
+    createdAt: "2026-02-22T09:05:00.000Z",
+    status: "pending",
+  },
+];
 
 const defaultFacilities: Facility[] = [
   {
@@ -37,7 +57,28 @@ const defaultFacilities: Facility[] = [
     facility: "Princess Marina Hospital",
     location: "Gaborone",
     distance: 2.1,
-    stock: { paracetamol: 120, amoxicillin: 30, ibuprofen: 50, insulin: 45 },
+    stock: {
+      paracetamol: 120,
+      amoxicillin: 180,
+      ibuprofen: 95,
+      insulin: 45,
+      metformin: 140,
+      amlodipine: 160,
+      losartan: 90,
+      atorvastatin: 110,
+      omeprazole: 200,
+      ceftriaxone: 60,
+      ciprofloxacin: 80,
+      azithromycin: 70,
+      clopidogrel: 55,
+      aspirin: 220,
+      furosemide: 75,
+      salbutamol: 130,
+      prednisolone: 65,
+      hydroxychloroquine: 40,
+      diclofenac: 85,
+      zinc: 300,
+    },
     equipment: {
       "MRI Scanner": "available",
       "CT Scanner": "busy",
@@ -56,7 +97,22 @@ const defaultFacilities: Facility[] = [
     facility: "Sir Ketumile Masire Hospital",
     location: "Gaborone",
     distance: 5.4,
-    stock: { insulin: 120, amoxicillin: 240, paracetamol: 80 },
+    stock: {
+      insulin: 120,
+      amoxicillin: 240,
+      paracetamol: 80,
+      metformin: 210,
+      amlodipine: 135,
+      ceftriaxone: 55,
+      ciprofloxacin: 70,
+      azithromycin: 65,
+      ibuprofen: 95,
+      losartan: 100,
+      aspirin: 150,
+      omeprazole: 120,
+      diclofenac: 75,
+      salbutamol: 90,
+    },
     equipment: { Ultrasound: "available", "MRI Scanner": "busy" },
     specialists: { Cardiologist: "available", Oncologist: "available" },
     mapUrl: "https://maps.google.com/?q=Sir+Ketumile+Masire+Teaching+Hospital",
@@ -66,7 +122,21 @@ const defaultFacilities: Facility[] = [
     facility: "UB Clinic",
     location: "Gaborone",
     distance: 3.2,
-    stock: { insulin: 5, paracetamol: 40 },
+    stock: {
+      insulin: 15,
+      paracetamol: 140,
+      amoxicillin: 65,
+      ibuprofen: 85,
+      metformin: 75,
+      amlodipine: 60,
+      losartan: 40,
+      omeprazole: 90,
+      aspirin: 110,
+      ceftriaxone: 20,
+      azithromycin: 35,
+      furosemide: 30,
+      salbutamol: 55,
+    },
     equipment: { Ultrasound: "available" },
     specialists: { "General Practitioner": "available", Nurse: "available" },
   },
@@ -75,7 +145,17 @@ const defaultFacilities: Facility[] = [
     facility: "BDF Clinic",
     location: "Mogoditshane",
     distance: 8.1,
-    stock: { paracetamol: 100 },
+    stock: {
+      paracetamol: 100,
+      amoxicillin: 40,
+      ibuprofen: 70,
+      metformin: 50,
+      amlodipine: 45,
+      aspirin: 80,
+      omeprazole: 60,
+      diclofenac: 55,
+      salbutamol: 35,
+    },
     equipment: { "X-Ray Machine": "available" },
     specialists: { Dentist: "available", Nurse: "available" },
   },
@@ -129,7 +209,7 @@ export function initMock() {
     write(STORAGE_KEYS.FACILITIES, defaultFacilities);
   }
   if (!localStorage.getItem(STORAGE_KEYS.TASKS)) {
-    write(STORAGE_KEYS.TASKS, []);
+    write(STORAGE_KEYS.TASKS, defaultTasks);
   }
   if (!localStorage.getItem(STORAGE_KEYS.PATIENTS)) {
     write(STORAGE_KEYS.PATIENTS, defaultPatients);

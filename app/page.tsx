@@ -101,7 +101,7 @@ export default function HomePage() {
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <BeatsLogo size={40} />
+            <BeatsLogo size={52} />
           </div>
           <div className="flex items-center gap-4">
             <Button variant="outline" size="sm" onClick={() => setLanguage(language === "en" ? "tn" : "en")}>
@@ -330,7 +330,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <BeatsLogo size={32} variant="white" />
+              <BeatsLogo size={44} variant="white" />
             </div>
             <div className="text-sm text-gray-400">
               {language === "en"
