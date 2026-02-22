@@ -155,7 +155,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background Logo Watermark - Professional Branding */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.06] pointer-events-none select-none">
-        <BeatsLogo size={1000} />
+        <BeatsLogo size={1500} />
       </div>
 
       {/* Subtle Floating Decorative Elements */}
