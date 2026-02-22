@@ -16,7 +16,8 @@ type Task = {
     | "booking_request"
     | "specialist_request"
     | "stock_update"
-    | "patient_referral";
+    | "patient_referral"
+    | "supply_order";
   fromFacility: string;
   toFacility: string;
   payload: any;

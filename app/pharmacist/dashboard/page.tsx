@@ -119,21 +119,23 @@ export default function PharmacistDashboard() {
   }
 
   const handleRequestTransfer = async (item: { facilityId: string; item: string; facilityName: string }) => {
+    const facilityKey = localStorage.getItem("userFacilityKey") || "pmh"
     await addTask({
-      type: "transfer_request",
-      fromFacility: item.facilityId,
-      toFacility: "pmh", // Requesting to our facility
+      type: "supply_order",
+      fromFacility: facilityKey,
+      toFacility: "cms_supply_hub",
       payload: {
         item: item.item,
         qty: 100,
         urgency: "urgent",
-        requestedAt: new Date().toISOString()
+        requestedAt: new Date().toISOString(),
+        requestedFrom: item.facilityName,
       }
     })
 
     toast({
-      title: "Transfer Requested",
-      description: `Requested 100 units of ${item.item} from ${item.facilityName}.`
+      title: "Supply Order Placed",
+      description: `Ordered 100 units of ${item.item} via Supply Hub.`
     })
   }
 
@@ -202,8 +204,8 @@ export default function PharmacistDashboard() {
             <CardContent className="p-4 flex items-center gap-4">
               <div className="p-2 bg-purple-500/10 rounded-lg text-purple-400"><Truck className="h-5 w-5" /></div>
               <div>
-                <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Pending Transfers</p>
-                <p className="text-xl font-bold">{tasks.filter(t => t.type === 'transfer_request' && t.status === 'pending').length}</p>
+                <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Pending Orders</p>
+                <p className="text-xl font-bold">{tasks.filter(t => (t.type === 'transfer_request' || t.type === 'supply_order') && t.status === 'pending').length}</p>
               </div>
             </CardContent>
           </Card>
@@ -228,9 +230,9 @@ export default function PharmacistDashboard() {
             </TabsTrigger>
             <TabsTrigger value="transfers" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white px-6 relative">
               {t.transfers}
-              {tasks.filter(tk => tk.status === 'pending').length > 0 && (
+              {tasks.filter(tk => tk.status === 'pending' && (tk.type === 'transfer_request' || tk.type === 'supply_order')).length > 0 && (
                 <span className="ml-2 bg-purple-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
-                  {tasks.filter(tk => tk.status === 'pending').length}
+                  {tasks.filter(tk => tk.status === 'pending' && (tk.type === 'transfer_request' || tk.type === 'supply_order')).length}
                 </span>
               )}
             </TabsTrigger>
@@ -355,14 +357,14 @@ export default function PharmacistDashboard() {
               </h2>
             </div>
             
-            {tasks.filter(t => t.type === 'transfer_request').length === 0 ? (
+            {tasks.filter(t => t.type === 'transfer_request' || t.type === 'supply_order').length === 0 ? (
               <div className="py-20 text-center bg-white rounded-2xl border border-slate-200 border-dashed shadow-sm">
                 <Truck className="h-10 w-10 text-slate-200 mx-auto mb-4" />
                 <p className="text-slate-500">No active logistics requests found.</p>
               </div>
             ) : (
               <div className="grid gap-4">
-                {tasks.filter(t => t.type === 'transfer_request').map((task) => (
+                {tasks.filter(t => t.type === 'transfer_request' || t.type === 'supply_order').map((task) => (
                   <Card key={task.id} className="bg-white border-slate-200 border-l-4 border-l-purple-600 hover:bg-slate-50 transition-all shadow-sm">
                     <CardContent className="p-5">
                       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -381,7 +383,12 @@ export default function PharmacistDashboard() {
                               <MapPin className="h-3 w-3" />
                               <span className="font-medium text-slate-300">{task.fromFacility}</span>
                               <ArrowRight className="h-3 w-3 text-slate-600" />
-                              <span className="font-medium text-slate-300">{task.toFacility}</span>
+                              <span className="font-medium text-slate-300">
+                                {task.type === "supply_order" ? "CMS Supply Hub" : task.toFacility}
+                              </span>
+                            </div>
+                            <div className="mt-1 text-[10px] text-slate-500 uppercase font-bold tracking-widest">
+                              {task.type === "supply_order" ? "Supply Order" : "Transfer Request"}
                             </div>
                           </div>
                         </div>
@@ -400,17 +407,22 @@ export default function PharmacistDashboard() {
                           </div>
                           
                           <div className="flex gap-2">
-                            {task.status === 'pending' && task.fromFacility === 'pmh' && (
+                            {task.status === 'pending' && task.type === 'transfer_request' && task.fromFacility === 'pmh' && (
                               <>
                                 <Button size="sm" variant="ghost" className="text-rose-500 hover:text-rose-400 hover:bg-rose-500/5 h-9 font-bold">Reject</Button>
                                 <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 h-9 font-bold px-4" onClick={() => updateTaskStatus(task.id, 'approved')}>Dispatch</Button>
                               </>
                             )}
-                            {task.status === 'approved' && task.fromFacility === 'pmh' && (
+                            {task.status === 'approved' && task.type === 'transfer_request' && task.fromFacility === 'pmh' && (
                               <Button size="sm" className="bg-purple-600 hover:bg-purple-500 font-bold px-4" onClick={() => updateTaskStatus(task.id, 'in-transit')}>Mark as Dispatched</Button>
                             )}
-                            {task.status === 'in-transit' && task.toFacility === 'pmh' && (
+                            {task.status === 'in-transit' && task.type === 'transfer_request' && task.toFacility === 'pmh' && (
                               <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 font-bold px-4" onClick={() => updateTaskStatus(task.id, 'fulfilled')}>Confirm Delivery</Button>
+                            )}
+                            {task.type === "supply_order" && task.status === "pending" && (
+                              <Badge className="bg-slate-50 text-slate-500 border-slate-200 h-9 px-4 flex items-center gap-2">
+                                Awaiting CMS
+                              </Badge>
                             )}
                             {task.status === 'fulfilled' && (
                               <Badge className="bg-slate-50 text-slate-500 border-slate-200 h-9 px-4 flex items-center gap-2">
