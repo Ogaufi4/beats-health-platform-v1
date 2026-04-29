@@ -36,7 +36,16 @@ import {
   ShieldCheck,
 } from "lucide-react"
 import Link from "next/link"
-import { findMedicine, findEquipment, findSpecialists, getTasks, addTask, updateTaskStatus, subscribe, getFacilities } from "@/components/mock-service"
+import {
+  getTasks,
+  addTask,
+  updateTaskStatus,
+  subscribe,
+  getFacilities,
+  getBloodAvailability,
+  getWardAvailability,
+  searchResourceAvailability,
+} from "@/components/mock-service"
 
 const Map = dynamic(() => import("@/components/Map"), {
   ssr: false,
@@ -50,10 +59,16 @@ export default function FacilityDashboard() {
   const [activeTab, setActiveTab] = useState("radar")
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<any[]>([])
+  const [searchCategory, setSearchCategory] = useState<"all" | "medication" | "blood" | "bed">("all")
+  const [searchFacilityId, setSearchFacilityId] = useState("all")
+  const [wardFilter, setWardFilter] = useState("")
   const [tasks, setTasks] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
   const [localFacility, setLocalFacility] = useState<any>(null)
+  const [facilityOptions, setFacilityOptions] = useState<any[]>([])
+  const [bloodAvailability, setBloodAvailability] = useState<any[]>([])
+  const [wardAvailability, setWardAvailability] = useState<any[]>([])
 
   const fallbackTasks = [
     {
@@ -93,7 +108,7 @@ export default function FacilityDashboard() {
       workload: "Facility Workload",
       specialists: "Specialist Network",
       tasks: "Pending Requests",
-      searchPlaceholder: "Search for medicines, equipment, or specialists...",
+      searchPlaceholder: "Search medicines, blood type, facility, ward, or category...",
       todayActivity: "Operational Overview",
       facilityRadar: "National Resource Radar",
       requestTransfer: "Request Transfer",
@@ -109,7 +124,7 @@ export default function FacilityDashboard() {
       workload: "Boloko jwa Mošomo",
       specialists: "Network ya Dingaka",
       tasks: "Dikopo tse di Emetsweng",
-      searchPlaceholder: "Batla dihlare, didirisiwa, kapa dingaka...",
+      searchPlaceholder: "Batla dihlare, madi, lefelo, ward kgotsa category...",
       todayActivity: "Tlhatlhobo ya Ditiro",
       facilityRadar: "Radar ya Didirisiwa ya Sechaba",
       requestTransfer: "Kopo ya go Romela",
@@ -129,9 +144,13 @@ export default function FacilityDashboard() {
     
     loadFacilityData()
     loadTasks()
+    loadAvailabilityPanels()
     const unsubAdded = subscribe("tasks:added", loadTasks)
     const unsubUpdated = subscribe("tasks:updated", loadTasks)
-    const unsubFac = subscribe("facilities:changed", loadFacilityData)
+    const unsubFac = subscribe("facilities:changed", () => {
+      loadFacilityData()
+      loadAvailabilityPanels()
+    })
     return () => {
       unsubAdded()
       unsubUpdated()
@@ -150,8 +169,15 @@ export default function FacilityDashboard() {
   const loadFacilityData = async () => {
     const facilityKey = localStorage.getItem("userFacilityKey") || "ub_clinic"
     const facilities = await getFacilities()
+    setFacilityOptions(facilities)
     const found = facilities.find(f => f.id === facilityKey)
     if (found) setLocalFacility(found)
+  }
+
+  const loadAvailabilityPanels = async () => {
+    const [blood, wards] = await Promise.all([getBloodAvailability(""), getWardAvailability("")])
+    setBloodAvailability(blood)
+    setWardAvailability(wards)
   }
 
   const loadTasks = async () => {
@@ -160,44 +186,58 @@ export default function FacilityDashboard() {
   }
 
   const handleSearch = async () => {
-    if (!searchQuery) return
     setLoading(true)
-    let results: any[] = []
-    
-    // Search across all types
-    const meds = await findMedicine(searchQuery)
-    const equip = await findEquipment(searchQuery)
-    const spec = await findSpecialists(searchQuery)
-    
-    results = [
-      ...meds.map(m => ({ ...m, type: "medicine" })),
-      ...equip.map(e => ({ ...e, type: "equipment" })),
-      ...spec.map(s => ({ ...s, type: "specialist" }))
-    ]
-    
-    setSearchResults(results)
-    setLoading(false)
+    try {
+      const results = await searchResourceAvailability({
+        query: searchQuery,
+        category: searchCategory,
+        facilityId: searchFacilityId === "all" ? undefined : searchFacilityId,
+        wardName: wardFilter || undefined,
+      })
+
+      setSearchResults(results)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleAction = async (item: any) => {
     const facilityKey = localStorage.getItem("userFacilityKey") || "ub_clinic"
-    const type = item.type === "medicine" ? "transfer_request" : item.type === "equipment" ? "booking_request" : "specialist_request"
+    const type = item.resource_type === "bed" ? "patient_referral" : "transfer_request"
     
     await addTask({
       type,
       fromFacility: facilityKey,
       toFacility: item.facilityId,
       payload: {
-        item: item.item,
-        qty: item.type === "medicine" ? 10 : 1,
+        item: item.resource_name ?? item.item,
+        availability_status: item.availability_status,
         requestedAt: new Date().toISOString()
       }
     })
 
     toast({
       title: "Request Sent",
-      description: `Sent a ${type.replace("_", " ")} for ${item.item} to ${item.facilityName}.`
+      description: `Sent a ${type.replace("_", " ")} for ${item.resource_name ?? item.item} to ${item.facilityName}.`
     })
+  }
+
+  const formatLastUpdated = (timestamp?: string) => {
+    if (!timestamp) return "Last updated just now"
+    const diffMs = Date.now() - new Date(timestamp).getTime()
+    const minutes = Math.max(1, Math.floor(diffMs / 60000))
+    if (minutes < 60) return `Last updated ${minutes} mins ago`
+    const hours = Math.floor(minutes / 60)
+    if (hours < 24) return `Last updated ${hours} hrs ago`
+    const days = Math.floor(hours / 24)
+    return `Last updated ${days} day${days === 1 ? "" : "s"} ago`
+  }
+
+  const getStatusBadgeClass = (status: string) => {
+    if (status === "Available") return "bg-emerald-50 text-emerald-700 border-emerald-200"
+    if (status === "Limited") return "bg-amber-50 text-amber-700 border-amber-200"
+    if (status === "Out of Stock" || status === "Full") return "bg-rose-50 text-rose-700 border-rose-200"
+    return "bg-slate-100 text-slate-700 border-slate-200"
   }
 
   return (
@@ -250,62 +290,95 @@ export default function FacilityDashboard() {
             <Activity className="h-5 w-5 text-blue-500" />
             <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">{t.facilityRadar}</h2>
           </div>
-          <div className="relative group">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500 group-focus-within:text-blue-500 transition-colors" />
-            <Input 
-              placeholder={t.searchPlaceholder} 
-              className="pl-12 py-7 bg-white border-slate-200 text-lg rounded-xl focus-visible:ring-blue-500/50 shadow-sm transition-all"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-3">
+            <div className="relative group lg:col-span-2">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500 group-focus-within:text-blue-500 transition-colors" />
+              <Input 
+                placeholder={t.searchPlaceholder} 
+                className="pl-12 py-7 bg-white border-slate-200 text-lg rounded-xl focus-visible:ring-blue-500/50 shadow-sm transition-all"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              />
+            </div>
+            <select
+              value={searchCategory}
+              onChange={(e) => setSearchCategory(e.target.value as "all" | "medication" | "blood" | "bed")}
+              className="h-14 rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-700 shadow-sm"
+            >
+              <option value="all">All Categories</option>
+              <option value="medication">Medication</option>
+              <option value="blood">Blood</option>
+              <option value="bed">Bed/Ward</option>
+            </select>
+            <select
+              value={searchFacilityId}
+              onChange={(e) => setSearchFacilityId(e.target.value)}
+              className="h-14 rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-700 shadow-sm"
+            >
+              <option value="all">All Facilities</option>
+              {facilityOptions.map((facility) => (
+                <option key={facility.id} value={facility.id}>
+                  {facility.facility}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3 mt-3">
+            <Input
+              value={wardFilter}
+              onChange={(e) => setWardFilter(e.target.value)}
+              placeholder="Optional ward filter (e.g. ICU, Maternity)"
+              className="h-12 bg-white border-slate-200 rounded-xl"
             />
             <Button 
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-500 px-6"
+              className="bg-blue-600 hover:bg-blue-500 px-8 h-12"
               onClick={handleSearch}
               disabled={loading}
             >
-              {loading ? "Searching..." : "Scan Network"}
+              {loading ? "Searching..." : "Search"}
             </Button>
           </div>
 
           {searchResults.length > 0 && (
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
               {searchResults.map((item, idx) => (
                 <Card key={idx} className="bg-white border-slate-200 hover:border-blue-500/50 transition-all group overflow-hidden shadow-sm">
                   <div className="absolute top-0 right-0 p-3">
                     <Badge variant="outline" className="text-slate-500 border-slate-800">
-                      {item.type.toUpperCase()}
+                      {String(item.resource_category ?? "resource").toUpperCase()}
                     </Badge>
                   </div>
                   <CardContent className="p-5">
-                    <div className="flex items-start gap-4">
-                      <div className={`p-3 rounded-lg ${
-                        item.type === "medicine" ? "bg-purple-500/10 text-purple-400" : 
-                        item.type === "equipment" ? "bg-emerald-500/10 text-emerald-400" : "bg-orange-500/10 text-orange-400"
-                      }`}>
-                        {item.type === "medicine" ? <Package className="h-6 w-6" /> : 
-                         item.type === "equipment" ? <Activity className="h-6 w-6" /> : <Users className="h-6 w-6" />}
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-bold text-slate-900">{item.item}</h3>
-                        <p className="text-sm text-slate-400 flex items-center gap-1 mt-1">
-                          <MapPin className="h-3 w-3" /> {item.facilityName}
+                    <div className="space-y-3">
+                      <h3 className="font-bold text-slate-900">{item.resource_name}</h3>
+                      <p className="text-sm text-slate-500 flex items-center gap-1">
+                        <MapPin className="h-3 w-3" /> {item.facility}
+                      </p>
+                      {item.ward_name && (
+                        <p className="text-xs text-slate-500">
+                          Ward: <span className="font-semibold text-slate-700">{item.ward_name}</span> ({item.ward_type})
                         </p>
-                        <div className="mt-4 flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className={`w-2 h-2 rounded-full ${item.status === "In Stock" || item.status === "Available" || item.status === "On Duty" ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-rose-500"}`} />
-                            <span className="text-xs font-semibold text-slate-300">{item.status}</span>
-                            {item.qty > 1 && <span className="text-xs text-slate-500">({item.qty} units)</span>}
-                          </div>
-                          <Button size="sm" onClick={() => handleAction(item)} className="bg-slate-800 hover:bg-blue-600 text-xs border-none h-8">
-                            {item.type === "medicine" ? t.requestTransfer : item.type === "equipment" ? t.bookEquipment : t.contactSpecialist}
-                          </Button>
-                        </div>
+                      )}
+                      <div className="flex items-center justify-between gap-2">
+                        <Badge className={`border ${getStatusBadgeClass(item.availability_status)}`}>
+                          {item.availability_status}
+                        </Badge>
+                        <Button size="sm" onClick={() => handleAction(item)} className="bg-slate-800 hover:bg-blue-600 text-xs border-none h-8">
+                          {item.resource_type === "bed" ? "Create Referral Check" : t.requestTransfer}
+                        </Button>
                       </div>
+                      <p className="text-xs text-slate-500">{formatLastUpdated(item.last_updated)}</p>
                     </div>
                   </CardContent>
                 </Card>
               ))}
+            </div>
+          )}
+          {searchResults.length === 0 && (searchQuery || wardFilter || searchCategory !== "all" || searchFacilityId !== "all") && !loading && (
+            <div className="mt-6 rounded-xl border border-dashed border-slate-200 bg-white p-6 text-center text-sm text-slate-500">
+              No matching resources found.
             </div>
           )}
         </div>
@@ -378,6 +451,56 @@ export default function FacilityDashboard() {
                 </CardContent>
               </Card>
             </div>
+
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              <Card className="bg-white border-slate-200 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-slate-900">Blood Availability by Facility</CardTitle>
+                  <CardDescription>A+, A-, B+, B-, AB+, AB-, O+, O-</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {bloodAvailability.slice(0, 12).map((item, idx) => (
+                    <div key={idx} className="rounded-lg border border-slate-200 p-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold text-slate-900">Blood Type: {item.blood_type}</p>
+                          <p className="text-xs text-slate-500">Facility: {item.facility}</p>
+                        </div>
+                        <Badge className={`border ${getStatusBadgeClass(item.availability_status)}`}>
+                          {item.availability_status}
+                        </Badge>
+                      </div>
+                      <p className="mt-2 text-xs text-slate-500">{formatLastUpdated(item.last_updated)}</p>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white border-slate-200 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-slate-900">Bed and Ward Availability</CardTitle>
+                  <CardDescription>Use this before referring patients to avoid blind referrals.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {wardAvailability.slice(0, 10).map((item, idx) => (
+                    <div key={idx} className="rounded-lg border border-slate-200 p-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold text-slate-900">{item.ward_name}</p>
+                          <p className="text-xs text-slate-500">
+                            Facility: {item.facility} | Type: {item.ward_type}
+                          </p>
+                        </div>
+                        <Badge className={`border ${getStatusBadgeClass(item.availability_status)}`}>
+                          {item.availability_status}
+                        </Badge>
+                      </div>
+                      <p className="mt-2 text-xs text-slate-500">{formatLastUpdated(item.last_updated)}</p>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="tasks" className="space-y-6 animate-in fade-in duration-300">
@@ -405,7 +528,7 @@ export default function FacilityDashboard() {
                           <div>
                             <div className="flex items-center gap-3">
                               <h3 className="font-bold text-slate-900 text-lg">{task.payload.item}</h3>
-                              <Badge className="bg-slate-100 text-[10px] h-5 border-slate-200 text-slate-600">{task.payload.qty} UNITS</Badge>
+                              <Badge className="bg-slate-100 text-[10px] h-5 border-slate-200 text-slate-600">REQUESTED</Badge>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-slate-400 mt-1">
                               <MapPin className="h-3 w-3 text-slate-500" />
@@ -457,13 +580,13 @@ export default function FacilityDashboard() {
                     <CardContent className="p-5">
                       <div className="flex justify-between items-start mb-4">
                         <p className="font-bold text-slate-900 text-lg">{med}</p>
-                        <Badge variant={Number(qty) < 50 ? "destructive" : "secondary"} className="bg-slate-50 text-slate-900 font-bold border-slate-200">
-                          {qty} units
+                        <Badge className={`border ${getStatusBadgeClass(Number(qty) <= 0 ? "Out of Stock" : Number(qty) <= 50 ? "Limited" : "Available")}`}>
+                          {Number(qty) <= 0 ? "Out of Stock" : Number(qty) <= 50 ? "Limited" : "Available"}
                         </Badge>
                       </div>
-                      <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                        <div className={`h-full ${Number(qty) < 50 ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]' : 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.4)]'}`} style={{ width: `${Math.min(100, Number(qty) * 2)}%` }} />
-                      </div>
+                      <p className="text-xs text-slate-500">
+                        {formatLastUpdated(localFacility.medicineUpdates?.[med]?.last_updated)}
+                      </p>
                     </CardContent>
                   </Card>
                 ))}

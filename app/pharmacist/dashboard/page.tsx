@@ -96,7 +96,18 @@ export default function PharmacistDashboard() {
     const facilities = await getFacilities()
     const currentFac = facilities.find(f => f.id === facilityKey)
     if (currentFac) {
-      setLocalInventory(Object.entries(currentFac.stock).map(([med, qty]) => ({ med, qty: Number(qty) })))
+      setLocalInventory(
+        Object.entries(currentFac.stock).map(([med, qty]) => {
+          const numericQty = Number(qty)
+          const availability_status = numericQty <= 0 ? "Out of Stock" : numericQty <= 50 ? "Limited" : "Available"
+          return {
+            med,
+            qty: numericQty,
+            availability_status,
+            last_updated: currentFac.medicineUpdates?.[med]?.last_updated,
+          }
+        }),
+      )
     }
   }
 
@@ -135,8 +146,26 @@ export default function PharmacistDashboard() {
 
     toast({
       title: "Supply Order Placed",
-      description: `Ordered 100 units of ${item.item} via Supply Hub.`
+      description: `Ordered ${item.item} via Supply Hub.`
     })
+  }
+
+  const formatLastUpdated = (timestamp?: string) => {
+    if (!timestamp) return "Last updated just now"
+    const diffMs = Date.now() - new Date(timestamp).getTime()
+    const minutes = Math.max(1, Math.floor(diffMs / 60000))
+    if (minutes < 60) return `Last updated ${minutes} mins ago`
+    const hours = Math.floor(minutes / 60)
+    if (hours < 24) return `Last updated ${hours} hrs ago`
+    const days = Math.floor(hours / 24)
+    return `Last updated ${days} day${days === 1 ? "" : "s"} ago`
+  }
+
+  const getStatusBadgeClass = (status: string) => {
+    if (status === "Available") return "bg-emerald-50 text-emerald-700 border-emerald-200"
+    if (status === "Limited") return "bg-amber-50 text-amber-700 border-amber-200"
+    if (status === "Out of Stock" || status === "Full") return "bg-rose-50 text-rose-700 border-rose-200"
+    return "bg-slate-100 text-slate-700 border-slate-200"
   }
 
   return (
@@ -196,7 +225,7 @@ export default function PharmacistDashboard() {
               <div className="p-2 bg-amber-500/10 rounded-lg text-amber-400"><AlertTriangle className="h-5 w-5" /></div>
               <div>
                 <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Low Stock</p>
-                <p className="text-xl font-bold">{localInventory.filter(i => i.qty < 50).length}</p>
+                <p className="text-xl font-bold">{localInventory.filter(i => i.availability_status !== "Available").length}</p>
               </div>
             </CardContent>
           </Card>
@@ -265,13 +294,11 @@ export default function PharmacistDashboard() {
                         <p className="font-bold text-slate-900 text-lg">{item.med}</p>
                         <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mt-1">Dispensing Station A</p>
                       </div>
-                      <Badge variant={item.qty < 50 ? "destructive" : "secondary"} className={`${item.qty < 50 ? 'bg-rose-50 text-rose-600 border-rose-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'} px-2 py-0.5`}>
-                        {item.qty} units
+                      <Badge className={`border px-2 py-0.5 ${getStatusBadgeClass(item.availability_status)}`}>
+                        {item.availability_status}
                       </Badge>
                     </div>
-                    <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                      <div className={`h-full ${item.qty < 50 ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]' : 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]'}`} style={{ width: `${Math.min(100, item.qty / 2)}%` }} />
-                    </div>
+                    <p className="text-xs text-slate-500">{formatLastUpdated(item.last_updated)}</p>
                     <div className="flex justify-between items-center mt-4">
                       <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">Usage: High</p>
                       <Button variant="ghost" size="sm" className="h-7 text-[10px] text-purple-400 hover:text-purple-300 hover:bg-purple-500/5">Details</Button>
@@ -326,11 +353,13 @@ export default function PharmacistDashboard() {
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Stock Availability</p>
+                          <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Availability</p>
                           <div className="flex items-center gap-2">
-                             <div className={`w-2 h-2 rounded-full ${item.qty > 50 ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]' : item.qty > 0 ? 'bg-amber-500' : 'bg-rose-500'}`} />
-                             <span className="text-sm font-bold text-slate-200">{item.qty} units</span>
+                             <Badge className={`border ${getStatusBadgeClass(item.availability_status)}`}>
+                               {item.availability_status}
+                             </Badge>
                           </div>
+                          <p className="text-xs text-slate-500 mt-2">{formatLastUpdated(item.last_updated)}</p>
                         </div>
                         <Button size="sm" onClick={() => handleRequestTransfer(item)} className="bg-purple-600 hover:bg-purple-500 border-none shadow-lg shadow-purple-600/20">
                           {t.requestTransfer}
@@ -377,7 +406,7 @@ export default function PharmacistDashboard() {
                           <div>
                             <div className="flex items-center gap-3">
                               <h3 className="font-bold text-slate-900 text-lg">{task.payload.item}</h3>
-                              <Badge className="bg-slate-50 text-[10px] h-5 border-slate-200 text-slate-600">{task.payload.qty} UNITS</Badge>
+                              <Badge className="bg-slate-50 text-[10px] h-5 border-slate-200 text-slate-600">REQUESTED</Badge>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-slate-400 mt-1">
                               <MapPin className="h-3 w-3" />
