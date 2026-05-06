@@ -46,11 +46,12 @@ export default function PharmacistDashboard() {
       title: "Pharmacy Command - Station 01",
       subtitle: "Inventory Logistics Intelligence",
       inventory: "Local Stock",
-      network: "Network Hub",
-      transfers: "Transfers & Logistics",
+      network: "National Supply Visibility",
+      transfers: "Supply Requests",
       analytics: "Usage Analytics",
-      searchPlaceholder: "Search medicine across national network...",
-      requestTransfer: "Request Transfer",
+      searchPlaceholder: "Search medicine availability across facilities...",
+      requestTransfer: "Submit Requisition",
+      medicationTransferRemoved: "Requisition disabled",
       raiseSupplyRequest: "Raise Supply Request",
       lowStockAlert: "Low Local Stock",
       criticalStock: "Critical Alert",
@@ -59,11 +60,12 @@ export default function PharmacistDashboard() {
       title: "Pharmacy Command - Station 01",
       subtitle: "Thulaganyo ya Ditiro tsa Dihlare",
       inventory: "Stock ya Mono",
-      network: "Network Center",
-      transfers: "Dipalangwa le Logistics",
+      network: "Ponagalo ya Kabo ya Sechaba",
+      transfers: "Dikopo tsa Kabo",
       analytics: "Analytics ya Tiriso",
       searchPlaceholder: "Batla dihlare mo network ya sechaba...",
-      requestTransfer: "Kopo ya go Romela",
+      requestTransfer: "Tsenya Kopo ya Kabo",
+      medicationTransferRemoved: "Kopo e emisitswe",
       raiseSupplyRequest: "Kopo ya go Tlatsa",
       lowStockAlert: "Stock e e kwa tlase",
       criticalStock: "Alert ya Botlhokwa",
@@ -129,7 +131,7 @@ export default function PharmacistDashboard() {
     setLoading(false)
   }
 
-  const handleRequestTransfer = async (item: { facilityId: string; item: string; facilityName: string }) => {
+  const handleSubmitRequisition = async (item: { facilityId: string; item: string; facilityName: string }) => {
     const facilityKey = localStorage.getItem("userFacilityKey") || "pmh"
     await addTask({
       type: "supply_order",
@@ -140,13 +142,13 @@ export default function PharmacistDashboard() {
         qty: 100,
         urgency: "urgent",
         requestedAt: new Date().toISOString(),
-        requestedFrom: item.facilityName,
+        visibilitySourceFacility: item.facilityName,
       }
     })
 
     toast({
-      title: "Supply Order Placed",
-      description: `Ordered ${item.item} via Supply Hub.`
+      title: "Requisition Submitted",
+      description: `Submitted ${item.item} requisition to CMS Supply Hub.`
     })
   }
 
@@ -234,7 +236,7 @@ export default function PharmacistDashboard() {
               <div className="p-2 bg-purple-500/10 rounded-lg text-purple-400"><Truck className="h-5 w-5" /></div>
               <div>
                 <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Pending Orders</p>
-                <p className="text-xl font-bold">{tasks.filter(t => (t.type === 'transfer_request' || t.type === 'supply_order') && t.status === 'pending').length}</p>
+                <p className="text-xl font-bold">{tasks.filter(t => t.type === 'supply_order' && t.status === 'pending').length}</p>
               </div>
             </CardContent>
           </Card>
@@ -259,9 +261,9 @@ export default function PharmacistDashboard() {
             </TabsTrigger>
             <TabsTrigger value="transfers" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white px-6 relative">
               {t.transfers}
-              {tasks.filter(tk => tk.status === 'pending' && (tk.type === 'transfer_request' || tk.type === 'supply_order')).length > 0 && (
+              {tasks.filter(tk => tk.status === 'pending' && tk.type === 'supply_order').length > 0 && (
                 <span className="ml-2 bg-purple-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
-                  {tasks.filter(tk => tk.status === 'pending' && (tk.type === 'transfer_request' || tk.type === 'supply_order')).length}
+                  {tasks.filter(tk => tk.status === 'pending' && tk.type === 'supply_order').length}
                 </span>
               )}
             </TabsTrigger>
@@ -315,7 +317,7 @@ export default function PharmacistDashboard() {
                 <Globe className="h-6 w-6 text-purple-500" />
                 Network Supply Hub
               </h2>
-              <p className="text-slate-400 text-sm">Discovery and coordination across National Health Network facilities.</p>
+              <p className="text-slate-400 text-sm">Facility visibility for planning and referral support. Requisitions are sent only to CMS Supply Hub.</p>
             </div>
 
             <div className="relative group max-w-2xl">
@@ -328,7 +330,7 @@ export default function PharmacistDashboard() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
               <Button onClick={handleNetworkSearch} disabled={loading} className="absolute right-2 top-1/2 -translate-y-1/2 bg-purple-600 hover:bg-purple-500 py-5">
-                {loading ? "Searching..." : "Scan Network"}
+                {loading ? "Searching..." : "Search Availability"}
               </Button>
             </div>
 
@@ -361,9 +363,9 @@ export default function PharmacistDashboard() {
                           </div>
                           <p className="text-xs text-slate-500 mt-2">{formatLastUpdated(item.last_updated)}</p>
                         </div>
-                        <Button size="sm" onClick={() => handleRequestTransfer(item)} className="bg-purple-600 hover:bg-purple-500 border-none shadow-lg shadow-purple-600/20">
-                          {t.requestTransfer}
-                        </Button>
+                        <Badge variant="outline" className="border-slate-300 text-slate-500 text-[10px]">
+                          {t.medicationTransferRemoved}
+                        </Badge>
                       </div>
                     </div>
                   </CardContent>
@@ -382,18 +384,18 @@ export default function PharmacistDashboard() {
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-2xl font-bold flex items-center gap-2">
                 <Truck className="h-6 w-6 text-purple-500" />
-                Regional Logistics Desk
+                Supply Request Desk
               </h2>
             </div>
             
-            {tasks.filter(t => t.type === 'transfer_request' || t.type === 'supply_order').length === 0 ? (
+            {tasks.filter(t => t.type === 'supply_order').length === 0 ? (
               <div className="py-20 text-center bg-white rounded-2xl border border-slate-200 border-dashed shadow-sm">
                 <Truck className="h-10 w-10 text-slate-200 mx-auto mb-4" />
-                <p className="text-slate-500">No active logistics requests found.</p>
+                <p className="text-slate-500">No active supply requests found.</p>
               </div>
             ) : (
               <div className="grid gap-4">
-                {tasks.filter(t => t.type === 'transfer_request' || t.type === 'supply_order').map((task) => (
+                {tasks.filter(t => t.type === 'supply_order').map((task) => (
                   <Card key={task.id} className="bg-white border-slate-200 border-l-4 border-l-purple-600 hover:bg-slate-50 transition-all shadow-sm">
                     <CardContent className="p-5">
                       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -412,12 +414,10 @@ export default function PharmacistDashboard() {
                               <MapPin className="h-3 w-3" />
                               <span className="font-medium text-slate-300">{task.fromFacility}</span>
                               <ArrowRight className="h-3 w-3 text-slate-600" />
-                              <span className="font-medium text-slate-300">
-                                {task.type === "supply_order" ? "CMS Supply Hub" : task.toFacility}
-                              </span>
+                              <span className="font-medium text-slate-300">CMS Supply Hub</span>
                             </div>
                             <div className="mt-1 text-[10px] text-slate-500 uppercase font-bold tracking-widest">
-                              {task.type === "supply_order" ? "Supply Order" : "Transfer Request"}
+                              Supply Requisition
                             </div>
                           </div>
                         </div>
@@ -436,19 +436,7 @@ export default function PharmacistDashboard() {
                           </div>
                           
                           <div className="flex gap-2">
-                            {task.status === 'pending' && task.type === 'transfer_request' && task.fromFacility === 'pmh' && (
-                              <>
-                                <Button size="sm" variant="ghost" className="text-rose-500 hover:text-rose-400 hover:bg-rose-500/5 h-9 font-bold">Reject</Button>
-                                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 h-9 font-bold px-4" onClick={() => updateTaskStatus(task.id, 'approved')}>Dispatch</Button>
-                              </>
-                            )}
-                            {task.status === 'approved' && task.type === 'transfer_request' && task.fromFacility === 'pmh' && (
-                              <Button size="sm" className="bg-purple-600 hover:bg-purple-500 font-bold px-4" onClick={() => updateTaskStatus(task.id, 'in-transit')}>Mark as Dispatched</Button>
-                            )}
-                            {task.status === 'in-transit' && task.type === 'transfer_request' && task.toFacility === 'pmh' && (
-                              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 font-bold px-4" onClick={() => updateTaskStatus(task.id, 'fulfilled')}>Confirm Delivery</Button>
-                            )}
-                            {task.type === "supply_order" && task.status === "pending" && (
+                            {task.status === "pending" && (
                               <Badge className="bg-slate-50 text-slate-500 border-slate-200 h-9 px-4 flex items-center gap-2">
                                 Awaiting CMS
                               </Badge>
@@ -471,7 +459,7 @@ export default function PharmacistDashboard() {
           <TabsContent value="analytics" className="py-20 text-center bg-white rounded-2xl border border-slate-200 border-dashed animate-in fade-in slide-in-from-bottom-2 duration-300 shadow-sm">
             <Activity className="h-16 w-16 text-slate-100 mx-auto mb-4" strokeWidth={1} />
             <h3 className="text-slate-900 font-bold text-2xl mb-2">Network Demand Intelligence</h3>
-            <p className="text-slate-500 max-w-sm mx-auto">Forecasting regional demand based on inter-facility transfer requests. Link active to National Health Data Hub in Gaborone.</p>
+            <p className="text-slate-500 max-w-sm mx-auto">Forecasting regional demand based on facility requisitions to CMS Supply Hub. Link active to National Health Data Hub in Gaborone.</p>
             <div className="mt-8 flex justify-center gap-2">
                <div className="px-4 py-2 bg-slate-50 border border-slate-100 rounded-lg">
                   <p className="text-[10px] text-slate-400 font-black uppercase mb-1">Avg Request Latency</p>

@@ -66,6 +66,7 @@ export default function FacilityDashboard() {
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
   const [localFacility, setLocalFacility] = useState<any>(null)
+  const [facilityKey, setFacilityKey] = useState("ub_clinic")
   const [facilityOptions, setFacilityOptions] = useState<any[]>([])
   const [bloodAvailability, setBloodAvailability] = useState<any[]>([])
   const [wardAvailability, setWardAvailability] = useState<any[]>([])
@@ -112,6 +113,7 @@ export default function FacilityDashboard() {
       todayActivity: "Operational Overview",
       facilityRadar: "National Resource Radar",
       requestTransfer: "Request Transfer",
+      medicationTransferRemoved: "Transfer disabled for medication",
       bookEquipment: "Book Resource",
       contactSpecialist: "Contact / Request",
     },
@@ -128,6 +130,7 @@ export default function FacilityDashboard() {
       todayActivity: "Tlhatlhobo ya Ditiro",
       facilityRadar: "Radar ya Didirisiwa ya Sechaba",
       requestTransfer: "Kopo ya go Romela",
+      medicationTransferRemoved: "Go romela ga dihlare go emisitswe",
       bookEquipment: "Beela Didirisiwa",
       contactSpecialist: "Ikanye / Kopa",
     },
@@ -136,6 +139,9 @@ export default function FacilityDashboard() {
   const [displayName, setDisplayName] = useState({ en: content.en.title, tn: content.tn.title })
 
   useEffect(() => {
+    const savedFacilityKey = localStorage.getItem("userFacilityKey") || "ub_clinic"
+    setFacilityKey(savedFacilityKey)
+
     const savedEn = localStorage.getItem("userFacilityNameEn")
     const savedTn = localStorage.getItem("userFacilityNameTn")
     if (savedEn && savedTn) {
@@ -167,10 +173,10 @@ export default function FacilityDashboard() {
   }
 
   const loadFacilityData = async () => {
-    const facilityKey = localStorage.getItem("userFacilityKey") || "ub_clinic"
+    const currentFacilityKey = localStorage.getItem("userFacilityKey") || facilityKey
     const facilities = await getFacilities()
     setFacilityOptions(facilities)
-    const found = facilities.find(f => f.id === facilityKey)
+    const found = facilities.find(f => f.id === currentFacilityKey)
     if (found) setLocalFacility(found)
   }
 
@@ -202,23 +208,38 @@ export default function FacilityDashboard() {
   }
 
   const handleAction = async (item: any) => {
-    const facilityKey = localStorage.getItem("userFacilityKey") || "ub_clinic"
+    if (item.resource_type === "medication") {
+      toast({
+        title: "Medication transfer disabled",
+        description: "Medication transfer requests are no longer available from this screen.",
+      })
+      return
+    }
+
+    const currentFacilityKey = localStorage.getItem("userFacilityKey") || facilityKey
     const type = item.resource_type === "bed" ? "patient_referral" : "transfer_request"
     
     await addTask({
       type,
-      fromFacility: facilityKey,
+      fromFacility: currentFacilityKey,
       toFacility: item.facilityId,
       payload: {
         item: item.resource_name ?? item.item,
         availability_status: item.availability_status,
+        ward_name: item.ward_name,
+        ward_type: item.ward_type,
+        patient_reference: `REF-${Date.now().toString().slice(-6)}`,
+        eta_minutes: 45,
         requestedAt: new Date().toISOString()
       }
     })
 
     toast({
-      title: "Request Sent",
-      description: `Sent a ${type.replace("_", " ")} for ${item.resource_name ?? item.item} to ${item.facilityName}.`
+      title: type === "patient_referral" ? "Referral Alert Sent" : "Request Sent",
+      description:
+        type === "patient_referral"
+          ? `Destination facility (${item.facilityName}) has been alerted for incoming patient referral.`
+          : `Sent a ${type.replace("_", " ")} for ${item.resource_name ?? item.item} to ${item.facilityName}.`
     })
   }
 
@@ -239,6 +260,10 @@ export default function FacilityDashboard() {
     if (status === "Out of Stock" || status === "Full") return "bg-rose-50 text-rose-700 border-rose-200"
     return "bg-slate-100 text-slate-700 border-slate-200"
   }
+
+  const incomingReferralAlerts = tasks.filter(
+    (task) => task.type === "patient_referral" && task.toFacility === facilityKey && task.status === "pending",
+  )
 
   return (
     <div className="min-h-screen bg-gray-50 text-slate-900">
@@ -365,9 +390,15 @@ export default function FacilityDashboard() {
                         <Badge className={`border ${getStatusBadgeClass(item.availability_status)}`}>
                           {item.availability_status}
                         </Badge>
-                        <Button size="sm" onClick={() => handleAction(item)} className="bg-slate-800 hover:bg-blue-600 text-xs border-none h-8">
-                          {item.resource_type === "bed" ? "Create Referral Check" : t.requestTransfer}
-                        </Button>
+                        {item.resource_type === "medication" ? (
+                          <Badge variant="outline" className="text-[10px] border-slate-300 text-slate-500">
+                            {t.medicationTransferRemoved}
+                          </Badge>
+                        ) : (
+                          <Button size="sm" onClick={() => handleAction(item)} className="bg-slate-800 hover:bg-blue-600 text-xs border-none h-8">
+                            {item.resource_type === "bed" ? "Create Referral Check" : t.requestTransfer}
+                          </Button>
+                        )}
                       </div>
                       <p className="text-xs text-slate-500">{formatLastUpdated(item.last_updated)}</p>
                     </div>
@@ -508,6 +539,36 @@ export default function FacilityDashboard() {
               <h2 className="text-2xl font-bold text-slate-900">Regional Coordination Desk</h2>
             </div>
 
+            <Card className="bg-white border-slate-200 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-base">Incoming Referral Alerts</CardTitle>
+                <CardDescription>Destination facility notifications for incoming patients.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {incomingReferralAlerts.length === 0 ? (
+                  <p className="text-sm text-slate-500">No incoming referral alerts for this facility.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {incomingReferralAlerts.map((task) => (
+                      <div key={task.id} className="rounded-lg border border-slate-200 p-3 flex items-center justify-between gap-4">
+                        <div>
+                          <p className="font-semibold text-slate-900">{task.payload.item}</p>
+                          <p className="text-xs text-slate-500">
+                            From: {task.fromFacility} | Ward: {task.payload.ward_name || "Not specified"} | ETA:{" "}
+                            {task.payload.eta_minutes ?? "N/A"} mins
+                          </p>
+                          <p className="text-xs text-slate-500">{formatLastUpdated(task.payload.requestedAt ?? task.createdAt)}</p>
+                        </div>
+                        <Button size="sm" className="bg-blue-600 hover:bg-blue-500" onClick={() => updateTaskStatus(task.id, "approved")}>
+                          Acknowledge Referral
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             <div className="grid gap-4">
               {displayTasks.length === 0 ? (
                 <div className="py-20 text-center bg-white rounded-xl border border-slate-200 border-dashed">
@@ -546,14 +607,25 @@ export default function FacilityDashboard() {
                             {task.status.toUpperCase()}
                           </Badge>
                           <div className="flex gap-2">
-                            {task.status === "pending" && (
+                            {task.status === "pending" && task.type !== "patient_referral" && (
                               <>
                                 <Button variant="ghost" size="sm" className="text-rose-500 hover:text-rose-400 hover:bg-rose-500/5 h-9 font-bold" onClick={() => updateTaskStatus(task.id, "cancelled")}>Deny</Button>
                                 <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 h-9 font-bold px-4" onClick={() => updateTaskStatus(task.id, "approved")}>Approve</Button>
                               </>
                             )}
+                            {task.status === "pending" && task.type === "patient_referral" && task.toFacility === facilityKey && (
+                              <Button size="sm" className="bg-blue-600 hover:bg-blue-500 h-9 font-bold px-4" onClick={() => updateTaskStatus(task.id, "approved")}>
+                                Acknowledge
+                              </Button>
+                            )}
                             {task.status === "approved" && (
-                              <Button size="sm" className="bg-blue-600 hover:bg-blue-500 h-9 font-bold px-4" onClick={() => updateTaskStatus(task.id, "in-transit")}>Dispatch</Button>
+                              task.type === "patient_referral" && task.toFacility === facilityKey ? (
+                                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 h-9 font-bold px-4" onClick={() => updateTaskStatus(task.id, "fulfilled")}>
+                                  Mark Arrived
+                                </Button>
+                              ) : (
+                                <Button size="sm" className="bg-blue-600 hover:bg-blue-500 h-9 font-bold px-4" onClick={() => updateTaskStatus(task.id, "in-transit")}>Dispatch</Button>
+                              )
                             )}
                           </div>
                         </div>
