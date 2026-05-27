@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
@@ -38,6 +38,7 @@ type SortMode = "distance" | "availability"
 type FacilityFilterMode = "nearby" | "all" | string
 type RequestUrgency = "Routine" | "Priority" | "Urgent"
 type RequestOutcome = "accepted" | "limited" | "declined"
+type RequestHistoryStatus = RequestOutcome | "pending"
 
 type FacilityRecord = {
   id: string
@@ -89,6 +90,17 @@ type RequestFeedback = {
   outcome: RequestOutcome
   note?: string
   createdAt: string
+}
+
+type RequestHistoryItem = {
+  id: string
+  resourceName: string
+  status: RequestHistoryStatus
+  facilityName: string
+  targetFacilityId: string
+  createdAt: string
+  resourceCategory?: ResourceCategoryId
+  resourceId?: string
 }
 
 const CATEGORY_META: Record<ResourceCategoryId, { label: string; icon: LucideIcon; hint: string }> = {
@@ -149,6 +161,27 @@ function getFeedbackClass(outcome: RequestOutcome) {
   return "text-rose-700 bg-rose-50 border-rose-200"
 }
 
+function getHistoryStatusClass(status: RequestHistoryStatus) {
+  if (status === "accepted") return "text-emerald-700 bg-emerald-50 border-emerald-200"
+  if (status === "limited") return "text-amber-700 bg-amber-50 border-amber-200"
+  if (status === "declined") return "text-rose-700 bg-rose-50 border-rose-200"
+  return "text-slate-700 bg-slate-100 border-slate-200"
+}
+
+function getHistoryStatusLabel(status: RequestHistoryStatus) {
+  if (status === "accepted") return "Accepted"
+  if (status === "limited") return "Limited"
+  if (status === "declined") return "Declined"
+  return "Pending"
+}
+
+function getHistoryStatusIcon(status: RequestHistoryStatus) {
+  if (status === "accepted") return CheckCircle2
+  if (status === "limited") return TriangleAlert
+  if (status === "declined") return CircleX
+  return Clock3
+}
+
 function getTrafficLevel(pendingCount: number) {
   if (pendingCount <= 2) return "Low"
   if (pendingCount <= 5) return "Moderate"
@@ -195,6 +228,14 @@ function toRequestOutcome(status: ResourceStatus): RequestOutcome {
   return "declined"
 }
 
+function isRequestOutcome(value: unknown): value is RequestOutcome {
+  return value === "accepted" || value === "limited" || value === "declined"
+}
+
+function isResourceCategory(value: unknown): value is ResourceCategoryId {
+  return value === "medicines" || value === "blood" || value === "lab" || value === "equipment" || value === "wards"
+}
+
 function getRoleCopy(role: DashboardRole) {
   if (role === "doctor") {
     return {
@@ -217,6 +258,10 @@ function getRoleCopy(role: DashboardRole) {
   }
 }
 
+function toHistoryTime(timestamp: string) {
+  return new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+}
+
 export default function AvailabilityCommandDashboard({ role }: { role: DashboardRole }) {
   const [language, setLanguage] = useState<"en" | "tn">("en")
   const [activeCategory, setActiveCategory] = useState<ResourceCategoryId>("medicines")
@@ -232,7 +277,6 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
   const [requestUrgency, setRequestUrgency] = useState<RequestUrgency>("Routine")
   const [requestNote, setRequestNote] = useState("")
   const [submittingRequest, setSubmittingRequest] = useState(false)
-  const [feedbackHistory, setFeedbackHistory] = useState<RequestFeedback[]>([])
   const { toast } = useToast()
 
   const roleCopy = getRoleCopy(role)
@@ -324,10 +368,10 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
 
     const blood: ResourceItem[] = facilities.map((facility) => {
       const facilityBloodRows = bloodByFacility.get(facility.id) ?? []
-      const statuses = facilityBloodRows.map((row) => String(row.availability_status))
+      const statuses = facilityBloodRows.map((row: any) => String(row.availability_status))
       const status = toBloodStatus(statuses)
-      const lastUpdated = getLatestTimestamp(facilityBloodRows.map((row) => String(row.last_updated)))
-      const availableTypes = facilityBloodRows.filter((row) => row.availability_status === "Available").length
+      const lastUpdated = getLatestTimestamp(facilityBloodRows.map((row: any) => String(row.last_updated)))
+      const availableTypes = facilityBloodRows.filter((row: any) => row.availability_status === "Available").length
 
       return {
         id: `blood-${facility.id}`,
@@ -345,7 +389,7 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
 
     const lab: ResourceItem[] = facilities.flatMap((facility) => {
       const facilityBloodRows = bloodByFacility.get(facility.id) ?? []
-      const bloodStatus = toBloodStatus(facilityBloodRows.map((row) => String(row.availability_status)))
+      const bloodStatus = toBloodStatus(facilityBloodRows.map((row: any) => String(row.availability_status)))
       const pendingCount = pendingRequestsByFacility.get(facility.id) ?? 0
       const pcrStatus = toLabPcrStatus(pendingCount)
       const equipmentStatuses = Object.values(facility.equipment)
@@ -354,7 +398,7 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
       const imagingStatus: ResourceStatus =
         busyMachines > availableMachines ? "Busy / Engaged" : availableMachines > 0 ? "Available" : "Limited"
       const sharedLastUpdated = getLatestTimestamp([
-        getLatestTimestamp(facilityBloodRows.map((row) => String(row.last_updated))),
+        getLatestTimestamp(facilityBloodRows.map((row: any) => String(row.last_updated))),
         getLatestTimestamp(Object.values(facility.medicineUpdates ?? {}).map((update) => update.last_updated)),
       ])
 
@@ -476,14 +520,54 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
     return role === "nurse" ? sorted.slice(0, 8) : sorted
   }, [activeCategory, baseResourceItems, facilityFilter, nearbyFacilities, role, sortBy])
 
+  const requestHistoryItems = useMemo(() => {
+    const history = tasks
+      .filter((task) => task.fromFacility === selectedFacilityId)
+      .map((task) => {
+        const payload = task.payload as Record<string, unknown>
+        if (payload.request_context !== "availability_check") return null
+
+        const status: RequestHistoryStatus = isRequestOutcome(payload.request_outcome) ? payload.request_outcome : "pending"
+        const resourceName = typeof payload.item === "string" ? payload.item : "Resource Request"
+        const facilityName =
+          facilities.find((facility) => facility.id === task.toFacility)?.facility ?? task.toFacility.toUpperCase()
+        const resourceCategory = isResourceCategory(payload.resource_category) ? payload.resource_category : undefined
+        const resourceId = typeof payload.resource_id === "string" ? payload.resource_id : undefined
+        const createdAt = typeof payload.requestedAt === "string" ? payload.requestedAt : task.createdAt
+
+        return {
+          id: `history-${task.id}`,
+          resourceName,
+          status,
+          facilityName,
+          targetFacilityId: task.toFacility,
+          createdAt,
+          resourceCategory,
+          resourceId,
+        } as RequestHistoryItem
+      })
+      .filter(Boolean) as RequestHistoryItem[]
+
+    return history.sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())
+  }, [facilities, selectedFacilityId, tasks])
+
   const feedbackByResource = useMemo(() => {
-    return feedbackHistory.reduce((accumulator, feedback) => {
-      if (!accumulator.has(feedback.resourceId)) {
-        accumulator.set(feedback.resourceId, feedback)
+    return requestHistoryItems.reduce((accumulator, historyItem) => {
+      if (!historyItem.resourceId || historyItem.status === "pending") return accumulator
+      if (!accumulator.has(historyItem.resourceId)) {
+        accumulator.set(historyItem.resourceId, {
+          id: historyItem.id,
+          resourceId: historyItem.resourceId,
+          resourceName: historyItem.resourceName,
+          facilityName: historyItem.facilityName,
+          urgency: "Routine",
+          outcome: historyItem.status,
+          createdAt: historyItem.createdAt,
+        } as RequestFeedback)
       }
       return accumulator
     }, new Map<string, RequestFeedback>())
-  }, [feedbackHistory])
+  }, [requestHistoryItems])
 
   const nearbyPendingRequests = useMemo(() => {
     return nearbyFacilities.reduce((sum, facility) => sum + (pendingRequestsByFacility.get(facility.id) ?? 0), 0)
@@ -514,25 +598,16 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
       toFacility: requestingItem.facilityId,
       payload: {
         item: requestingItem.resourceName,
+        resource_id: requestingItem.id,
+        resource_category: requestingItem.category,
         status: requestingItem.status,
+        request_context: "availability_check",
+        request_outcome: outcome,
         urgency: requestUrgency,
         note: requestNote.trim(),
         requestedAt: new Date().toISOString(),
       },
     })
-
-    const feedback: RequestFeedback = {
-      id: `feedback-${Date.now()}`,
-      resourceId: requestingItem.id,
-      resourceName: requestingItem.resourceName,
-      facilityName: requestingItem.facilityName,
-      urgency: requestUrgency,
-      outcome,
-      note: requestNote.trim() || undefined,
-      createdAt: new Date().toISOString(),
-    }
-
-    setFeedbackHistory((previous) => [feedback, ...previous].slice(0, 20))
     setSubmittingRequest(false)
     closeRequestDialog()
     const responseText = RESPONSE_COPY[outcome]
@@ -541,6 +616,52 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
       title: `${responseText.title}: ${requestingItem.resourceName}`,
       description: `${responseText.action} at ${requestingItem.facilityName}.`,
     })
+  }
+
+  const tryAlternative = (historyItem: RequestHistoryItem) => {
+    if (!historyItem.resourceCategory) {
+      toast({
+        title: "No alternative available",
+        description: "This request is missing category data needed for suggestions.",
+      })
+      return
+    }
+
+    const categoryPool = baseResourceItems[historyItem.resourceCategory]
+    const sameResource = categoryPool.filter(
+      (item) => item.resourceName === historyItem.resourceName && item.facilityId !== historyItem.targetFacilityId,
+    )
+    const fallback = categoryPool.filter((item) => item.facilityId !== historyItem.targetFacilityId)
+    const candidatePool = sameResource.length ? sameResource : fallback
+
+    const bestAlternative = [...candidatePool]
+      .sort((left, right) => {
+        if (left.statusScore === right.statusScore) {
+          return (left.distance ?? Number.POSITIVE_INFINITY) - (right.distance ?? Number.POSITIVE_INFINITY)
+        }
+        return right.statusScore - left.statusScore
+      })
+      .find((item) => item.status !== "Unavailable" && item.status !== "Full")
+
+    if (!bestAlternative) {
+      toast({
+        title: "No alternative found",
+        description: "Nearby facilities currently show limited options for this request.",
+      })
+      return
+    }
+
+    setActiveCategory(historyItem.resourceCategory)
+    if (role === "doctor") {
+      setFacilityFilter("nearby")
+    }
+
+    toast({
+      title: `Alternative: ${bestAlternative.facilityName}`,
+      description: `${bestAlternative.resourceName} is ${bestAlternative.status}.`,
+    })
+
+    openRequestDialog(bestAlternative)
   }
 
   return (
@@ -698,7 +819,7 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
                             <MapPin className="h-3 w-3" />
                             {item.facilityName}
                           </span>
-                          {typeof item.distance === "number" ? ` • ${item.distance.toFixed(1)} km` : ""}
+                          {typeof item.distance === "number" ? ` - ${item.distance.toFixed(1)} km` : ""}
                         </p>
                       </div>
                       <Badge className={`border ${getStatusClass(item.status)}`}>{item.status}</Badge>
@@ -731,48 +852,48 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
           </div>
         </section>
 
-        <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <Card>
+        <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle className="text-base">Response Feedback</CardTitle>
-              <CardDescription>Instant guidance before any patient movement</CardDescription>
+              <CardTitle className="text-base">Request History</CardTitle>
+              <CardDescription>Lightweight, glanceable recent actions and responses</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {feedbackHistory.length === 0 && (
-                <p className="rounded-md border border-dashed p-4 text-sm text-slate-500">
-                  No responses yet. Send a request to receive acceptance guidance.
+            <CardContent className="space-y-2">
+              {requestHistoryItems.length === 0 && (
+                <p className="rounded-md border border-dashed p-3 text-sm text-slate-500">
+                  No recent requests yet. Your latest 3 to 5 actions appear here.
                 </p>
               )}
-              {feedbackHistory.slice(0, 6).map((feedback) => (
-                <div key={feedback.id} className={`rounded-md border p-3 text-sm ${getFeedbackClass(feedback.outcome)}`}>
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="font-semibold">
-                      {feedback.resourceName} • {feedback.facilityName}
-                    </p>
-                    <Badge variant="outline">{feedback.urgency}</Badge>
+              {requestHistoryItems.slice(0, 5).map((historyItem) => {
+                const StatusIcon = getHistoryStatusIcon(historyItem.status)
+                const ResourceIcon = historyItem.resourceCategory ? CATEGORY_META[historyItem.resourceCategory].icon : Pill
+                return (
+                  <div key={historyItem.id} className="flex items-center justify-between gap-2 rounded-md border p-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-slate-800">
+                        <span className="inline-flex items-center gap-1">
+                          <ResourceIcon className="h-4 w-4 text-slate-500" />
+                          {historyItem.resourceName}
+                        </span>
+                        <span className="mx-1 text-slate-400">{"->"}</span>
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs ${getHistoryStatusClass(historyItem.status)}`}
+                        >
+                          <StatusIcon className="h-3.5 w-3.5" />
+                          {getHistoryStatusLabel(historyItem.status)}
+                        </span>
+                        <span className="mx-1 text-slate-400">({historyItem.facilityName})</span>
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">{toHistoryTime(historyItem.createdAt)}</p>
+                    </div>
+                    {(historyItem.status === "declined" || historyItem.status === "limited") && (
+                      <Button size="sm" variant="outline" onClick={() => tryAlternative(historyItem)}>
+                        Try alternative
+                      </Button>
+                    )}
                   </div>
-                  <p className="mt-1">
-                    {feedback.outcome === "accepted" && (
-                      <span className="inline-flex items-center gap-1">
-                        <CheckCircle2 className="h-4 w-4" />
-                        Send patient
-                      </span>
-                    )}
-                    {feedback.outcome === "limited" && (
-                      <span className="inline-flex items-center gap-1">
-                        <TriangleAlert className="h-4 w-4" />
-                        Proceed with caution
-                      </span>
-                    )}
-                    {feedback.outcome === "declined" && (
-                      <span className="inline-flex items-center gap-1">
-                        <CircleX className="h-4 w-4" />
-                        Not available
-                      </span>
-                    )}
-                  </p>
-                </div>
-              ))}
+                )
+              })}
             </CardContent>
           </Card>
 
@@ -791,7 +912,7 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
                       <Badge variant="outline">{getTrafficLevel(pending)}</Badge>
                     </div>
                     <p className="mt-1 text-xs text-slate-500">
-                      {typeof facility.distance === "number" ? `${facility.distance.toFixed(1)} km away` : "Distance not set"} • {pending} active requests
+                      {typeof facility.distance === "number" ? `${facility.distance.toFixed(1)} km away` : "Distance not set"} - {pending} active requests
                     </p>
                   </div>
                 )
@@ -848,3 +969,5 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
     </div>
   )
 }
+
+
