@@ -17,7 +17,9 @@ import {
   MapPin,
   Pill,
   Scan,
+  Search,
   Stethoscope,
+  Truck,
   TriangleAlert,
   type LucideIcon,
 } from "lucide-react"
@@ -26,13 +28,14 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/use-toast"
 import { addTask, getBloodAvailability, getFacilities, getTasks, getWardAvailability, subscribe } from "@/components/mock-service"
 
 type DashboardRole = "doctor" | "nurse"
-type ResourceCategoryId = "medicines" | "blood" | "lab" | "equipment" | "wards"
+type ResourceCategoryId = "medicines" | "blood" | "lab" | "equipment" | "ambulances" | "wards"
 type ResourceStatus = "Available" | "Limited" | "Unavailable" | "Busy / Engaged" | "In Use" | "Full"
 type SortMode = "distance" | "availability"
 type FacilityFilterMode = "nearby" | "all" | string
@@ -108,6 +111,7 @@ const CATEGORY_META: Record<ResourceCategoryId, { label: string; icon: LucideIco
   blood: { label: "Blood", icon: Droplets, hint: "Available / Limited / Unavailable" },
   lab: { label: "Lab / Diagnostics", icon: Scan, hint: "Capacity only, no results shown" },
   equipment: { label: "Equipment", icon: Activity, hint: "MRI, X-Ray, Ultrasound" },
+  ambulances: { label: "Ambulances", icon: Truck, hint: "Available / Limited / In Use" },
   wards: { label: "Ward / Beds", icon: BedDouble, hint: "Available / Limited / Full" },
 }
 
@@ -233,7 +237,14 @@ function isRequestOutcome(value: unknown): value is RequestOutcome {
 }
 
 function isResourceCategory(value: unknown): value is ResourceCategoryId {
-  return value === "medicines" || value === "blood" || value === "lab" || value === "equipment" || value === "wards"
+  return (
+    value === "medicines" ||
+    value === "blood" ||
+    value === "lab" ||
+    value === "equipment" ||
+    value === "ambulances" ||
+    value === "wards"
+  )
 }
 
 function getRoleCopy(role: DashboardRole) {
@@ -265,6 +276,7 @@ function toHistoryTime(timestamp: string) {
 export default function AvailabilityCommandDashboard({ role }: { role: DashboardRole }) {
   const [language, setLanguage] = useState<"en" | "tn">("en")
   const [activeCategory, setActiveCategory] = useState<ResourceCategoryId>("medicines")
+  const [searchQuery, setSearchQuery] = useState("")
   const [sortBy, setSortBy] = useState<SortMode>("availability")
   const [facilityFilter, setFacilityFilter] = useState<FacilityFilterMode>("nearby")
   const [selectedFacilityId, setSelectedFacilityId] = useState("ub_clinic")
@@ -328,6 +340,14 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
     return tasks.reduce((accumulator, task) => {
       if (task.status !== "pending") return accumulator
       accumulator.set(task.toFacility, (accumulator.get(task.toFacility) ?? 0) + 1)
+      return accumulator
+    }, new Map<string, number>())
+  }, [tasks])
+
+  const activeDispatchesByFacility = useMemo(() => {
+    return tasks.reduce((accumulator, task) => {
+      if (task.status !== "pending") return accumulator
+      accumulator.set(task.fromFacility, (accumulator.get(task.fromFacility) ?? 0) + 1)
       return accumulator
     }, new Map<string, number>())
   }, [tasks])
@@ -468,6 +488,32 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
       })
     })
 
+    const ambulances: ResourceItem[] = facilities.map((facility) => {
+      const fleetSize = Math.max(1, Math.min(4, Math.ceil(facility.wards.length / 2) + (facility.id.length % 2)))
+      const activeDispatches = activeDispatchesByFacility.get(facility.id) ?? 0
+      const availableUnits = Math.max(0, fleetSize - activeDispatches)
+      const status: ResourceStatus =
+        availableUnits >= 2 ? "Available" : availableUnits === 1 ? "Limited" : activeDispatches > 0 ? "In Use" : "Unavailable"
+
+      const lastUpdated = getLatestTimestamp([
+        ...tasks.filter((task) => task.fromFacility === facility.id).map((task) => task.createdAt),
+        getLatestTimestamp(Object.values(facility.medicineUpdates ?? {}).map((update) => update.last_updated)),
+      ])
+
+      return {
+        id: `ambulances-${facility.id}`,
+        category: "ambulances",
+        resourceName: "Ambulance Dispatch",
+        facilityId: facility.id,
+        facilityName: facility.facility,
+        distance: facility.distance,
+        status,
+        statusScore: STATUS_SCORE[status],
+        detail: `${availableUnits}/${fleetSize} ambulance units ready`,
+        lastUpdated,
+      }
+    })
+
     const wards: ResourceItem[] = wardRows.map((row, index) => {
       const rawStatus = String(row.availability_status)
       const status: ResourceStatus = rawStatus === "Full" ? "Full" : rawStatus === "Available" ? "Available" : "Limited"
@@ -486,8 +532,8 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
       }
     })
 
-    return { medicines, blood, lab, equipment, wards }
-  }, [bloodByFacility, facilities, pendingRequestsByFacility, wardRows])
+    return { medicines, blood, lab, equipment, ambulances, wards }
+  }, [activeDispatchesByFacility, bloodByFacility, facilities, pendingRequestsByFacility, tasks, wardRows])
 
   const latestUpdate = useMemo(() => {
     const allTimestamps = Object.values(baseResourceItems)
@@ -499,6 +545,7 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
   const filteredItems = useMemo(() => {
     const selected = baseResourceItems[activeCategory]
     const nearbyIds = new Set(nearbyFacilities.map((facility) => facility.id))
+    const normalizedSearch = searchQuery.trim().toLowerCase()
 
     const facilityScoped = selected.filter((item) => {
       if (role === "nurse") return nearbyIds.has(item.facilityId)
@@ -517,8 +564,14 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
       return right.statusScore - left.statusScore
     })
 
-    return role === "nurse" ? sorted.slice(0, 8) : sorted
-  }, [activeCategory, baseResourceItems, facilityFilter, nearbyFacilities, role, sortBy])
+    const searched = normalizedSearch
+      ? sorted.filter((item) =>
+          [item.resourceName, item.facilityName, item.detail, item.status].join(" ").toLowerCase().includes(normalizedSearch),
+        )
+      : sorted
+
+    return role === "nurse" ? searched.slice(0, 8) : searched
+  }, [activeCategory, baseResourceItems, facilityFilter, nearbyFacilities, role, searchQuery, sortBy])
 
   const requestHistoryItems = useMemo(() => {
     const history = tasks
@@ -753,7 +806,16 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
               <h2 className="text-lg font-semibold">Resource Availability</h2>
               <p className="text-sm text-slate-500">Check capacity first, then request instantly</p>
             </div>
-            <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="flex w-full flex-col gap-2 sm:flex-row lg:w-auto lg:items-center">
+              <div className="relative w-full sm:w-[280px] lg:w-[320px]">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Input
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Search resource, facility, or status"
+                  className="h-10 border-slate-200 pl-9"
+                />
+              </div>
               {role === "doctor" && (
                 <select
                   value={facilityFilter}
@@ -786,7 +848,7 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
           </div>
 
           <Tabs value={activeCategory} onValueChange={(value) => setActiveCategory(value as ResourceCategoryId)}>
-            <TabsList className="grid h-auto w-full grid-cols-2 gap-2 bg-white p-1 md:grid-cols-5">
+            <TabsList className="grid h-auto w-full grid-cols-2 gap-2 bg-white p-1 md:grid-cols-6">
               {(Object.keys(CATEGORY_META) as ResourceCategoryId[]).map((category) => {
                 const meta = CATEGORY_META[category]
                 return (
@@ -850,6 +912,12 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
               )
             })}
           </div>
+
+          {filteredItems.length === 0 && (
+            <div className="rounded-md border border-dashed bg-white p-6 text-center text-sm text-slate-500">
+              No matching resources found for this search.
+            </div>
+          )}
         </section>
 
         <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
