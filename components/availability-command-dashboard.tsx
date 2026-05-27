@@ -82,6 +82,7 @@ type ResourceItem = {
   statusScore: number
   detail: string
   lastUpdated?: string
+  searchMetadata: string[]
 }
 
 type RequestFeedback = {
@@ -106,13 +107,43 @@ type RequestHistoryItem = {
   resourceId?: string
 }
 
-const CATEGORY_META: Record<ResourceCategoryId, { label: string; icon: LucideIcon; hint: string }> = {
-  medicines: { label: "Medicines", icon: Pill, hint: "Available / Limited / Unavailable" },
-  blood: { label: "Blood", icon: Droplets, hint: "Available / Limited / Unavailable" },
-  lab: { label: "Lab / Diagnostics", icon: Scan, hint: "Capacity only, no results shown" },
-  equipment: { label: "Equipment", icon: Activity, hint: "MRI, X-Ray, Ultrasound" },
-  ambulances: { label: "Ambulances", icon: Truck, hint: "Available / Limited / In Use" },
-  wards: { label: "Ward / Beds", icon: BedDouble, hint: "Available / Limited / Full" },
+const CATEGORY_META: Record<ResourceCategoryId, { label: string; icon: LucideIcon; hint: string; keywords: string[] }> = {
+  medicines: {
+    label: "Medicines",
+    icon: Pill,
+    hint: "Available / Limited / Unavailable",
+    keywords: ["medicine", "medication", "drug", "paracetamol", "painkiller"],
+  },
+  blood: {
+    label: "Blood",
+    icon: Droplets,
+    hint: "Available / Limited / Unavailable",
+    keywords: ["blood", "blood bank", "transfusion", "o+", "a+", "b+", "ab+"],
+  },
+  lab: {
+    label: "Lab / Diagnostics",
+    icon: Scan,
+    hint: "Capacity only, no results shown",
+    keywords: ["lab", "diagnostics", "pcr", "imaging", "blood test"],
+  },
+  equipment: {
+    label: "Equipment",
+    icon: Activity,
+    hint: "MRI, X-Ray, Ultrasound",
+    keywords: ["equipment", "mri", "x-ray", "ultrasound", "scanner"],
+  },
+  ambulances: {
+    label: "Ambulances",
+    icon: Truck,
+    hint: "Available / Limited / In Use",
+    keywords: ["ambulance", "transport", "dispatch", "transfer"],
+  },
+  wards: {
+    label: "Ward / Beds",
+    icon: BedDouble,
+    hint: "Available / Limited / Full",
+    keywords: ["ward", "bed", "icu", "maternity", "capacity"],
+  },
 }
 
 const STATUS_SCORE: Record<ResourceStatus, number> = {
@@ -192,16 +223,10 @@ function getTrafficLevel(pendingCount: number) {
   return "High"
 }
 
-function toMedicineStatus(stock: Record<string, number>): ResourceStatus {
-  const quantities = Object.values(stock)
-  if (!quantities.length) return "Unavailable"
-  const available = quantities.filter((value) => value > 50).length
-  const limited = quantities.filter((value) => value > 0 && value <= 50).length
-  const unavailable = quantities.filter((value) => value <= 0).length
-
-  if (available === 0 && limited === 0) return "Unavailable"
-  if (available >= limited + unavailable) return "Available"
-  return "Limited"
+function toMedicineUnitStatus(qty: number): ResourceStatus {
+  if (qty <= 0) return "Unavailable"
+  if (qty <= 50) return "Limited"
+  return "Available"
 }
 
 function toBloodStatus(statuses: string[]): ResourceStatus {
@@ -364,25 +389,25 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
 
   const baseResourceItems = useMemo(() => {
     const medicines: ResourceItem[] = facilities.map((facility) => {
-      const quantities = Object.values(facility.stock)
-      const available = quantities.filter((value) => value > 50).length
-      const unavailable = quantities.filter((value) => value <= 0).length
-      const status = toMedicineStatus(facility.stock)
-      const lastUpdated = getLatestTimestamp(
-        Object.values(facility.medicineUpdates ?? {}).map((update) => update.last_updated),
-      )
+      const paracetamolQty = Number(facility.stock.paracetamol ?? 0)
+      const status = toMedicineUnitStatus(paracetamolQty)
+      const medicineUpdate = facility.medicineUpdates?.paracetamol?.last_updated
+      const lastUpdated =
+        medicineUpdate ??
+        getLatestTimestamp(Object.values(facility.medicineUpdates ?? {}).map((update) => update.last_updated))
 
       return {
         id: `medicines-${facility.id}`,
         category: "medicines",
-        resourceName: "Medicines",
+        resourceName: "Paracetamol",
         facilityId: facility.id,
         facilityName: facility.facility,
         distance: facility.distance,
         status,
         statusScore: STATUS_SCORE[status],
-        detail: `${available} available lines, ${unavailable} unavailable lines`,
+        detail: `${paracetamolQty} units available`,
         lastUpdated,
+        searchMetadata: ["paracetamol", "medicine", "medication", "analgesic", "painkiller"],
       }
     })
 
@@ -404,6 +429,7 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
         statusScore: STATUS_SCORE[status],
         detail: `${availableTypes}/8 blood types currently available`,
         lastUpdated,
+        searchMetadata: ["blood", "blood bank", "transfusion", "o+", "a+", "b+", "ab+"],
       }
     })
 
@@ -434,6 +460,7 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
           statusScore: STATUS_SCORE[bloodStatus],
           detail: "Capacity only, no patient result details shown",
           lastUpdated: sharedLastUpdated,
+          searchMetadata: ["lab", "diagnostics", "blood test", "capacity"],
         },
         {
           id: `lab-pcr-${facility.id}`,
@@ -446,6 +473,7 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
           statusScore: STATUS_SCORE[pcrStatus],
           detail: `${pendingCount} pending request${pendingCount === 1 ? "" : "s"} in queue`,
           lastUpdated: sharedLastUpdated,
+          searchMetadata: ["lab", "pcr", "diagnostics", "machine"],
         },
         {
           id: `lab-imaging-${facility.id}`,
@@ -458,6 +486,7 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
           statusScore: STATUS_SCORE[imagingStatus],
           detail: `${availableMachines} machines available now`,
           lastUpdated: sharedLastUpdated,
+          searchMetadata: ["lab", "imaging", "diagnostics", "radiology"],
         },
       ]
     })
@@ -484,6 +513,7 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
           statusScore: STATUS_SCORE[status],
           detail: matchingEntry ? matchingEntry[0] : "Not currently installed on site",
           lastUpdated,
+          searchMetadata: ["equipment", equipmentName.toLowerCase(), "scanner", "machine"],
         }
       })
     })
@@ -511,6 +541,7 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
         statusScore: STATUS_SCORE[status],
         detail: `${availableUnits}/${fleetSize} ambulance units ready`,
         lastUpdated,
+        searchMetadata: ["ambulance", "dispatch", "transport", "referral vehicle"],
       }
     })
 
@@ -529,6 +560,7 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
         statusScore: STATUS_SCORE[status],
         detail: `${String(row.ward_type)} ward`,
         lastUpdated: String(row.last_updated),
+        searchMetadata: ["ward", "bed", String(row.ward_name), String(row.ward_type)],
       }
     })
 
@@ -566,7 +598,17 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
 
     const searched = normalizedSearch
       ? sorted.filter((item) =>
-          [item.resourceName, item.facilityName, item.detail, item.status].join(" ").toLowerCase().includes(normalizedSearch),
+          [
+            item.resourceName,
+            item.facilityName,
+            item.detail,
+            item.status,
+            item.searchMetadata.join(" "),
+            CATEGORY_META[item.category].keywords.join(" "),
+          ]
+            .join(" ")
+            .toLowerCase()
+            .includes(normalizedSearch),
         )
       : sorted
 
