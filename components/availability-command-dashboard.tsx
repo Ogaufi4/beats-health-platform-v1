@@ -350,6 +350,12 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
   const roleCopy = getRoleCopy(role)
 
   useEffect(() => {
+    setActiveCategory("medicines")
+    setSearchScope("internal")
+    setSearchQuery("")
+  }, [role])
+
+  useEffect(() => {
     const savedFacilityId = localStorage.getItem("userFacilityKey") || "ub_clinic"
     const savedFacilityName = localStorage.getItem("userFacilityNameEn") || "UB Clinic"
     setSelectedFacilityId(savedFacilityId)
@@ -668,6 +674,10 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
       }
       return right.statusScore - left.statusScore
     })
+
+    if (isExternalSearch && !normalizedSearch) {
+      return []
+    }
 
     const searched = normalizedSearch
       ? sorted.filter((item) =>
@@ -1081,7 +1091,9 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
           {filteredItems.length === 0 && (
             <div className="rounded-md border border-dashed bg-white p-6 text-center text-sm text-slate-500">
               {searchScope === "external"
-                ? "No matching resources found in other facilities."
+                ? searchQuery.trim()
+                  ? "No matching resources found in other facilities."
+                  : "Type a medicine, equipment, blood type, specialist, or ward name to search other facilities."
                 : "No matching resources found in your internal inventory."}
             </div>
           )}
