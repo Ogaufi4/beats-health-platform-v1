@@ -12,6 +12,7 @@ import { getBloodAvailability, getFacilities, getTasks, getWardAvailability, sub
 type FacilityRecord = {
   id: string
   facility: string
+  location?: string
   stock: Record<string, number>
   wards: Array<{ available_beds: number; total_beds: number }>
 }
@@ -21,6 +22,14 @@ type TaskRecord = {
   status: string
   createdAt: string
   toFacility: string
+}
+
+function toTitleCase(value: string) {
+  return value
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map((part) => part[0].toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ")
 }
 
 export default function AdminDashboardPage() {
@@ -119,8 +128,42 @@ export default function AdminDashboardPage() {
       .slice(0, 6)
   }, [bloodRows, facilities, wardRows])
 
-  const demandPatternLabel =
-    mostRequestedResources.length > 0 ? mostRequestedResources[0].resource : "No demand pattern yet"
+  const medicineNames = useMemo(() => {
+    const names = new Set<string>()
+    facilities.forEach((facility) => {
+      Object.keys(facility.stock ?? {}).forEach((item) => names.add(item.toLowerCase()))
+    })
+    return names
+  }, [facilities])
+
+  const mostRequestedMedicineByDistrict = useMemo(() => {
+    const counts = new Map<string, { medicine: string; district: string; count: number }>()
+
+    tasks.forEach((task) => {
+      const rawItem = task.payload?.item
+      if (typeof rawItem !== "string") return
+      const normalizedItem = rawItem.trim().toLowerCase()
+      if (!medicineNames.has(normalizedItem)) return
+
+      const district = facilities.find((facility) => facility.id === task.toFacility)?.location ?? "Unknown district"
+      const key = `${normalizedItem}|${district.toLowerCase()}`
+      const existing = counts.get(key)
+      if (existing) {
+        existing.count += 1
+        return
+      }
+
+      counts.set(key, {
+        medicine: toTitleCase(rawItem),
+        district,
+        count: 1,
+      })
+    })
+
+    return Array.from(counts.values()).sort((left, right) => right.count - left.count)[0] ?? null
+  }, [facilities, medicineNames, tasks])
+
+  const demandPatternLabel = mostRequestedMedicineByDistrict?.medicine ?? "No medicine demand signal yet"
 
   return (
     <div className="min-h-screen bg-gray-50 text-slate-900">
@@ -205,7 +248,11 @@ export default function AdminDashboardPage() {
               <CardTitle className="text-lg">{demandPatternLabel}</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-xs text-slate-500">Current most requested resource trend</p>
+              <p className="text-xs text-slate-500">
+                {mostRequestedMedicineByDistrict
+                  ? `Top district: ${mostRequestedMedicineByDistrict.district} (${mostRequestedMedicineByDistrict.count} requests)`
+                  : "No medicine request trend captured yet"}
+              </p>
             </CardContent>
           </Card>
         </section>
@@ -217,6 +264,15 @@ export default function AdminDashboardPage() {
               <CardDescription>National demand signals for policy planning</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
+              {mostRequestedMedicineByDistrict && (
+                <div className="rounded-md border border-blue-100 bg-blue-50 p-3">
+                  <p className="text-sm font-semibold text-slate-800">Most Requested Medicine</p>
+                  <p className="text-sm text-slate-700">
+                    {mostRequestedMedicineByDistrict.medicine} - {mostRequestedMedicineByDistrict.district}
+                  </p>
+                  <p className="text-xs text-slate-500">{mostRequestedMedicineByDistrict.count} total requests</p>
+                </div>
+              )}
               {mostRequestedResources.length === 0 && (
                 <p className="rounded-md border border-dashed p-4 text-sm text-slate-500">No requests captured yet.</p>
               )}

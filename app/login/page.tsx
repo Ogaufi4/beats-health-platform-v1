@@ -39,7 +39,6 @@ export default function LoginPage() {
         doctor: "Medical Doctor",
         nurse: "Nurse",
         pharmacist: "Pharmacist",
-        chw: "Community Health Worker",
         cms: "Central Medical Stores",
       },
       facilities: {
@@ -78,7 +77,6 @@ export default function LoginPage() {
         doctor: "Ngaka",
         nurse: "Mooki",
         pharmacist: "Mooki wa Dihlare",
-        chw: "Modiri wa Boitekanelo wa Motse",
         cms: "Central Medical Stores",
       },
       facilities: {
@@ -139,9 +137,6 @@ export default function LoginPage() {
         break
       case "pharmacist":
         router.push("/pharmacist/dashboard")
-        break
-      case "chw":
-        router.push("/chw/dashboard")
         break
       case "cms":
         router.push("/cms/dashboard")
@@ -219,7 +214,6 @@ export default function LoginPage() {
                     <SelectItem value="doctor">{t.roles.doctor}</SelectItem>
                     <SelectItem value="nurse">{t.roles.nurse}</SelectItem>
                     <SelectItem value="pharmacist">{t.roles.pharmacist}</SelectItem>
-                    <SelectItem value="chw">{t.roles.chw}</SelectItem>
                     <SelectItem value="cms">{t.roles.cms}</SelectItem>
                   </SelectContent>
                 </Select>

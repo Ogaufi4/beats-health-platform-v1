@@ -21,6 +21,7 @@ import {
   Stethoscope,
   Truck,
   TriangleAlert,
+  Users,
   type LucideIcon,
 } from "lucide-react"
 import BeatsLogo from "@/components/BeatsLogo"
@@ -35,10 +36,11 @@ import { useToast } from "@/components/ui/use-toast"
 import { addTask, getBloodAvailability, getFacilities, getTasks, getWardAvailability, subscribe } from "@/components/mock-service"
 
 type DashboardRole = "doctor" | "nurse"
-type ResourceCategoryId = "medicines" | "blood" | "lab" | "equipment" | "ambulances" | "wards"
+type ResourceCategoryId = "medicines" | "blood" | "lab" | "equipment" | "ambulances" | "wards" | "specialists"
 type ResourceStatus = "Available" | "Limited" | "Unavailable" | "Busy / Engaged" | "In Use" | "Full"
 type SortMode = "distance" | "availability"
 type FacilityFilterMode = "nearby" | "all" | string
+type SearchScopeMode = "internal" | "external"
 type RequestUrgency = "Routine" | "Priority" | "Urgent"
 type RequestOutcome = "accepted" | "limited" | "declined"
 type RequestHistoryStatus = RequestOutcome | "pending"
@@ -59,6 +61,7 @@ type FacilityRecord = {
   }>
   medicineUpdates?: Record<string, { last_updated: string }>
   equipment: Record<string, "available" | "busy" | "maintenance">
+  specialists: Record<string, "available" | "busy" | "off-duty">
 }
 
 type TaskRecord = {
@@ -144,6 +147,12 @@ const CATEGORY_META: Record<ResourceCategoryId, { label: string; icon: LucideIco
     hint: "Available / Limited / Full",
     keywords: ["ward", "bed", "icu", "maternity", "capacity"],
   },
+  specialists: {
+    label: "Specialist Network",
+    icon: Users,
+    hint: "On Duty / Busy / Off Duty",
+    keywords: ["specialist", "doctor", "consultant", "oncologist", "cardiologist"],
+  },
 }
 
 const STATUS_SCORE: Record<ResourceStatus, number> = {
@@ -161,7 +170,15 @@ const RESPONSE_COPY: Record<RequestOutcome, { title: string; action: string }> =
   declined: { title: "Declined", action: "Not available" },
 }
 
-const EQUIPMENT_TARGETS = ["MRI", "X-Ray", "Ultrasound"] as const
+const EQUIPMENT_TARGETS = ["MRI", "CT Scanner", "X-Ray", "Ultrasound"] as const
+
+function toTitleCase(value: string) {
+  return value
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map((part) => part[0].toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ")
+}
 
 function getLatestTimestamp(values: Array<string | undefined>): string | undefined {
   const timestamps = values.filter(Boolean) as string[]
@@ -229,6 +246,12 @@ function toMedicineUnitStatus(qty: number): ResourceStatus {
   return "Available"
 }
 
+function toMedicineDetail(status: ResourceStatus) {
+  if (status === "Available") return "In stock and ready for dispensing"
+  if (status === "Limited") return "Low stock level, replenish soon"
+  return "Currently out of stock"
+}
+
 function toBloodStatus(statuses: string[]): ResourceStatus {
   if (!statuses.length) return "Unavailable"
   const available = statuses.filter((status) => status === "Available").length
@@ -251,6 +274,12 @@ function toEquipmentStatus(equipmentStatus?: "available" | "busy" | "maintenance
   return "Limited"
 }
 
+function toSpecialistStatus(status?: "available" | "busy" | "off-duty"): ResourceStatus {
+  if (status === "available") return "Available"
+  if (status === "busy") return "Busy / Engaged"
+  return "Unavailable"
+}
+
 function toRequestOutcome(status: ResourceStatus): RequestOutcome {
   if (status === "Available") return "accepted"
   if (status === "Limited" || status === "Busy / Engaged" || status === "In Use") return "limited"
@@ -268,7 +297,8 @@ function isResourceCategory(value: unknown): value is ResourceCategoryId {
     value === "lab" ||
     value === "equipment" ||
     value === "ambulances" ||
-    value === "wards"
+    value === "wards" ||
+    value === "specialists"
   )
 }
 
@@ -302,6 +332,7 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
   const [language, setLanguage] = useState<"en" | "tn">("en")
   const [activeCategory, setActiveCategory] = useState<ResourceCategoryId>("medicines")
   const [searchQuery, setSearchQuery] = useState("")
+  const [searchScope, setSearchScope] = useState<SearchScopeMode>("internal")
   const [sortBy, setSortBy] = useState<SortMode>("availability")
   const [facilityFilter, setFacilityFilter] = useState<FacilityFilterMode>("nearby")
   const [selectedFacilityId, setSelectedFacilityId] = useState("ub_clinic")
@@ -324,6 +355,10 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
     setSelectedFacilityId(savedFacilityId)
     setDisplayFacility(savedFacilityName)
   }, [])
+
+  useEffect(() => {
+    setSearchScope("internal")
+  }, [activeCategory, selectedFacilityId])
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -388,27 +423,28 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
   }, [bloodRows])
 
   const baseResourceItems = useMemo(() => {
-    const medicines: ResourceItem[] = facilities.map((facility) => {
-      const paracetamolQty = Number(facility.stock.paracetamol ?? 0)
-      const status = toMedicineUnitStatus(paracetamolQty)
-      const medicineUpdate = facility.medicineUpdates?.paracetamol?.last_updated
-      const lastUpdated =
-        medicineUpdate ??
-        getLatestTimestamp(Object.values(facility.medicineUpdates ?? {}).map((update) => update.last_updated))
+    const medicines: ResourceItem[] = facilities.flatMap((facility) => {
+      return Object.entries(facility.stock).map(([medicineName, qty]) => {
+        const status = toMedicineUnitStatus(Number(qty))
+        const lastUpdated =
+          facility.medicineUpdates?.[medicineName]?.last_updated ??
+          getLatestTimestamp(Object.values(facility.medicineUpdates ?? {}).map((update) => update.last_updated))
+        const displayName = toTitleCase(medicineName)
 
-      return {
-        id: `medicines-${facility.id}`,
-        category: "medicines",
-        resourceName: "Paracetamol",
-        facilityId: facility.id,
-        facilityName: facility.facility,
-        distance: facility.distance,
-        status,
-        statusScore: STATUS_SCORE[status],
-        detail: `${paracetamolQty} units available`,
-        lastUpdated,
-        searchMetadata: ["paracetamol", "medicine", "medication", "analgesic", "painkiller"],
-      }
+        return {
+          id: `medicines-${medicineName}-${facility.id}`,
+          category: "medicines" as const,
+          resourceName: displayName,
+          facilityId: facility.id,
+          facilityName: facility.facility,
+          distance: facility.distance,
+          status,
+          statusScore: STATUS_SCORE[status],
+          detail: toMedicineDetail(status),
+          lastUpdated,
+          searchMetadata: [medicineName, displayName.toLowerCase(), "medicine", "medication", "pharmacy"],
+        }
+      })
     })
 
     const blood: ResourceItem[] = facilities.map((facility) => {
@@ -522,6 +558,9 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
       const fleetSize = Math.max(1, Math.min(4, Math.ceil(facility.wards.length / 2) + (facility.id.length % 2)))
       const activeDispatches = activeDispatchesByFacility.get(facility.id) ?? 0
       const availableUnits = Math.max(0, fleetSize - activeDispatches)
+      const inRouteDispatches = tasks.filter(
+        (task) => task.fromFacility === facility.id && (task.status === "approved" || task.status === "in-transit"),
+      ).length
       const status: ResourceStatus =
         availableUnits >= 2 ? "Available" : availableUnits === 1 ? "Limited" : activeDispatches > 0 ? "In Use" : "Unavailable"
 
@@ -539,9 +578,9 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
         distance: facility.distance,
         status,
         statusScore: STATUS_SCORE[status],
-        detail: `${availableUnits}/${fleetSize} ambulance units ready`,
+        detail: `${availableUnits} ready, ${activeDispatches} active, ${inRouteDispatches} in route`,
         lastUpdated,
-        searchMetadata: ["ambulance", "dispatch", "transport", "referral vehicle"],
+        searchMetadata: ["ambulance", "dispatch", "transport", "referral vehicle", "in route", "active units"],
       }
     })
 
@@ -564,7 +603,36 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
       }
     })
 
-    return { medicines, blood, lab, equipment, ambulances, wards }
+    const specialists: ResourceItem[] = facilities.flatMap((facility) => {
+      return Object.entries(facility.specialists ?? {}).map(([specialistName, specialistStatus]) => {
+        const status = toSpecialistStatus(specialistStatus)
+        const lastUpdated = getLatestTimestamp(
+          Object.values(facility.medicineUpdates ?? {}).map((update) => update.last_updated),
+        )
+        const detail =
+          specialistStatus === "available"
+            ? "Available for consultation"
+            : specialistStatus === "busy"
+              ? "Currently handling patients"
+              : "Off duty at the moment"
+
+        return {
+          id: `specialist-${specialistName}-${facility.id}`,
+          category: "specialists" as const,
+          resourceName: specialistName,
+          facilityId: facility.id,
+          facilityName: facility.facility,
+          distance: facility.distance,
+          status,
+          statusScore: STATUS_SCORE[status],
+          detail,
+          lastUpdated,
+          searchMetadata: ["specialist", "consultant", "doctor", specialistName.toLowerCase()],
+        }
+      })
+    })
+
+    return { medicines, blood, lab, equipment, ambulances, wards, specialists }
   }, [activeDispatchesByFacility, bloodByFacility, facilities, pendingRequestsByFacility, tasks, wardRows])
 
   const latestUpdate = useMemo(() => {
@@ -578,8 +646,13 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
     const selected = baseResourceItems[activeCategory]
     const nearbyIds = new Set(nearbyFacilities.map((facility) => facility.id))
     const normalizedSearch = searchQuery.trim().toLowerCase()
+    const isExternalSearch = searchScope === "external"
 
-    const facilityScoped = selected.filter((item) => {
+    const internalOnly = selected.filter((item) => item.facilityId === selectedFacilityId)
+    const externalOnly = selected.filter((item) => item.facilityId !== selectedFacilityId)
+
+    const facilityScoped = (isExternalSearch ? externalOnly : internalOnly).filter((item) => {
+      if (!isExternalSearch) return true
       if (role === "nurse") return nearbyIds.has(item.facilityId)
       if (facilityFilter === "all") return true
       if (facilityFilter === "nearby") return nearbyIds.has(item.facilityId)
@@ -612,8 +685,8 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
         )
       : sorted
 
-    return role === "nurse" ? searched.slice(0, 8) : searched
-  }, [activeCategory, baseResourceItems, facilityFilter, nearbyFacilities, role, searchQuery, sortBy])
+    return role === "nurse" && isExternalSearch ? searched.slice(0, 8) : searched
+  }, [activeCategory, baseResourceItems, facilityFilter, nearbyFacilities, role, searchQuery, searchScope, selectedFacilityId, sortBy])
 
   const requestHistoryItems = useMemo(() => {
     const history = tasks
@@ -671,6 +744,13 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
   const currentTraffic = getTrafficLevel(nearbyPendingRequests)
 
   const openRequestDialog = (item: ResourceItem) => {
+    if (item.facilityId === selectedFacilityId) {
+      toast({
+        title: "Internal resource selected",
+        description: "This item is already in your facility inventory.",
+      })
+      return
+    }
     setRequestingItem(item)
     setRequestUrgency("Routine")
     setRequestNote("")
@@ -688,7 +768,12 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
     const outcome = toRequestOutcome(requestingItem.status)
 
     await addTask({
-      type: requestingItem.category === "wards" ? "patient_referral" : "booking_request",
+      type:
+        requestingItem.category === "wards"
+          ? "patient_referral"
+          : requestingItem.category === "specialists"
+            ? "specialist_request"
+            : "booking_request",
       fromFacility: selectedFacilityId,
       toFacility: requestingItem.facilityId,
       payload: {
@@ -747,6 +832,7 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
     }
 
     setActiveCategory(historyItem.resourceCategory)
+    setSearchScope("external")
     if (role === "doctor") {
       setFacilityFilter("nearby")
     }
@@ -854,28 +940,54 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
                 <Input
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="Search resource, facility, or status"
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault()
+                      setSearchScope("external")
+                    }
+                  }}
+                  placeholder={
+                    searchScope === "internal"
+                      ? "Filter internal inventory (e.g. paracetamol, CT scanner, cardiologist)"
+                      : "Search other facilities (medicine, equipment, ambulance, specialist)"
+                  }
                   className="h-10 border-slate-200 pl-9"
                 />
               </div>
+              <Button
+                className="h-10 whitespace-nowrap bg-blue-600 px-4 hover:bg-blue-500"
+                onClick={() => setSearchScope("external")}
+              >
+                Search Elsewhere
+              </Button>
+              <Button
+                variant="outline"
+                className="h-10 whitespace-nowrap"
+                onClick={() => setSearchScope("internal")}
+              >
+                Show Internal
+              </Button>
               {role === "doctor" && (
                 <select
                   value={facilityFilter}
                   onChange={(event) => setFacilityFilter(event.target.value as FacilityFilterMode)}
-                  className="h-10 min-w-[180px] rounded-md border border-slate-200 bg-white px-3 text-sm"
+                  disabled={searchScope === "internal"}
+                  className="h-10 min-w-[180px] rounded-md border border-slate-200 bg-white px-3 text-sm disabled:bg-slate-100 disabled:text-slate-400"
                 >
                   <option value="nearby">Nearby facilities</option>
                   <option value="all">All facilities</option>
-                  {facilities.map((facility) => (
+                  {facilities
+                    .filter((facility) => facility.id !== selectedFacilityId)
+                    .map((facility) => (
                     <option key={facility.id} value={facility.id}>
                       {facility.facility}
                     </option>
-                  ))}
+                    ))}
                 </select>
               )}
               {role === "nurse" && (
                 <Badge variant="outline" className="h-10 items-center rounded-md px-3 text-slate-600">
-                  Nearby facilities only
+                  {searchScope === "internal" ? "Internal facility only" : "Nearby facilities only"}
                 </Badge>
               )}
               <select
@@ -890,7 +1002,7 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
           </div>
 
           <Tabs value={activeCategory} onValueChange={(value) => setActiveCategory(value as ResourceCategoryId)}>
-            <TabsList className="grid h-auto w-full grid-cols-2 gap-2 bg-white p-1 md:grid-cols-6">
+            <TabsList className="grid h-auto w-full grid-cols-2 gap-2 bg-white p-1 md:grid-cols-7">
               {(Object.keys(CATEGORY_META) as ResourceCategoryId[]).map((category) => {
                 const meta = CATEGORY_META[category]
                 return (
@@ -907,7 +1019,12 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
             </TabsList>
           </Tabs>
 
-          <p className="text-xs text-slate-500">{CATEGORY_META[activeCategory].hint}</p>
+          <p className="text-xs text-slate-500">
+            {CATEGORY_META[activeCategory].hint} -{" "}
+            {searchScope === "internal"
+              ? `Internal inventory at ${displayFacility}`
+              : "External search results from other facilities"}
+          </p>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {filteredItems.map((item) => {
@@ -932,9 +1049,15 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
                     <p className="text-sm text-slate-600">{item.detail}</p>
                     <p className="text-xs text-slate-500">{toRelativeTime(item.lastUpdated)}</p>
 
-                    <Button className="w-full bg-blue-600 hover:bg-blue-500" onClick={() => openRequestDialog(item)}>
-                      {roleCopy.actionLabel}
-                    </Button>
+                    {item.facilityId === selectedFacilityId ? (
+                      <Badge variant="outline" className="w-full justify-center py-2 text-slate-600">
+                        Internal availability
+                      </Badge>
+                    ) : (
+                      <Button className="w-full bg-blue-600 hover:bg-blue-500" onClick={() => openRequestDialog(item)}>
+                        {roleCopy.actionLabel}
+                      </Button>
+                    )}
 
                     {response && (
                       <div className={`rounded-md border p-3 text-xs ${getFeedbackClass(response.outcome)}`}>
@@ -957,7 +1080,9 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
 
           {filteredItems.length === 0 && (
             <div className="rounded-md border border-dashed bg-white p-6 text-center text-sm text-slate-500">
-              No matching resources found for this search.
+              {searchScope === "external"
+                ? "No matching resources found in other facilities."
+                : "No matching resources found in your internal inventory."}
             </div>
           )}
         </section>

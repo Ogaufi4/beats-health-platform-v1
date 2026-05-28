@@ -44,7 +44,7 @@ export default function HomePage() {
         },
         accessibility: {
           title: "Rural Access",
-          description: "SMS/USSD support for low-connectivity areas with Community Health Worker assistance",
+          description: "SMS/USSD support for low-connectivity areas to keep rural facilities connected",
         },
         security: {
           title: "Secure & Compliant",
@@ -77,7 +77,7 @@ export default function HomePage() {
         },
         accessibility: {
           title: "Phitlhelelo ya Magae",
-          description: "Tshegetso ya SMS/USSD mo mafelong a a kwa kgakala le thuso ya badiri ba boitekanelo",
+          description: "Tshegetso ya SMS/USSD mo mafelong a a kwa kgakala go kopanya mafelo a boitekanelo",
         },
         security: {
           title: "Sireletso le Tshwaragano",
