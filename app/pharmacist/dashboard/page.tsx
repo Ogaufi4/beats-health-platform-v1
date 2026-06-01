@@ -1,474 +1,520 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
+import Link from "next/link"
+import {
+  Bell,
+  CheckCircle2,
+  CircleX,
+  Download,
+  Globe,
+  LogOut,
+  MapPin,
+  Search,
+  TriangleAlert,
+} from "lucide-react"
 import BeatsLogo from "@/components/BeatsLogo"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import {
-  Pill,
-  AlertTriangle,
-  Clock,
-  Truck,
-  Plus,
-  Search,
-  Settings,
-  LogOut,
-  Globe,
-  Bell,
-  ArrowRight,
-  Database,
-  SearchIcon,
-  ShieldCheck,
-  TrendingUp,
-  MapPin,
-  CheckCircle2,
-  Activity,
-} from "lucide-react"
-import Link from "next/link"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/components/ui/use-toast"
-import { findMedicine, getTasks, addTask, updateTaskStatus, subscribe, getFacilities } from "@/components/mock-service"
+import { findMedicine, getFacilities, getTasks, subscribe, updateTaskStatus } from "@/components/mock-service"
 
-export default function PharmacistDashboard() {
+type RequestDecision = "accepted" | "limited" | "declined"
+
+type TaskRecord = {
+  id: string
+  type: string
+  fromFacility: string
+  toFacility: string
+  payload: Record<string, unknown>
+  status: string
+  createdAt: string
+}
+
+type FacilityRecord = {
+  id: string
+  facility: string
+  stock: Record<string, number>
+  medicineUpdates?: Record<string, { last_updated: string }>
+}
+
+type LocalMedicine = {
+  name: string
+  qty: number
+  availability: "Available" | "Limited" | "Out of Stock"
+  lastUpdated?: string
+}
+
+function toRelativeTime(timestamp?: string) {
+  if (!timestamp) return "just now"
+  const diffMs = Date.now() - new Date(timestamp).getTime()
+  const minutes = Math.max(1, Math.floor(diffMs / 60000))
+  if (minutes < 60) return `${minutes} min${minutes === 1 ? "" : "s"} ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours} hr${hours === 1 ? "" : "s"} ago`
+  const days = Math.floor(hours / 24)
+  return `${days} day${days === 1 ? "" : "s"} ago`
+}
+
+function toAvailability(qty: number): LocalMedicine["availability"] {
+  if (qty <= 0) return "Out of Stock"
+  if (qty <= 50) return "Limited"
+  return "Available"
+}
+
+function getStatusClass(status: string) {
+  if (status === "Available") return "bg-emerald-50 text-emerald-700 border-emerald-200"
+  if (status === "Limited") return "bg-amber-50 text-amber-700 border-amber-200"
+  return "bg-rose-50 text-rose-700 border-rose-200"
+}
+
+function getDecisionLabel(decision: RequestDecision) {
+  if (decision === "accepted") return "Accepted"
+  if (decision === "limited") return "Limited"
+  return "Declined"
+}
+
+function toUrgency(payload: Record<string, unknown>) {
+  const raw = payload.urgency
+  if (typeof raw === "string") {
+    const value = raw.toLowerCase()
+    if (value.includes("urgent")) return "Urgent"
+    if (value.includes("priority")) return "Priority"
+  }
+  return "Routine"
+}
+
+export default function PharmacistDashboardPage() {
   const [language, setLanguage] = useState<"en" | "tn">("en")
   const [activeTab, setActiveTab] = useState("inventory")
+  const [facilityId, setFacilityId] = useState("pmh")
+  const [displayFacility, setDisplayFacility] = useState("Princess Marina Hospital")
+  const [tasks, setTasks] = useState<TaskRecord[]>([])
+  const [facilities, setFacilities] = useState<FacilityRecord[]>([])
+  const [localInventory, setLocalInventory] = useState<LocalMedicine[]>([])
   const [searchQuery, setSearchQuery] = useState("")
-  const [networkResults, setNetworkResults] = useState<any[]>([])
-  const [localInventory, setLocalInventory] = useState<any[]>([])
-  const [tasks, setTasks] = useState<any[]>([])
-  const [loading, setLoading] = useState(false)
+  const [visibilityResults, setVisibilityResults] = useState<any[]>([])
+  const [searching, setSearching] = useState(false)
+  const [respondingTaskId, setRespondingTaskId] = useState<string | null>(null)
   const { toast } = useToast()
 
-  const content = {
-    en: {
-      title: "Pharmacy Command - Station 01",
-      subtitle: "Inventory Logistics Intelligence",
-      inventory: "Local Stock",
-      network: "National Supply Visibility",
-      transfers: "Supply Requests",
-      analytics: "Usage Analytics",
-      searchPlaceholder: "Search medicine availability across facilities...",
-      requestTransfer: "Submit Requisition",
-      medicationTransferRemoved: "Requisition disabled",
-      raiseSupplyRequest: "Raise Supply Request",
-      lowStockAlert: "Low Local Stock",
-      criticalStock: "Critical Alert",
-    },
-    tn: {
-      title: "Pharmacy Command - Station 01",
-      subtitle: "Thulaganyo ya Ditiro tsa Dihlare",
-      inventory: "Stock ya Mono",
-      network: "Ponagalo ya Kabo ya Sechaba",
-      transfers: "Dikopo tsa Kabo",
-      analytics: "Analytics ya Tiriso",
-      searchPlaceholder: "Batla dihlare mo network ya sechaba...",
-      requestTransfer: "Tsenya Kopo ya Kabo",
-      medicationTransferRemoved: "Kopo e emisitswe",
-      raiseSupplyRequest: "Kopo ya go Tlatsa",
-      lowStockAlert: "Stock e e kwa tlase",
-      criticalStock: "Alert ya Botlhokwa",
-    },
-  }
-
-  const [displayFacility, setDisplayFacility] = useState({ en: content.en.subtitle, tn: content.tn.subtitle })
+  useEffect(() => {
+    const savedFacilityId = localStorage.getItem("userFacilityKey") || "pmh"
+    const savedFacilityName = localStorage.getItem("userFacilityNameEn") || "Princess Marina Hospital"
+    setFacilityId(savedFacilityId)
+    setDisplayFacility(savedFacilityName)
+  }, [])
 
   useEffect(() => {
-    const savedEn = localStorage.getItem("userFacilityNameEn")
-    const savedTn = localStorage.getItem("userFacilityNameTn")
-    if (savedEn && savedTn) {
-      setDisplayFacility({ en: savedEn, tn: savedTn })
+    const loadDashboardData = async () => {
+      const [facilityData, taskData] = await Promise.all([getFacilities(), getTasks()])
+      setFacilities(facilityData as FacilityRecord[])
+      setTasks(taskData as TaskRecord[])
     }
 
-    loadLocalInventory()
-    loadTasks()
-    const unsubAdded = subscribe("tasks:added", loadTasks)
-    const unsubUpdated = subscribe("tasks:updated", loadTasks)
-    const unsubFac = subscribe("facilities:changed", loadLocalInventory)
+    loadDashboardData()
+    const unsubTaskAdd = subscribe("tasks:added", loadDashboardData)
+    const unsubTaskUpdate = subscribe("tasks:updated", loadDashboardData)
+    const unsubFacilities = subscribe("facilities:changed", loadDashboardData)
+
     return () => {
-      unsubAdded()
-      unsubUpdated()
-      unsubFac()
+      unsubTaskAdd()
+      unsubTaskUpdate()
+      unsubFacilities()
     }
   }, [])
 
-  const loadLocalInventory = async () => {
-    const facilityKey = localStorage.getItem("userFacilityKey") || "pmh"
-    const facilities = await getFacilities()
-    const currentFac = facilities.find(f => f.id === facilityKey)
-    if (currentFac) {
-      setLocalInventory(
-        Object.entries(currentFac.stock).map(([med, qty]) => {
-          const numericQty = Number(qty)
-          const availability_status = numericQty <= 0 ? "Out of Stock" : numericQty <= 50 ? "Limited" : "Available"
-          return {
-            med,
-            qty: numericQty,
-            availability_status,
-            last_updated: currentFac.medicineUpdates?.[med]?.last_updated,
-          }
-        }),
-      )
+  useEffect(() => {
+    const localFacility = facilities.find((facility) => facility.id === facilityId)
+    if (!localFacility) {
+      setLocalInventory([])
+      return
     }
-  }
 
-  const t = {
-    ...content[language],
-    subtitle: language === "en" ? displayFacility.en : displayFacility.tn
-  }
+    const inventory = Object.entries(localFacility.stock).map(([name, qty]) => {
+      const numericQty = Number(qty)
+      return {
+        name,
+        qty: numericQty,
+        availability: toAvailability(numericQty),
+        lastUpdated: localFacility.medicineUpdates?.[name]?.last_updated,
+      } satisfies LocalMedicine
+    })
+    setLocalInventory(inventory.sort((left, right) => left.name.localeCompare(right.name)))
+  }, [facilities, facilityId])
 
-  const loadTasks = async () => {
-    const data = await getTasks()
-    setTasks(data)
-  }
+  const incomingAvailabilityRequests = useMemo(() => {
+    return tasks
+      .filter((task) => task.toFacility === facilityId && task.status === "pending")
+      .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())
+  }, [facilityId, tasks])
 
-  const handleNetworkSearch = async () => {
-    if (!searchQuery) return
-    setLoading(true)
-    const results = await findMedicine(searchQuery)
-    setNetworkResults(results)
-    setLoading(false)
-  }
-
-  const handleSubmitRequisition = async (item: { facilityId: string; item: string; facilityName: string }) => {
-    const facilityKey = localStorage.getItem("userFacilityKey") || "pmh"
-    await addTask({
-      type: "supply_order",
-      fromFacility: facilityKey,
-      toFacility: "cms_supply_hub",
-      payload: {
-        item: item.item,
-        qty: 100,
-        urgency: "urgent",
-        requestedAt: new Date().toISOString(),
-        visibilitySourceFacility: item.facilityName,
+  const mostRequiredMedicines = useMemo(() => {
+    const counts = new Map<string, number>()
+    incomingAvailabilityRequests.forEach((task) => {
+      const resource = task.payload?.item
+      if (typeof resource === "string" && resource.trim()) {
+        counts.set(resource, (counts.get(resource) ?? 0) + 1)
       }
     })
 
+    return Array.from(counts.entries())
+      .map(([medicine, count]) => ({ medicine, count }))
+      .sort((left, right) => right.count - left.count)
+      .slice(0, 5)
+  }, [incomingAvailabilityRequests])
+
+  const topRequestingFacilities = useMemo(() => {
+    const counts = new Map<string, number>()
+    incomingAvailabilityRequests.forEach((task) => {
+      const facilityName = facilities.find((facility) => facility.id === task.fromFacility)?.facility ?? task.fromFacility.toUpperCase()
+      counts.set(facilityName, (counts.get(facilityName) ?? 0) + 1)
+    })
+
+    return Array.from(counts.entries())
+      .map(([facility, count]) => ({ facility, count }))
+      .sort((left, right) => right.count - left.count)
+      .slice(0, 5)
+  }, [facilities, incomingAvailabilityRequests])
+
+  const criticalLowMedicines = useMemo(() => {
+    return localInventory.filter((medicine) => medicine.qty <= 20).sort((left, right) => left.qty - right.qty)
+  }, [localInventory])
+
+  const mostlyUsedMedicines = useMemo(() => {
+    return [...localInventory].sort((left, right) => left.qty - right.qty).slice(0, 5)
+  }, [localInventory])
+
+  const handleVisibilitySearch = async () => {
+    const query = searchQuery.trim()
+    if (!query) {
+      setVisibilityResults([])
+      return
+    }
+
+    setSearching(true)
+    try {
+      const results = await findMedicine(query)
+      setVisibilityResults(results)
+    } finally {
+      setSearching(false)
+    }
+  }
+
+  const respondToIncomingRequest = async (task: TaskRecord, decision: RequestDecision) => {
+    setRespondingTaskId(task.id)
+    const mappedStatus = decision === "declined" ? "cancelled" : "approved"
+    await updateTaskStatus(task.id, mappedStatus as any)
+    setRespondingTaskId(null)
+
     toast({
-      title: "Requisition Submitted",
-      description: `Submitted ${item.item} requisition to CMS Supply Hub.`
+      title: `${getDecisionLabel(decision)}: ${String(task.payload.item ?? "resource")}`,
+      description: `Response sent to ${facilities.find((f) => f.id === task.fromFacility)?.facility ?? task.fromFacility}.`,
     })
   }
 
-  const formatLastUpdated = (timestamp?: string) => {
-    if (!timestamp) return "Last updated just now"
-    const diffMs = Date.now() - new Date(timestamp).getTime()
-    const minutes = Math.max(1, Math.floor(diffMs / 60000))
-    if (minutes < 60) return `Last updated ${minutes} mins ago`
-    const hours = Math.floor(minutes / 60)
-    if (hours < 24) return `Last updated ${hours} hrs ago`
-    const days = Math.floor(hours / 24)
-    return `Last updated ${days} day${days === 1 ? "" : "s"} ago`
-  }
+  const exportAnalyticsData = () => {
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      facility: displayFacility,
+      criticalLowMedicines,
+      mostlyUsedMedicines,
+      mostRequiredMedicines,
+      topRequestingFacilities,
+    }
 
-  const getStatusBadgeClass = (status: string) => {
-    if (status === "Available") return "bg-emerald-50 text-emerald-700 border-emerald-200"
-    if (status === "Limited") return "bg-amber-50 text-amber-700 border-amber-200"
-    if (status === "Out of Stock" || status === "Full") return "bg-rose-50 text-rose-700 border-rose-200"
-    return "bg-slate-100 text-slate-700 border-slate-200"
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `pharmacy-analytics-${new Date().toISOString().slice(0, 10)}.json`
+    link.click()
+    URL.revokeObjectURL(url)
+
+    toast({
+      title: "Export complete",
+      description: "Analytics data has been exported successfully.",
+    })
   }
 
   return (
     <div className="min-h-screen bg-gray-50 text-slate-900">
-      {/* Premium Dashboard Header */}
-      <header className="border-b bg-white backdrop-blur-md sticky top-0 z-50">
-        <div className="px-6 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/20">
-                <Pill className="h-6 w-6 text-white" />
-              </div>
-              <BeatsLogo size={44} />
-              <div>
-                <h1 className="text-lg font-bold tracking-tight text-slate-900">{t.title}</h1>
-                <p className="text-[10px] font-bold text-purple-400 uppercase tracking-[0.2em] flex items-center gap-1">
-                  <ShieldCheck className="h-3 w-3" />
-                  {t.subtitle}
-                </p>
-              </div>
+      <header className="sticky top-0 z-50 border-b bg-white">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
+          <div className="flex items-center gap-4">
+            <BeatsLogo size={48} />
+            <div>
+              <h1 className="text-xl font-bold tracking-tight">Pharmacy Command</h1>
+              <p className="text-xs font-semibold uppercase tracking-widest text-purple-600">{displayFacility}</p>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="px-3 py-1 bg-slate-100 rounded-full border border-slate-200 flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">CMS Link Active</span>
-              </div>
-              <Button variant="ghost" size="icon" onClick={() => setLanguage(language === "en" ? "tn" : "en")} className="text-slate-400 font-bold">
-                <Globe className="h-4 w-4" />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setLanguage(language === "en" ? "tn" : "en")}>
+              <Globe className="mr-2 h-4 w-4" />
+              {language === "en" ? "Setswana" : "English"}
+            </Button>
+            <Button variant="outline" size="icon" aria-label="Notifications">
+              <Bell className="h-4 w-4" />
+            </Button>
+            <Link href="/login">
+              <Button variant="outline" size="icon" aria-label="Log out">
+                <LogOut className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="icon" className="text-slate-400">
-                <Bell className="h-4 w-4" />
-              </Button>
-              <Link href="/login">
-                <Button variant="ghost" size="icon" className="text-slate-400">
-                  <LogOut className="h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
+            </Link>
           </div>
         </div>
       </header>
 
-      <main className="p-6 max-w-7xl mx-auto">
-        {/* Quick Stats Banner */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card className="bg-white border-slate-200 shadow-sm">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400"><Database className="h-5 w-5" /></div>
-              <div>
-                <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Local SKUs</p>
-                <p className="text-xl font-bold">{localInventory.length}</p>
-              </div>
-            </CardContent>
+      <main className="mx-auto max-w-7xl space-y-6 px-6 py-6">
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Local SKUs</CardDescription>
+              <CardTitle className="text-2xl">{localInventory.length}</CardTitle>
+            </CardHeader>
           </Card>
-          <Card className="bg-white border-slate-200 shadow-sm">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="p-2 bg-amber-500/10 rounded-lg text-amber-400"><AlertTriangle className="h-5 w-5" /></div>
-              <div>
-                <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Low Stock</p>
-                <p className="text-xl font-bold">{localInventory.filter(i => i.availability_status !== "Available").length}</p>
-              </div>
-            </CardContent>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Critical Low</CardDescription>
+              <CardTitle className="text-2xl">{criticalLowMedicines.length}</CardTitle>
+            </CardHeader>
           </Card>
-          <Card className="bg-white border-slate-200 shadow-sm">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="p-2 bg-purple-500/10 rounded-lg text-purple-400"><Truck className="h-5 w-5" /></div>
-              <div>
-                <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Pending Orders</p>
-                <p className="text-xl font-bold">{tasks.filter(t => t.type === 'supply_order' && t.status === 'pending').length}</p>
-              </div>
-            </CardContent>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Incoming Availability Requests</CardDescription>
+              <CardTitle className="text-2xl">{incomingAvailabilityRequests.length}</CardTitle>
+            </CardHeader>
           </Card>
-          <Card className="bg-white border-slate-200 shadow-sm">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-400"><TrendingUp className="h-5 w-5" /></div>
-              <div>
-                <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Supply Orders</p>
-                <p className="text-xl font-bold">12</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        </section>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="bg-white border border-slate-200 p-1 w-full md:w-auto overflow-x-auto justify-start">
-            <TabsTrigger value="inventory" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white px-6">
-              {t.inventory}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList className="grid h-auto w-full grid-cols-2 gap-2 bg-white p-1 md:grid-cols-4">
+            <TabsTrigger value="inventory" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+              Local Stock
             </TabsTrigger>
-            <TabsTrigger value="network" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white px-6">
-              {t.network}
+            <TabsTrigger value="visibility" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+              National Visibility
             </TabsTrigger>
-            <TabsTrigger value="transfers" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white px-6 relative">
-              {t.transfers}
-              {tasks.filter(tk => tk.status === 'pending' && tk.type === 'supply_order').length > 0 && (
-                <span className="ml-2 bg-purple-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
-                  {tasks.filter(tk => tk.status === 'pending' && tk.type === 'supply_order').length}
-                </span>
-              )}
+            <TabsTrigger value="requests" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+              Supply Requests
             </TabsTrigger>
-            <TabsTrigger value="analytics" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white px-6">
-              {t.analytics}
+            <TabsTrigger value="analytics" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+              Usage Analytics
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="inventory" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-2xl font-bold flex items-center gap-2">
-                  <Database className="h-6 w-6 text-purple-600" />
-                  Local Station Stock
-                </h2>
-                <p className="text-slate-500 text-sm">Real-time inventory for Station 01</p>
-              </div>
-              <Button className="bg-purple-600 hover:bg-purple-500 shadow-lg shadow-purple-600/20">
-                <Plus className="h-4 w-4 mr-2" /> Adjust Stock
-              </Button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {localInventory.map((item, idx) => (
-                <Card key={idx} className="bg-white border-slate-200 hover:border-purple-500/50 transition-all group overflow-hidden shadow-sm">
-                  <div className="absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 bg-purple-600/5 rounded-full blur-2xl group-hover:bg-purple-600/10 transition-colors" />
-                  <CardContent className="p-5 relative">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <p className="font-bold text-slate-900 text-lg">{item.med}</p>
-                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mt-1">Dispensing Station A</p>
-                      </div>
-                      <Badge className={`border px-2 py-0.5 ${getStatusBadgeClass(item.availability_status)}`}>
-                        {item.availability_status}
-                      </Badge>
+          <TabsContent value="inventory" className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {localInventory.map((item) => (
+                <Card key={item.name}>
+                  <CardContent className="space-y-2 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="font-semibold text-slate-900">{item.name}</p>
+                      <Badge className={`border ${getStatusClass(item.availability)}`}>{item.availability}</Badge>
                     </div>
-                    <p className="text-xs text-slate-500">{formatLastUpdated(item.last_updated)}</p>
-                    <div className="flex justify-between items-center mt-4">
-                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">Usage: High</p>
-                      <Button variant="ghost" size="sm" className="h-7 text-[10px] text-purple-400 hover:text-purple-300 hover:bg-purple-500/5">Details</Button>
-                    </div>
+                    <p className="text-xs text-slate-500">Qty: {item.qty}</p>
+                    <p className="text-xs text-slate-500">Updated {toRelativeTime(item.lastUpdated)}</p>
                   </CardContent>
                 </Card>
               ))}
             </div>
           </TabsContent>
 
-          <TabsContent value="network" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <div className="flex flex-col gap-2">
-              <h2 className="text-2xl font-bold flex items-center gap-2">
-                <Globe className="h-6 w-6 text-purple-500" />
-                Network Supply Hub
-              </h2>
-              <p className="text-slate-400 text-sm">Facility visibility for planning and referral support. Requisitions are sent only to CMS Supply Hub.</p>
-            </div>
-
-            <div className="relative group max-w-2xl">
-              <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 group-focus-within:text-purple-400 transition-colors" />
-              <Input 
-                className="pl-12 py-6 bg-white border-slate-200 text-lg rounded-xl focus:ring-purple-500/50 transition-all border-2 shadow-sm text-slate-900"
-                placeholder={t.searchPlaceholder}
-                value={searchQuery}
-                onKeyDown={(e) => e.key === 'Enter' && handleNetworkSearch()}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <Button onClick={handleNetworkSearch} disabled={loading} className="absolute right-2 top-1/2 -translate-y-1/2 bg-purple-600 hover:bg-purple-500 py-5">
-                {loading ? "Searching..." : "Search Availability"}
-              </Button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4">
-              {networkResults.map((item, idx) => (
-                <Card key={idx} className="bg-white border-slate-200 hover:border-purple-500/50 transition-all overflow-hidden relative group shadow-sm">
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-600/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <CardContent className="p-5">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="p-3 bg-purple-500/10 rounded-xl text-purple-400">
-                        <Pill className="h-6 w-6" />
-                      </div>
-                      <Badge variant="outline" className="border-slate-200 text-slate-500 uppercase text-[10px] tracking-widest bg-slate-50 px-2 py-1">
-                        {item.location || "3.2km away"}
-                      </Badge>
-                    </div>
-                    <h3 className="text-lg font-bold text-slate-900 mb-1">{item.item}</h3>
-                    <p className="text-sm text-slate-400 flex items-center gap-1 mb-6">
-                      <MapPin className="h-3 w-3 text-slate-500" /> {item.facilityName}
-                    </p>
-                    
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Availability</p>
-                          <div className="flex items-center gap-2">
-                             <Badge className={`border ${getStatusBadgeClass(item.availability_status)}`}>
-                               {item.availability_status}
-                             </Badge>
-                          </div>
-                          <p className="text-xs text-slate-500 mt-2">{formatLastUpdated(item.last_updated)}</p>
-                        </div>
-                        <Badge variant="outline" className="border-slate-300 text-slate-500 text-[10px]">
-                          {t.medicationTransferRemoved}
-                        </Badge>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-              {searchQuery && networkResults.length === 0 && !loading && (
-                <div className="col-span-full py-12 text-center bg-white rounded-3xl border border-slate-200 border-dashed">
-                  <Search className="h-10 w-10 text-slate-200 mx-auto mb-3" />
-                  <p className="text-slate-500">No match found for "{searchQuery}" in the regional hub.</p>
+          <TabsContent value="visibility" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">National Visibility Search</CardTitle>
+                <CardDescription>Type a medicine and search to see availability across facilities</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <div className="relative w-full">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <Input
+                      className="pl-9"
+                      value={searchQuery}
+                      onChange={(event) => setSearchQuery(event.target.value)}
+                      onKeyDown={(event) => event.key === "Enter" && handleVisibilitySearch()}
+                      placeholder="Search medicine (e.g. paracetamol, insulin)"
+                    />
+                  </div>
+                  <Button className="bg-purple-600 hover:bg-purple-500" onClick={handleVisibilitySearch} disabled={searching}>
+                    {searching ? "Searching..." : "Search"}
+                  </Button>
                 </div>
-              )}
-            </div>
-          </TabsContent>
 
-          <TabsContent value="transfers" className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-2xl font-bold flex items-center gap-2">
-                <Truck className="h-6 w-6 text-purple-500" />
-                Supply Request Desk
-              </h2>
-            </div>
-            
-            {tasks.filter(t => t.type === 'supply_order').length === 0 ? (
-              <div className="py-20 text-center bg-white rounded-2xl border border-slate-200 border-dashed shadow-sm">
-                <Truck className="h-10 w-10 text-slate-200 mx-auto mb-4" />
-                <p className="text-slate-500">No active supply requests found.</p>
-              </div>
-            ) : (
-              <div className="grid gap-4">
-                {tasks.filter(t => t.type === 'supply_order').map((task) => (
-                  <Card key={task.id} className="bg-white border-slate-200 border-l-4 border-l-purple-600 hover:bg-slate-50 transition-all shadow-sm">
-                    <CardContent className="p-5">
-                      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                        <div className="flex items-center gap-8">
-                          <div className="text-center w-24">
-                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{new Date(task.createdAt).toLocaleDateString()}</p>
-                            <p className="text-lg font-bold text-purple-400 tabular-nums">{new Date(task.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                          </div>
-                          <div className="hidden md:block h-12 w-px bg-slate-100" />
-                          <div>
-                            <div className="flex items-center gap-3">
-                              <h3 className="font-bold text-slate-900 text-lg">{task.payload.item}</h3>
-                              <Badge className="bg-slate-50 text-[10px] h-5 border-slate-200 text-slate-600">REQUESTED</Badge>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-slate-400 mt-1">
-                              <MapPin className="h-3 w-3" />
-                              <span className="font-medium text-slate-300">{task.fromFacility}</span>
-                              <ArrowRight className="h-3 w-3 text-slate-600" />
-                              <span className="font-medium text-slate-300">CMS Supply Hub</span>
-                            </div>
-                            <div className="mt-1 text-[10px] text-slate-500 uppercase font-bold tracking-widest">
-                              Supply Requisition
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end">
-                          <div className="flex flex-col items-end">
-                            <p className="text-[10px] text-slate-500 uppercase font-black tracking-tighter mb-1">Network Status</p>
-                            <Badge className={`${
-                              task.status === 'pending' ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                              task.status === 'approved' ? 'bg-blue-50 text-blue-600 border-blue-100 shadow-sm' :
-                              task.status === 'in-transit' ? 'bg-purple-50 text-purple-600 border-purple-100 animate-pulse' :
-                              'bg-emerald-50 text-emerald-600 border-emerald-100'
-                            } border px-3 py-1 font-bold text-[10px] tracking-wider`}>
-                              {task.status.toUpperCase().replace('-', ' ')}
+                {visibilityResults.length > 0 && (
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                    {visibilityResults.map((result, index) => (
+                      <Card key={`${result.facilityId}-${result.item}-${index}`}>
+                        <CardContent className="space-y-2 p-4">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="font-semibold text-slate-900">{result.item}</p>
+                            <Badge className={`border ${getStatusClass(String(result.availability_status))}`}>
+                              {String(result.availability_status)}
                             </Badge>
                           </div>
-                          
-                          <div className="flex gap-2">
-                            {task.status === "pending" && (
-                              <Badge className="bg-slate-50 text-slate-500 border-slate-200 h-9 px-4 flex items-center gap-2">
-                                Awaiting CMS
-                              </Badge>
-                            )}
-                            {task.status === 'fulfilled' && (
-                              <Badge className="bg-slate-50 text-slate-500 border-slate-200 h-9 px-4 flex items-center gap-2">
-                                <CheckCircle2 className="h-4 w-4" /> Logged
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+                          <p className="text-xs text-slate-500">
+                            <span className="inline-flex items-center gap-1">
+                              <MapPin className="h-3 w-3" />
+                              {result.facilityName}
+                            </span>
+                          </p>
+                          <p className="text-xs text-slate-500">Updated {toRelativeTime(String(result.last_updated))}</p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+
+                {searchQuery.trim() && visibilityResults.length === 0 && !searching && (
+                  <p className="rounded-md border border-dashed p-3 text-sm text-slate-500">
+                    No national visibility matches found for "{searchQuery}".
+                  </p>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
-          <TabsContent value="analytics" className="py-20 text-center bg-white rounded-2xl border border-slate-200 border-dashed animate-in fade-in slide-in-from-bottom-2 duration-300 shadow-sm">
-            <Activity className="h-16 w-16 text-slate-100 mx-auto mb-4" strokeWidth={1} />
-            <h3 className="text-slate-900 font-bold text-2xl mb-2">Network Demand Intelligence</h3>
-            <p className="text-slate-500 max-w-sm mx-auto">Forecasting regional demand based on facility requisitions to CMS Supply Hub. Link active to National Health Data Hub in Gaborone.</p>
-            <div className="mt-8 flex justify-center gap-2">
-               <div className="px-4 py-2 bg-slate-50 border border-slate-100 rounded-lg">
-                  <p className="text-[10px] text-slate-400 font-black uppercase mb-1">Avg Request Latency</p>
-                  <p className="text-xl font-bold text-blue-600">42 min</p>
-               </div>
-               <div className="px-4 py-2 bg-slate-50 border border-slate-100 rounded-lg">
-                  <p className="text-[10px] text-slate-400 font-black uppercase mb-1">Network Saving</p>
-                  <p className="text-xl font-bold text-emerald-600">24%</p>
-               </div>
+          <TabsContent value="requests" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Incoming Availability Requests</CardTitle>
+                <CardDescription>Review and respond to requests from other facilities</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {incomingAvailabilityRequests.length === 0 && (
+                  <p className="rounded-md border border-dashed p-4 text-sm text-slate-500">
+                    No incoming availability requests at this time.
+                  </p>
+                )}
+
+                {incomingAvailabilityRequests.map((task) => {
+                  const resource = typeof task.payload.item === "string" ? task.payload.item : "Unspecified resource"
+                  const fromFacility = facilities.find((facility) => facility.id === task.fromFacility)?.facility ?? task.fromFacility.toUpperCase()
+                  const urgency = toUrgency(task.payload)
+                  return (
+                    <div key={task.id} className="rounded-md border p-4">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="space-y-1">
+                          <p className="text-sm font-semibold text-slate-900">{resource}</p>
+                          <p className="text-xs text-slate-500">From: {fromFacility}</p>
+                          <p className="text-xs text-slate-500">Received {toRelativeTime(task.createdAt)}</p>
+                        </div>
+                        <Badge className={`border ${urgency === "Urgent" ? "border-rose-200 bg-rose-50 text-rose-700" : urgency === "Priority" ? "border-amber-200 bg-amber-50 text-amber-700" : "border-slate-200 bg-slate-100 text-slate-700"}`}>
+                          {urgency}
+                        </Badge>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button
+                          size="sm"
+                          className="bg-emerald-600 hover:bg-emerald-500"
+                          onClick={() => respondToIncomingRequest(task, "accepted")}
+                          disabled={respondingTaskId === task.id}
+                        >
+                          <CheckCircle2 className="mr-1 h-4 w-4" />
+                          Accept
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-amber-200 text-amber-700 hover:bg-amber-50"
+                          onClick={() => respondToIncomingRequest(task, "limited")}
+                          disabled={respondingTaskId === task.id}
+                        >
+                          <TriangleAlert className="mr-1 h-4 w-4" />
+                          Limited
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-rose-200 text-rose-700 hover:bg-rose-50"
+                          onClick={() => respondToIncomingRequest(task, "declined")}
+                          disabled={respondingTaskId === task.id}
+                        >
+                          <CircleX className="mr-1 h-4 w-4" />
+                          Decline
+                        </Button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="analytics" className="space-y-4">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-lg font-semibold">Usage Analytics</h2>
+              <Button variant="outline" onClick={exportAnalyticsData}>
+                <Download className="mr-2 h-4 w-4" />
+                Export Data
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Critically Low Medicines</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {criticalLowMedicines.length === 0 && <p className="text-sm text-slate-500">No critically low medicines right now.</p>}
+                  {criticalLowMedicines.map((medicine) => (
+                    <div key={medicine.name} className="flex items-center justify-between rounded-md border p-2">
+                      <p className="text-sm font-medium">{medicine.name}</p>
+                      <Badge className="border border-rose-200 bg-rose-50 text-rose-700">Qty {medicine.qty}</Badge>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Mostly Used Medicines</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {mostlyUsedMedicines.map((medicine) => (
+                    <div key={medicine.name} className="flex items-center justify-between rounded-md border p-2">
+                      <p className="text-sm font-medium">{medicine.name}</p>
+                      <Badge variant="outline">Qty {medicine.qty}</Badge>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Most Required Medicines</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {mostRequiredMedicines.length === 0 && <p className="text-sm text-slate-500">No incoming medicine demand signals yet.</p>}
+                  {mostRequiredMedicines.map((entry) => (
+                    <div key={entry.medicine} className="flex items-center justify-between rounded-md border p-2">
+                      <p className="text-sm font-medium">{entry.medicine}</p>
+                      <Badge variant="outline">{entry.count} requests</Badge>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Top Requesting Facilities</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {topRequestingFacilities.length === 0 && <p className="text-sm text-slate-500">No requesting facility trend yet.</p>}
+                  {topRequestingFacilities.map((entry) => (
+                    <div key={entry.facility} className="flex items-center justify-between rounded-md border p-2">
+                      <p className="text-sm font-medium">{entry.facility}</p>
+                      <Badge variant="outline">{entry.count} requests</Badge>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
         </Tabs>
