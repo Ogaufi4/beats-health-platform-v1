@@ -12,6 +12,7 @@ import {
   MapPin,
   Search,
   TriangleAlert,
+  Users,
 } from "lucide-react"
 import BeatsLogo from "@/components/BeatsLogo"
 import { Badge } from "@/components/ui/badge"
@@ -99,6 +100,9 @@ export default function PharmacistDashboardPage() {
   const [visibilityResults, setVisibilityResults] = useState<any[]>([])
   const [searching, setSearching] = useState(false)
   const [respondingTaskId, setRespondingTaskId] = useState<string | null>(null)
+  const [showSpecialistModal, setShowSpecialistModal] = useState(false)
+  const [specialistSearch, setSpecialistSearch] = useState("")
+  const [specialistSearchResults, setSpecialistSearchResults] = useState<any[]>([])
   const { toast } = useToast()
 
   useEffect(() => {
@@ -253,6 +257,10 @@ export default function PharmacistDashboardPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setShowSpecialistModal(true)}>
+              <Users className="mr-2 h-4 w-4" />
+              Specialist Network
+            </Button>
             <Button variant="outline" size="sm" onClick={() => setLanguage(language === "en" ? "tn" : "en")}>
               <Globe className="mr-2 h-4 w-4" />
               {language === "en" ? "Setswana" : "English"}

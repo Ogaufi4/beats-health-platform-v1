@@ -307,7 +307,7 @@ function getRoleCopy(role: DashboardRole) {
       subtitle: "Primary decision dashboard",
       quote: "I do not guess anymore. I know before I move the patient.",
       actionLabel: "Request Availability",
-      helperLabel: "Decision support in one screen",
+      helperLabel: "Real-time facility coordination",
       assistantAction: "Follow-up on request",
     }
   }
@@ -317,7 +317,7 @@ function getRoleCopy(role: DashboardRole) {
     subtitle: "Support and execution dashboard",
     quote: "I can coordinate fast and support the doctor without extra complexity.",
     actionLabel: "Send Request",
-    helperLabel: "Simplified coordination view",
+    helperLabel: "Coordination hub for nurses",
     assistantAction: "Assist Doctor Request",
   }
 }
@@ -462,13 +462,13 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
       return {
         id: `blood-${bloodType}-${facilityId}-${index}`,
         category: "blood",
-        resourceName: bloodType,
+        resourceName: `${bloodType} Blood`,
         facilityId,
         facilityName: String(row.facility),
         distance: facility?.distance,
         status,
         statusScore: STATUS_SCORE[status],
-        detail: `Blood type ${bloodType} availability`,
+        detail: `Availability: ${status}`,
         lastUpdated: String(row.last_updated),
         searchMetadata: ["blood", "blood type", bloodType.toLowerCase(), String(row.facility).toLowerCase()],
       }
@@ -947,7 +947,7 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
                   placeholder={
                     searchScope === "internal"
                       ? "Filter internal inventory (e.g. paracetamol, CT scanner, cardiologist)"
-                      : "Search other facilities (medicine, equipment, ambulance, specialist)"
+                      : "Search other facilities (type to find medicine, equipment, blood type, specialist, ward)"
                   }
                   className="h-10 border-slate-200 pl-9"
                 />
