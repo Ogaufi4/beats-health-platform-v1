@@ -39,7 +39,6 @@ export default function LoginPage() {
         doctor: "Medical Doctor",
         nurse: "Nurse",
         pharmacist: "Pharmacist",
-        cms: "Central Medical Stores",
       },
       facilities: {
         pmh: "Princess Marina Hospital",
@@ -77,7 +76,6 @@ export default function LoginPage() {
         doctor: "Ngaka",
         nurse: "Mooki",
         pharmacist: "Mooki wa Dihlare",
-        cms: "Central Medical Stores",
       },
       facilities: {
         pmh: "Sepetlele sa Princess Marina",
@@ -100,7 +98,7 @@ export default function LoginPage() {
 
   const t = content[language]
 
-  const isNationalRole = userType === "admin" || userType === "cms"
+  const isNationalRole = userType === "admin"
 
   useEffect(() => {
     if (isNationalRole) setFacility("")
@@ -137,9 +135,6 @@ export default function LoginPage() {
         break
       case "pharmacist":
         router.push("/pharmacist/dashboard")
-        break
-      case "cms":
-        router.push("/cms/dashboard")
         break
       default:
         alert("Please select a valid user role.")
@@ -214,7 +209,6 @@ export default function LoginPage() {
                     <SelectItem value="doctor">{t.roles.doctor}</SelectItem>
                     <SelectItem value="nurse">{t.roles.nurse}</SelectItem>
                     <SelectItem value="pharmacist">{t.roles.pharmacist}</SelectItem>
-                    <SelectItem value="cms">{t.roles.cms}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

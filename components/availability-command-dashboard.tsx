@@ -8,7 +8,6 @@ import {
   Bell,
   CheckCircle2,
   CircleX,
-  ClipboardCheck,
   Clock3,
   Droplets,
   Globe,
@@ -18,7 +17,6 @@ import {
   Pill,
   Scan,
   Search,
-  Stethoscope,
   Truck,
   TriangleAlert,
   Users,
@@ -120,7 +118,7 @@ const CATEGORY_META: Record<ResourceCategoryId, { label: string; icon: LucideIco
   blood: {
     label: "Blood",
     icon: Droplets,
-    hint: "Available / Limited / Unavailable",
+    hint: "Blood types by facility (A+, A-, B+, B-, AB+, AB-, O+, O-)",
     keywords: ["blood", "blood bank", "transfusion", "o+", "a+", "b+", "ab+"],
   },
   lab: {
@@ -309,7 +307,7 @@ function getRoleCopy(role: DashboardRole) {
       subtitle: "Primary decision dashboard",
       quote: "I do not guess anymore. I know before I move the patient.",
       actionLabel: "Request Availability",
-      helperLabel: "Decision support in one screen",
+      helperLabel: "Real-time facility coordination",
       assistantAction: "Follow-up on request",
     }
   }
@@ -319,7 +317,7 @@ function getRoleCopy(role: DashboardRole) {
     subtitle: "Support and execution dashboard",
     quote: "I can coordinate fast and support the doctor without extra complexity.",
     actionLabel: "Send Request",
-    helperLabel: "Simplified coordination view",
+    helperLabel: "Coordination hub for nurses",
     assistantAction: "Assist Doctor Request",
   }
 }
@@ -364,6 +362,7 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
 
   useEffect(() => {
     setSearchScope("internal")
+    setSearchQuery("")
   }, [activeCategory, selectedFacilityId])
 
   useEffect(() => {
@@ -453,25 +452,25 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
       })
     })
 
-    const blood: ResourceItem[] = facilities.map((facility) => {
-      const facilityBloodRows = bloodByFacility.get(facility.id) ?? []
-      const statuses = facilityBloodRows.map((row: any) => String(row.availability_status))
-      const status = toBloodStatus(statuses)
-      const lastUpdated = getLatestTimestamp(facilityBloodRows.map((row: any) => String(row.last_updated)))
-      const availableTypes = facilityBloodRows.filter((row: any) => row.availability_status === "Available").length
+    const blood: ResourceItem[] = bloodRows.map((row: any, index) => {
+      const rawStatus = String(row.availability_status)
+      const status: ResourceStatus = rawStatus === "Available" ? "Available" : rawStatus === "Out of Stock" ? "Unavailable" : "Limited"
+      const facilityId = String(row.facilityId)
+      const facility = facilities.find((item) => item.id === facilityId)
+      const bloodType = String(row.blood_type).toUpperCase()
 
       return {
-        id: `blood-${facility.id}`,
+        id: `blood-${bloodType}-${facilityId}-${index}`,
         category: "blood",
-        resourceName: "Blood Bank Capacity",
-        facilityId: facility.id,
-        facilityName: facility.facility,
-        distance: facility.distance,
+        resourceName: `${bloodType} Blood`,
+        facilityId,
+        facilityName: String(row.facility),
+        distance: facility?.distance,
         status,
         statusScore: STATUS_SCORE[status],
-        detail: `${availableTypes}/8 blood types currently available`,
-        lastUpdated,
-        searchMetadata: ["blood", "blood bank", "transfusion", "o+", "a+", "b+", "ab+"],
+        detail: `Availability: ${status}`,
+        lastUpdated: String(row.last_updated),
+        searchMetadata: ["blood", "blood type", bloodType.toLowerCase(), String(row.facility).toLowerCase()],
       }
     })
 
@@ -887,16 +886,6 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
       </header>
 
       <main className="mx-auto max-w-7xl space-y-6 px-6 py-6">
-        <Card className="border-blue-100 bg-white">
-          <CardContent className="flex items-center gap-3 p-4">
-            {role === "doctor" ? <Stethoscope className="h-5 w-5 text-blue-600" /> : <ClipboardCheck className="h-5 w-5 text-blue-600" />}
-            <div>
-              <p className="text-sm font-semibold text-slate-700">{roleCopy.helperLabel}</p>
-              <p className="text-sm text-slate-500">{roleCopy.quote}</p>
-            </div>
-          </CardContent>
-        </Card>
-
         <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <Card>
             <CardHeader className="pb-3">
@@ -959,7 +948,7 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
                   placeholder={
                     searchScope === "internal"
                       ? "Filter internal inventory (e.g. paracetamol, CT scanner, cardiologist)"
-                      : "Search other facilities (medicine, equipment, ambulance, specialist)"
+                      : "Search other facilities (type to find medicine, equipment, blood type, specialist, ward)"
                   }
                   className="h-10 border-slate-200 pl-9"
                 />
@@ -973,7 +962,10 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
               <Button
                 variant="outline"
                 className="h-10 whitespace-nowrap"
-                onClick={() => setSearchScope("internal")}
+                onClick={() => {
+                  setSearchScope("internal")
+                  setSearchQuery("")
+                }}
               >
                 Show Internal
               </Button>

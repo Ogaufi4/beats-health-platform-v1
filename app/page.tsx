@@ -40,7 +40,7 @@ export default function HomePage() {
         stock: {
           title: "Stock Management",
           description:
-            "Automated medicine inventory tracking with smart replenishment alerts to Central Medical Stores",
+            "Automated medicine inventory tracking with smart replenishment alerts to the national supply network",
         },
         accessibility: {
           title: "Rural Access",
@@ -291,7 +291,7 @@ export default function HomePage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-                  <span>{language === "en" ? "CMS sees regional demand" : "CMS e bona tlhokego ya kgaolo"}</span>
+                  <span>{language === "en" ? "National teams see regional demand" : "Ditlhopha tsa naga di bona tlhokego ya kgaolo"}</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="w-2 h-2 bg-green-600 rounded-full"></div>
