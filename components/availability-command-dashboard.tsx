@@ -686,7 +686,6 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
             item.detail,
             item.status,
             item.searchMetadata.join(" "),
-            CATEGORY_META[item.category].keywords.join(" "),
           ]
             .join(" ")
             .toLowerCase()
