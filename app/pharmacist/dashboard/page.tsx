@@ -10,6 +10,8 @@ import {
   Globe,
   LogOut,
   MapPin,
+  Minus,
+  Plus,
   Search,
   TriangleAlert,
   Users,
@@ -21,7 +23,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/components/ui/use-toast"
-import { findMedicine, getFacilities, getTasks, subscribe, updateTaskStatus } from "@/components/mock-service"
+import { findMedicine, getFacilities, getTasks, subscribe, updateStock, updateTaskStatus } from "@/components/mock-service"
 
 type RequestDecision = "accepted" | "limited" | "declined"
 
@@ -100,6 +102,8 @@ export default function PharmacistDashboardPage() {
   const [visibilityResults, setVisibilityResults] = useState<any[]>([])
   const [searching, setSearching] = useState(false)
   const [respondingTaskId, setRespondingTaskId] = useState<string | null>(null)
+  const [adjustingMedicine, setAdjustingMedicine] = useState<string | null>(null)
+  const [stockAdjustments, setStockAdjustments] = useState<Record<string, string>>({})
   const [showSpecialistModal, setShowSpecialistModal] = useState(false)
   const [specialistSearch, setSpecialistSearch] = useState("")
   const [specialistSearchResults, setSpecialistSearchResults] = useState<any[]>([])
@@ -220,10 +224,72 @@ export default function PharmacistDashboardPage() {
     })
   }
 
+  const applyStockAdjustment = async (medicine: LocalMedicine, direction: 1 | -1) => {
+    const rawValue = stockAdjustments[medicine.name] ?? "0"
+    const units = Math.floor(Number(rawValue))
+
+    if (!Number.isFinite(units) || units <= 0) {
+      toast({
+        title: "Stock adjustment needed",
+        description: "Enter a positive whole number of units before adjusting stock.",
+      })
+      return
+    }
+
+    setAdjustingMedicine(medicine.name)
+    const updatedFacility = await updateStock(facilityId, medicine.name, units * direction)
+    setAdjustingMedicine(null)
+
+    if (!updatedFacility) {
+      toast({
+        title: "Stock update failed",
+        description: "The selected facility could not be found.",
+      })
+      return
+    }
+
+    setStockAdjustments((current) => ({ ...current, [medicine.name]: "" }))
+    toast({
+      title: "Stock adjusted",
+      description: `${medicine.name} ${direction > 0 ? "increased" : "reduced"} by ${units} unit${units === 1 ? "" : "s"}.`,
+    })
+  }
+
+  const exportInventoryData = () => {
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      facilityId,
+      facility: displayFacility,
+      inventory: localInventory,
+      totals: {
+        skus: localInventory.length,
+        criticalLow: criticalLowMedicines.length,
+        available: localInventory.filter((medicine) => medicine.availability === "Available").length,
+        limited: localInventory.filter((medicine) => medicine.availability === "Limited").length,
+        outOfStock: localInventory.filter((medicine) => medicine.availability === "Out of Stock").length,
+      },
+    }
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `pharmacy-stock-${new Date().toISOString().slice(0, 10)}.json`
+    link.click()
+    URL.revokeObjectURL(url)
+
+    toast({
+      title: "Export complete",
+      description: "Local stock data has been exported successfully.",
+    })
+  }
+
   const exportAnalyticsData = () => {
     const payload = {
       exportedAt: new Date().toISOString(),
+      facilityId,
       facility: displayFacility,
+      inventory: localInventory,
       criticalLowMedicines,
       mostlyUsedMedicines,
       mostRequiredMedicines,
@@ -316,6 +382,13 @@ export default function PharmacistDashboardPage() {
           </TabsList>
 
           <TabsContent value="inventory" className="space-y-4">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-lg font-semibold">Local Stock</h2>
+              <Button variant="outline" onClick={exportInventoryData}>
+                <Download className="mr-2 h-4 w-4" />
+                Export Data
+              </Button>
+            </div>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
               {localInventory.map((item) => (
                 <Card key={item.name}>
@@ -326,6 +399,44 @@ export default function PharmacistDashboardPage() {
                     </div>
                     <p className="text-xs text-slate-500">Qty: {item.qty}</p>
                     <p className="text-xs text-slate-500">Updated {toRelativeTime(item.lastUpdated)}</p>
+                    <div className="flex flex-col gap-2 pt-2 sm:flex-row">
+                      <Input
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={stockAdjustments[item.name] ?? ""}
+                        onChange={(event) =>
+                          setStockAdjustments((current) => ({
+                            ...current,
+                            [item.name]: event.target.value,
+                          }))
+                        }
+                        placeholder="Units"
+                        aria-label={`Stock adjustment units for ${item.name}`}
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="outline"
+                          aria-label={`Reduce ${item.name} stock`}
+                          onClick={() => applyStockAdjustment(item, -1)}
+                          disabled={adjustingMedicine === item.name}
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          size="icon"
+                          className="bg-purple-600 hover:bg-purple-500"
+                          aria-label={`Increase ${item.name} stock`}
+                          onClick={() => applyStockAdjustment(item, 1)}
+                          disabled={adjustingMedicine === item.name}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
               ))}

@@ -331,6 +331,7 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
   const [activeCategory, setActiveCategory] = useState<ResourceCategoryId>("medicines")
   const [searchQuery, setSearchQuery] = useState("")
   const [searchScope, setSearchScope] = useState<SearchScopeMode>("internal")
+  const [showInternalMedicines, setShowInternalMedicines] = useState(false)
   const [sortBy, setSortBy] = useState<SortMode>("availability")
   const [facilityFilter, setFacilityFilter] = useState<FacilityFilterMode>("nearby")
   const [selectedFacilityId, setSelectedFacilityId] = useState("ub_clinic")
@@ -351,6 +352,7 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
     setActiveCategory("medicines")
     setSearchScope("internal")
     setSearchQuery("")
+    setShowInternalMedicines(false)
   }, [role])
 
   useEffect(() => {
@@ -363,6 +365,7 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
   useEffect(() => {
     setSearchScope("internal")
     setSearchQuery("")
+    setShowInternalMedicines(false)
   }, [activeCategory, selectedFacilityId])
 
   useEffect(() => {
@@ -652,9 +655,14 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
     const nearbyIds = new Set(nearbyFacilities.map((facility) => facility.id))
     const normalizedSearch = searchQuery.trim().toLowerCase()
     const isExternalSearch = searchScope === "external"
+    const shouldHideInternalMedicines = activeCategory === "medicines" && !isExternalSearch && !showInternalMedicines
 
     const internalOnly = selected.filter((item) => item.facilityId === selectedFacilityId)
     const externalOnly = selected.filter((item) => item.facilityId !== selectedFacilityId)
+
+    if (shouldHideInternalMedicines) {
+      return []
+    }
 
     const facilityScoped = (isExternalSearch ? externalOnly : internalOnly).filter((item) => {
       if (!isExternalSearch) return true
@@ -694,7 +702,7 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
       : sorted
 
     return role === "nurse" && isExternalSearch ? searched.slice(0, 8) : searched
-  }, [activeCategory, baseResourceItems, facilityFilter, nearbyFacilities, role, searchQuery, searchScope, selectedFacilityId, sortBy])
+  }, [activeCategory, baseResourceItems, facilityFilter, nearbyFacilities, role, searchQuery, searchScope, selectedFacilityId, showInternalMedicines, sortBy])
 
   const requestHistoryItems = useMemo(() => {
     const history = tasks
@@ -964,6 +972,9 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
                 onClick={() => {
                   setSearchScope("internal")
                   setSearchQuery("")
+                  if (activeCategory === "medicines") {
+                    setShowInternalMedicines(true)
+                  }
                 }}
               >
                 Show Internal
@@ -1085,7 +1096,9 @@ export default function AvailabilityCommandDashboard({ role }: { role: Dashboard
                 ? searchQuery.trim()
                   ? "No matching resources found in other facilities."
                   : "Type a medicine, equipment, blood type, specialist, or ward name to search other facilities."
-                : "No matching resources found in your internal inventory."}
+                : activeCategory === "medicines" && !showInternalMedicines
+                  ? "Click Show Internal to view your facility medication inventory."
+                  : "No matching resources found in your internal inventory."}
             </div>
           )}
         </section>
