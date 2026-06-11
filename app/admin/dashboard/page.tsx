@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import { Activity, Bed, Bell, Building2, Clock, Globe, LogOut, ShieldCheck, Stethoscope, TrendingUp, TriangleAlert, Users, AlertCircle, CheckCircle2, XCircle } from "lucide-react"
+import { Activity, Bed, Bell, Building2, Clock, Globe, LogOut, ShieldCheck, Stethoscope, TrendingUp, Users, AlertCircle, CheckCircle2 } from "lucide-react"
 import BeatsLogo from "@/components/BeatsLogo"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -28,40 +28,12 @@ type TaskRecord = {
   type?: string
 }
 
-type UrgencyLevel = "urgent" | "priority" | "routine"
-
 function toTitleCase(value: string) {
   return value
     .split(/[\s_-]+/)
     .filter(Boolean)
     .map((part) => part[0].toUpperCase() + part.slice(1).toLowerCase())
     .join(" ")
-}
-
-function getUrgencyLevel(item: string): UrgencyLevel {
-  const urgent = ["insulin", "blood", "mri", "ct", "emergency"]
-  const priority = ["amoxicillin", "ceftriaxone", "oxygen", "equipment"]
-  const itemLower = item.toLowerCase()
-  
-  if (urgent.some(u => itemLower.includes(u))) return "urgent"
-  if (priority.some(p => itemLower.includes(p))) return "priority"
-  return "routine"
-}
-
-function getUrgencyColor(urgency: UrgencyLevel): string {
-  switch (urgency) {
-    case "urgent": return "bg-red-100 border-red-300"
-    case "priority": return "bg-amber-100 border-amber-300"
-    case "routine": return "bg-gray-100 border-gray-300"
-  }
-}
-
-function getUrgencyBadgeColor(urgency: UrgencyLevel): string {
-  switch (urgency) {
-    case "urgent": return "bg-red-500"
-    case "priority": return "bg-amber-500"
-    case "routine": return "bg-gray-400"
-  }
 }
 
 function formatTimeAgo(dateStr: string): string {
@@ -125,18 +97,6 @@ export default function AdminDashboardPage() {
       accumulator.set(task.toFacility, (accumulator.get(task.toFacility) ?? 0) + 1)
       return accumulator
     }, new Map<string, number>())
-  }, [tasks])
-
-  // A. INCOMING REQUESTS - sorted by most recent first
-  const incomingRequests = useMemo(() => {
-    return tasks
-      .filter(t => t.status === "pending")
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-  }, [tasks])
-
-  // B. ESCALATION ALERTS - count of pending requests
-  const escalationAlertCount = useMemo(() => {
-    return tasks.filter(t => t.status === "pending").length
   }, [tasks])
 
   // E. QUICK ACTIVITY SNAPSHOT - stats
@@ -286,8 +246,9 @@ export default function AdminDashboardPage() {
               <Bell className="h-4 w-4" />
             </Button>
             <Link href="/login">
-              <Button variant="outline" size="icon" aria-label="Log out">
-                <LogOut className="h-4 w-4" />
+              <Button variant="outline" size="sm" aria-label="Log out">
+                <LogOut className="mr-2 h-4 w-4" />
+                {language === "en" ? "Log out" : "Tswa"}
               </Button>
             </Link>
           </div>
@@ -305,124 +266,6 @@ export default function AdminDashboardPage() {
             </p>
           </CardContent>
         </Card>
-
-        {/* A. INCOMING REQUESTS (TOP PRIORITY) */}
-        <section>
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertCircle className="h-5 w-5 text-blue-600" />
-                {language === "en" ? "Incoming Requests" : "Dipolo Tse Tsenang"}
-              </CardTitle>
-              <CardDescription>
-                {language === "en" 
-                  ? `${incomingRequests.length} pending requests - sorted by most recent`
-                  : `${incomingRequests.length} dipolo tse iphagameng - dikarabelo tse dingwe`}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {incomingRequests.length === 0 ? (
-                <p className="rounded-md border border-dashed p-4 text-center text-sm text-slate-500">
-                  {language === "en" ? "No pending requests" : "Ga go na dipolo"}
-                </p>
-              ) : (
-                incomingRequests.map((request) => {
-                  const resourceName = request.payload?.item ? toTitleCase(String(request.payload.item)) : "Unknown Resource"
-                  const facility = facilities.find(f => f.id === request.toFacility)
-                  const urgency = getUrgencyLevel(String(request.payload?.item ?? ""))
-                  
-                  return (
-                    <div
-                      key={request.id}
-                      className={`rounded-lg border-2 p-4 ${getUrgencyColor(urgency)}`}
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h4 className="font-semibold text-slate-900">{resourceName}</h4>
-                            <Badge className={`${getUrgencyBadgeColor(urgency)} text-white`}>
-                              {urgency.charAt(0).toUpperCase() + urgency.slice(1)}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-slate-700">
-                            {language === "en" ? "From: " : "Go tswa: "}
-                            <span className="font-medium">{facilities.find(f => f.id === request.fromFacility)?.facility ?? request.fromFacility}</span>
-                          </p>
-                          <p className="text-sm text-slate-700">
-                            {language === "en" ? "To: " : "Go: "}
-                            <span className="font-medium">{facility?.facility ?? request.toFacility}</span>
-                          </p>
-                          {facility?.location && (
-                            <p className="text-xs text-slate-600">
-                              {language === "en" ? "Location: " : "Lefelo: "}{facility.location}
-                            </p>
-                          )}
-                          <p className="text-xs text-slate-500 mt-2">
-                            {language === "en" ? "Time received: " : "Nako ya go amogelwa: "}
-                            {formatTimeAgo(request.createdAt)} ({new Date(request.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
-                          </p>
-                        </div>
-                        <div className="flex gap-2 flex-col">
-                          <Button size="sm" className="bg-green-600 hover:bg-green-700">
-                            <CheckCircle2 className="h-4 w-4 mr-1" />
-                            {language === "en" ? "Accept" : "Amogela"}
-                          </Button>
-                          <Button size="sm" variant="outline" className="border-amber-300 text-amber-700">
-                            {language === "en" ? "Limited" : "Sekepe"}
-                          </Button>
-                          <Button size="sm" variant="outline" className="border-red-300 text-red-700">
-                            <XCircle className="h-4 w-4 mr-1" />
-                            {language === "en" ? "Decline" : "Gaisa"}
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })
-              )}
-            </CardContent>
-          </Card>
-        </section>
-
-        {/* B. ESCALATION ALERTS */}
-        <section>
-          <Card className="border-2 border-red-200 bg-red-50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-red-700">
-                <TriangleAlert className="h-5 w-5" />
-                {language === "en" ? "Escalation Alerts" : "Pele Tse Kgonakgonang"}
-              </CardTitle>
-              <CardDescription>
-                {language === "en"
-                  ? `${escalationAlertCount} pending requests awaiting response`
-                  : `${escalationAlertCount} dipolo tse iphagameng`}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {escalationAlertCount > 0 ? (
-                <>
-                  <div className="flex items-center justify-between rounded-md bg-red-100 p-3">
-                    <div>
-                      <p className="font-semibold text-red-900">{escalationAlertCount} Unresponded Requests</p>
-                      <p className="text-sm text-red-700">
-                        {language === "en"
-                          ? "These requests require immediate attention"
-                          : "Dipolo tse di naya kopano ya bonopagatso"}
-                      </p>
-                    </div>
-                    <Button className="bg-red-600 hover:bg-red-700">
-                      {language === "en" ? "Respond Now" : "Karabela Jaanong"}
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <p className="rounded-md border border-dashed p-4 text-center text-sm text-green-700">
-                  {language === "en" ? "All requests have been responded to" : "Dipolo tsotlhe di lekile"}
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </section>
 
         {/* C. AVAILABILITY CONTROL */}
         <section>
