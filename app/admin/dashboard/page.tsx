@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import { Activity, Bell, Clock, Globe, LogOut, ShieldCheck, TrendingUp, TriangleAlert, Users, AlertCircle, CheckCircle2, XCircle } from "lucide-react"
+import { Activity, Bed, Bell, Building2, Clock, Globe, LogOut, ShieldCheck, Stethoscope, TrendingUp, TriangleAlert, Users, AlertCircle, CheckCircle2, XCircle } from "lucide-react"
 import BeatsLogo from "@/components/BeatsLogo"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -15,6 +15,7 @@ type FacilityRecord = {
   location?: string
   stock: Record<string, number>
   wards: Array<{ available_beds: number; total_beds: number }>
+  specialists: Record<string, "available" | "busy" | "off-duty">
 }
 
 type TaskRecord = {
@@ -154,14 +155,14 @@ export default function AdminDashboardPage() {
     }
   }, [tasks])
 
-  // F. MOST REQUESTED MEDICINE BY LOCATION/DISTRICT
-  const mostRequestedMedicineByDistrict = useMemo(() => {
+  // F. MOST REQUESTED MEDICINE BY FACILITY
+  const mostRequestedMedicinesByFacility = useMemo(() => {
     const medicineNames = new Set<string>()
     facilities.forEach((facility) => {
       Object.keys(facility.stock ?? {}).forEach((item) => medicineNames.add(item.toLowerCase()))
     })
 
-    const counts = new Map<string, { medicine: string; district: string; count: number }>()
+    const counts = new Map<string, { medicine: string; facility: string; location?: string; count: number }>()
 
     tasks.forEach((task) => {
       const rawItem = task.payload?.item
@@ -169,8 +170,9 @@ export default function AdminDashboardPage() {
       const normalizedItem = rawItem.trim().toLowerCase()
       if (!medicineNames.has(normalizedItem)) return
 
-      const district = facilities.find((facility) => facility.id === task.toFacility)?.location ?? "Unknown district"
-      const key = `${normalizedItem}|${district.toLowerCase()}`
+      const facility = facilities.find((item) => item.id === task.toFacility)
+      const facilityName = facility?.facility ?? task.toFacility.toUpperCase()
+      const key = `${normalizedItem}|${task.toFacility}`
       const existing = counts.get(key)
       if (existing) {
         existing.count += 1
@@ -179,24 +181,53 @@ export default function AdminDashboardPage() {
 
       counts.set(key, {
         medicine: toTitleCase(rawItem),
-        district,
+        facility: facilityName,
+        location: facility?.location,
         count: 1,
       })
     })
 
-    return Array.from(counts.values()).sort((left, right) => right.count - left.count).slice(0, 1)[0] ?? null
+    return Array.from(counts.values()).sort((left, right) => right.count - left.count).slice(0, 4)
   }, [facilities, tasks])
 
-  const highPressureFacilities = useMemo(() => {
-    return facilities.filter((facility) => {
-      const pending = pendingByFacility.get(facility.id) ?? 0
-      const lowBedWards = facility.wards.filter((ward) => {
-        const ratio = ward.available_beds / Math.max(1, ward.total_beds)
-        return ratio <= 0.2
-      }).length
-      return pending >= 3 || lowBedWards >= 1
-    }).length
+  const hospitalCapacity = useMemo(() => {
+    return facilities
+      .map((facility) => {
+        const totalBeds = facility.wards.reduce((sum, ward) => sum + Number(ward.total_beds ?? 0), 0)
+        const availableBeds = facility.wards.reduce((sum, ward) => sum + Number(ward.available_beds ?? 0), 0)
+        const occupiedBeds = Math.max(0, totalBeds - availableBeds)
+        const occupancyRate = totalBeds > 0 ? Math.round((occupiedBeds / totalBeds) * 100) : 0
+        const pending = pendingByFacility.get(facility.id) ?? 0
+
+        return {
+          facility: facility.facility,
+          location: facility.location,
+          totalBeds,
+          availableBeds,
+          occupiedBeds,
+          occupancyRate,
+          pending,
+        }
+      })
+      .sort((left, right) => right.occupancyRate - left.occupancyRate)
   }, [facilities, pendingByFacility])
+
+  const specialistCapacity = useMemo(() => {
+    return facilities
+      .map((facility) => {
+        const specialists = Object.entries(facility.specialists ?? {})
+        const available = specialists.filter(([, status]) => status === "available").length
+
+        return {
+          facility: facility.facility,
+          location: facility.location,
+          available,
+          total: specialists.length,
+          names: specialists.map(([name]) => name).slice(0, 3),
+        }
+      })
+      .sort((left, right) => right.available - left.available)
+  }, [facilities])
 
   const toggleAvailabilityStatus = (key: keyof typeof availabilityStatus) => {
     const current = availabilityStatus[key]
@@ -505,47 +536,130 @@ export default function AdminDashboardPage() {
           </Card>
         </section>
 
-        {/* F. MOST REQUESTED MEDICINE BY LOCATION/DISTRICT */}
-        <section>
+        {/* F. NATIONAL PLANNING SIGNALS */}
+        <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-blue-600" />
-                {language === "en" ? "Most Requested Medicine by District" : "Meriana Tse Bapikiwang"}
+                {language === "en" ? "Most Requested Medicine by Facility" : "Meriana e e Kopiwang ka Lefelo"}
               </CardTitle>
               <CardDescription>
                 {language === "en" 
-                  ? "Top medicine demand by geographic location"
+                  ? "Medicine demand ranked by receiving facility"
                   : "Meditsi e e mo godimo"}
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              {mostRequestedMedicineByDistrict ? (
-                <div className="rounded-md border-2 border-blue-200 bg-blue-50 p-4">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-blue-900">
-                        {language === "en" ? "Top Medicine: " : "Meditsi e mo godimo: "}
-                        <span className="text-base font-bold">{mostRequestedMedicineByDistrict.medicine}</span>
-                      </p>
-                      <p className="text-sm text-blue-800 mt-1">
-                        {language === "en" ? "District: " : "Kopano: "}
-                        <span className="font-medium">{mostRequestedMedicineByDistrict.district}</span>
-                      </p>
-                      <p className="text-xs text-blue-600 mt-2">
-                        {language === "en" 
-                          ? `Total requests: ${mostRequestedMedicineByDistrict.count}`
-                          : `Kopano: ${mostRequestedMedicineByDistrict.count}`}
-                      </p>
+            <CardContent className="space-y-3">
+              {mostRequestedMedicinesByFacility.length > 0 ? (
+                mostRequestedMedicinesByFacility.map((entry) => (
+                  <div key={`${entry.medicine}-${entry.facility}`} className="rounded-md border p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-slate-900">{entry.medicine}</p>
+                        <p className="text-sm text-slate-600">{entry.facility}</p>
+                        {entry.location && <p className="text-xs text-slate-500">{entry.location}</p>}
+                      </div>
+                      <Badge className="bg-blue-600">{entry.count}</Badge>
                     </div>
-                    <Badge className="bg-blue-600">{mostRequestedMedicineByDistrict.count} requests</Badge>
                   </div>
-                </div>
+                ))
               ) : (
                 <p className="rounded-md border border-dashed p-4 text-center text-sm text-slate-500">
                   {language === "en" ? "No medicine demand signal yet" : "Ga go na seipone"}
                 </p>
               )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bed className="h-5 w-5 text-amber-600" />
+                {language === "en" ? "Beds and Hospital Capacity" : "Dibethe le Bokgoni jwa Maokelo"}
+              </CardTitle>
+              <CardDescription>
+                {language === "en" ? "Facilities ranked by current bed occupancy" : "Maokelo ka tiriso ya dibethe"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {hospitalCapacity.slice(0, 4).map((facility) => (
+                <div key={facility.facility} className="rounded-md border p-3">
+                  <div className="mb-2 flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-slate-900">{facility.facility}</p>
+                      <p className="text-xs text-slate-500">
+                        {facility.availableBeds} of {facility.totalBeds} beds available
+                      </p>
+                    </div>
+                    <Badge variant={facility.occupancyRate >= 85 ? "default" : "outline"}>{facility.occupancyRate}% full</Badge>
+                  </div>
+                  <div className="h-2 rounded-full bg-slate-100">
+                    <div
+                      className={`h-2 rounded-full ${facility.occupancyRate >= 85 ? "bg-red-500" : facility.occupancyRate >= 70 ? "bg-amber-500" : "bg-green-500"}`}
+                      style={{ width: `${Math.min(100, facility.occupancyRate)}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Stethoscope className="h-5 w-5 text-green-600" />
+                {language === "en" ? "Specialists by Facility" : "Dingaka ka Lefelo"}
+              </CardTitle>
+              <CardDescription>
+                {language === "en" ? "Available specialists and clinical coverage" : "Dingaka tse di teng"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {specialistCapacity.map((facility) => (
+                <div key={facility.facility} className="rounded-md border p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-slate-900">{facility.facility}</p>
+                      <p className="text-xs text-slate-500">
+                        {facility.names.length > 0 ? facility.names.join(", ") : "No specialists listed"}
+                      </p>
+                    </div>
+                    <Badge className="bg-green-600">
+                      {facility.available}/{facility.total}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </section>
+
+        <section>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building2 className="h-5 w-5 text-slate-700" />
+                {language === "en" ? "Hospital Capacity Summary" : "Tshobokanyo ya Bokgoni jwa Maokelo"}
+              </CardTitle>
+              <CardDescription>
+                {language === "en" ? "National view of available beds, total beds, and pending facility pressure" : "Ponelopele ya naga ya dibethe le kgatelelo"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                {hospitalCapacity.map((facility) => (
+                  <div key={facility.facility} className="flex items-center justify-between rounded-md border p-3">
+                    <div>
+                      <p className="font-medium text-slate-900">{facility.facility}</p>
+                      <p className="text-xs text-slate-500">
+                        {facility.occupiedBeds} occupied, {facility.availableBeds} available, {facility.pending} pending requests
+                      </p>
+                    </div>
+                    <Badge variant="outline">{facility.totalBeds} beds</Badge>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
         </section>
